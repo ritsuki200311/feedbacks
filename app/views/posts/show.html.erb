@@ -1,0 +1,14 @@
+<h1><%= @post.title %></h1>
+
+<!-- サムネイル画像の表示 -->
+<% if @post.thumbnail.attached? %>
+  <%= image_tag @post.thumbnail %>
+<% end %>
+
+<!-- 動画の埋め込み表示 -->
+<% if @post.video.attached? %>
+  <%= video_tag url_for(@post.video), controls: true, class: "video-player" %>
+<% end %>
+
+<!-- 投稿内容の表示（必要に応じて） -->
+<p>ここに投稿の内容が入ります。</p>

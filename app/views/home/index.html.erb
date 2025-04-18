@@ -1,0 +1,30 @@
+<h1>投稿一覧</h1>
+
+<!-- ナビゲーションリンク -->
+<nav>
+
+  <%= link_to "投稿検索", search_posts_path, class: "btn" %>
+  <%= link_to "新規投稿", new_post_path %>
+  <%= link_to "マイページ", mypage_path, class: "btn" %>
+</nav>
+
+<hr>
+
+<!-- 投稿一覧表示 -->
+<% if @posts&.any? %>
+  <% @posts.each do |post| %>
+    <div class="post">
+      <h2><%= link_to post.title, post_path(post) %></h2>
+      
+      <% if post.thumbnail_url.present? %>
+        <%= image_tag(post.thumbnail_url, alt: post.title, class: "thumbnail") %>
+      <% end %>
+
+      <p>リアクション数: <%= post.reactions_count || 0 %></p>
+
+      <%= link_to "詳細", post_path(post), class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+<% else %>
+  <p>まだ投稿がありません。</p>
+<% end %>

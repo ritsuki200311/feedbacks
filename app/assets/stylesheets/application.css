@@ -8,3 +8,9 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+ .thumbnail {
+    max-width: 200px;
+    max-height: 200px;
+    object-fit: cover;
+    display: block;
+  }  

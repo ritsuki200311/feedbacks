@@ -1,29 +1,47 @@
+<!-- app/views/posts/index.html.erb -->
+
 <h1>ホーム画面</h1>
 
 <!-- ナビゲーションリンク -->
 <nav>
-
   <%= link_to "投稿検索", search_posts_path, class: "btn" %>
   <%= link_to "新規投稿", new_post_path %>
   <%= link_to "マイページ", mypage_path, class: "btn" %>
+  <%= link_to "ログアウト", destroy_user_session_path, method: :delete, data: { turbo: false, confirm: "本当にログアウトしますか？" }, class: "btn" %>
 </nav>
 
 <hr>
 
 <h1>投稿一覧</h1>
 
-<% @posts.each do |post| %>
-  <div class="post">
-    <h2><%= link_to post.title, post_path(post) %></h2>
-    <p><%= truncate(post.body, length: 100) %></p>
-    <small><%= post.created_at.strftime("%Y-%m-%d %H:%M") %></small>
-  </div>
-  <hr>
-<% end %>
-
 <% if @posts.any? %>
   <% @posts.each do |post| %>
-    <!-- 投稿表示 -->
+    <div class="post">
+      <h2><%= link_to post.title, post_path(post) %></h2>
+      <p><%= truncate(post.body, length: 100) %></p>
+      <small><%= post.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+
+      <% if post.thumbnail.attached? %>
+        <div>
+          <%= image_tag post.thumbnail, style: "max-width: 200px; height: auto;" %>
+        </div>
+      <% else %>
+        <p>サムネイル画像はありません。</p>
+      <% end %>
+
+      <% if post.video.attached? %>
+        <div>
+          <video width="200" controls>
+            <source src="<%= url_for(post.video) %>" type="<%= post.video.content_type %>">
+            お使いのブラウザは video タグをサポートしていません。
+          </video>
+        </div>
+      <% else %>
+        <p>動画はありません。</p>
+      <% end %>
+
+    </div>
+    <hr>
   <% end %>
 <% else %>
   <p>まだ投稿がありません。</p>

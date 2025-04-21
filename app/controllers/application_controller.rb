@@ -4,7 +4,14 @@ class ApplicationController < ActionController::Base
 
   before_action :configure_permitted_parameters, if: :devise_controller?
 
+
+  # ログアウト後のリダイレクト先をログインページに設定
+  def after_sign_out_path_for(resource_or_scope)
+    new_user_session_path # Deviseのログインページ
+  end
+
   protected
+  
 
   def configure_permitted_parameters
     # ユーザー登録時に name フィールドを許可

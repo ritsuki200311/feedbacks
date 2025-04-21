@@ -1,4 +1,4 @@
-<h1>投稿一覧</h1>
+<h1>ホーム画面</h1>
 
 <!-- ナビゲーションリンク -->
 <nav>
@@ -10,20 +10,20 @@
 
 <hr>
 
-<!-- 投稿一覧表示 -->
-<% if @posts&.any? %>
+<h1>投稿一覧</h1>
+
+<% @posts.each do |post| %>
+  <div class="post">
+    <h2><%= link_to post.title, post_path(post) %></h2>
+    <p><%= truncate(post.body, length: 100) %></p>
+    <small><%= post.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+  </div>
+  <hr>
+<% end %>
+
+<% if @posts.any? %>
   <% @posts.each do |post| %>
-    <div class="post">
-      <h2><%= link_to post.title, post_path(post) %></h2>
-      
-      <% if post.thumbnail_url.present? %>
-        <%= image_tag(post.thumbnail_url, alt: post.title, class: "thumbnail") %>
-      <% end %>
-
-      <p>リアクション数: <%= post.reactions_count || 0 %></p>
-
-      <%= link_to "詳細", post_path(post), class: "btn btn-secondary" %>
-    </div>
+    <!-- 投稿表示 -->
   <% end %>
 <% else %>
   <p>まだ投稿がありません。</p>

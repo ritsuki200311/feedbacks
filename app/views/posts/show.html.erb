@@ -1,14 +1,7 @@
+<!-- app/views/posts/show.html.erb -->
+
 <h1><%= @post.title %></h1>
+<p><%= @post.body %></p>
+<p><%= @post.created_at.strftime("%Y-%m-%d %H:%M") %></p>
 
-<!-- サムネイル画像の表示 -->
-<% if @post.thumbnail.attached? %>
-  <%= image_tag @post.thumbnail %>
-<% end %>
-
-<!-- 動画の埋め込み表示 -->
-<% if @post.video.attached? %>
-  <%= video_tag url_for(@post.video), controls: true, class: "video-player" %>
-<% end %>
-
-<!-- 投稿内容の表示（必要に応じて） -->
-<p>ここに投稿の内容が入ります。</p>
+<%= link_to "ホームに戻る", root_path %>

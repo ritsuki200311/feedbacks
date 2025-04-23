@@ -4,5 +4,8 @@ class Post < ApplicationRecord
     has_one_attached :thumbnail
     validates :title, presence: true
     validates :body, presence: true
+    has_many :comments, dependent: :destroy
+    belongs_to :user
+    
     # validates :video, presence: true  # この行をコメントアウトして無効にする
   end

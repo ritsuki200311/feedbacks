@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   # 投稿のルートを生成
-  resources :posts, only: [:create, :show, :new]
+  resources :posts, only: [:create, :show, :new, :destroy] do
+    # 投稿に関連するコメントのルート
+    resources :comments, only: [:create]
+  end
 
   # ルートページ
   root "home#index"
@@ -19,4 +22,9 @@ Rails.application.routes.draw do
 
   # ヘルスチェック用ルート
   get "up" => "rails/health#show", as: :rails_health_check
+
+  # メール系
+  if Rails.env.development?
+    mount LetterOpenerWeb::Engine, at: "/letter_opener"
+  end
 end

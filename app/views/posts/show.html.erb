@@ -1,24 +1,45 @@
-<!-- app/views/posts/show.html.erb -->
-
 <h1><%= @post.title %></h1>
 <p><%= @post.body %></p>
-<p><%= @post.created_at.strftime("%Y-%m-%d %H:%M") %></p>
 
 <% if @post.thumbnail.attached? %>
   <div>
-    <%= image_tag @post.thumbnail.variant(resize_to_limit: [400, 400]), class: "thumbnail" %>
+    <%= image_tag @post.thumbnail, style: "max-width: 200px; height: auto;" %>
   </div>
 <% end %>
 
 <% if @post.video.attached? %>
   <div>
-    <video width="100%" style="max-width: 600px;" controls>
+    <video width="400" controls>
       <source src="<%= url_for(@post.video) %>" type="<%= @post.video.content_type %>">
       お使いのブラウザは video タグをサポートしていません。
     </video>
   </div>
 <% else %>
-  <p>動画はありません。</p>
+  <p>動画はありません</p>
 <% end %>
 
-<%= link_to "ホームに戻る", root_path %>
+<h3>コメント</h3>
+
+<% if @post.comments.any? %>
+  <% @post.comments.each do |comment| %>
+    <div>
+      <% if comment.user %>
+        <p><strong><%= comment.user.name %>:</strong> <%= comment.body %></p>
+      <% else %>
+        <p><strong>匿名:</strong> <%= comment.body %></p>
+      <% end %>
+    </div>
+  <% end %>
+<% else %>
+  <p>コメントはありません。</p>
+<% end %>
+
+<%= form_with model: [@post, @comment], local: true do |form| %>
+  <div>
+    <%= form.label :body, "コメント" %>
+    <%= form.text_area :body, rows: 3 %>
+  </div>
+  <div>
+    <%= form.submit "コメントする" %>
+  </div>
+<% end %>

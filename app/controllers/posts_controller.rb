@@ -1,25 +1,14 @@
 class PostsController < ApplicationController
-  def new
-    @post = Post.new
-  end
+  before_action :set_post, only: [:show, :edit, :update, :destroy]
 
-  def create
-    @post = Post.new(post_params)
-    if @post.save
-      redirect_to @post, notice: "投稿が完了しました！"
-    else
-      render :new
-    end
-  end
-  
-
-  def show
-    @post = Post.find(params[:id])
+  def destroy
+    @post.destroy
+    redirect_to posts_path, notice: '投稿が削除されました。'
   end
 
   private
 
-  def post_params
-    params.require(:post).permit(:title, :body, :thumbnail)
-  end  
+  def set_post
+    @post = Post.find(params[:id])
+  end
 end

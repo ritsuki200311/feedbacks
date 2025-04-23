@@ -7,6 +7,8 @@ Rails.application.routes.draw do
 
   # ユーザー認証（Devise）
   devise_for :users
+
+  # ユーザー関連のルート（必要な場合）
   get "users/index"
 
   # マイページ（あとで作る）

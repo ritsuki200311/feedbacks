@@ -34,12 +34,12 @@
   <p>コメントはありません。</p>
 <% end %>
 
-<%= form_with model: [@post, @comment], local: true do |form| %>
+<%= form_with(model: [@post, @comment], local: true) do |form| %>
   <div>
     <%= form.label :body, "コメント" %>
     <%= form.text_area :body, rows: 3 %>
   </div>
   <div>
-    <%= form.submit "コメントする" %>
+    <%= form.submit "コメントを投稿" %>
   </div>
 <% end %>

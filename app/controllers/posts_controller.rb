@@ -6,13 +6,18 @@ class PostsController < ApplicationController
   end
 
   def create
-    @post = Post.new(post_params)
-    if @post.save
-      redirect_to @post, notice: "投稿が作成されました。"
+    @comment = @post.comments.build(comment_params)
+    @comment.user = current_user  # ユーザーを設定
+  
+    if @comment.save
+      respond_to do |format|
+        format.html { redirect_to @post, notice: "コメントが投稿されました！" }
+        format.turbo_stream { render turbo_stream: turbo_stream.append("comments_for_post_#{@post.id}", partial: "comments/comment", locals: { comment: @comment }) }
+      end
     else
-      render :new
+      redirect_to @post, alert: "コメントの投稿に失敗しました。"
     end
-  end
+  end 
 
   def edit
     # @post は :set_post コールバックでセットされます
@@ -38,7 +43,7 @@ class PostsController < ApplicationController
   private
 
   def post_params
-    params.require(:post).permit(:title, :content)
+    params.require(:post).permit(:title, :body, :thumbnail, :video)  # 必要なパラメータを許可
   end
 
   def set_post

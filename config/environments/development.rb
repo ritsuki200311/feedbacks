@@ -71,7 +71,7 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
 
   # メールを開発環境で受信する
-  config.action_mailer.delivery_method = :letter_opener_web
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
-  config.action_mailer.perform_deliveries = true
+  config.action_mailer.delivery_method = :test
+  config.action_mailer.default_options = { from: "dummy@example.com" }
 end

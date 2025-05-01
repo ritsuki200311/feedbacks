@@ -20,21 +20,26 @@
 
 <h3>コメント</h3>
 
-<% if @post.comments.any? %>
-  <% @post.comments.each do |comment| %>
-    <div>
-      <% if comment.user %>
-        <p><strong><%= comment.user.name %>:</strong> <%= comment.body %></p>
-      <% else %>
-        <p><strong>匿名:</strong> <%= comment.body %></p>
-      <% end %>
-    </div>
+<!-- コメント一覧を表示 -->
+<div id="comments_for_post_<%= @post.id %>">
+  <% if @post.comments.any? %>
+    <% @post.comments.each do |comment| %>
+      <div class="comment">
+        <% if comment.user %>
+          <p><strong><%= comment.user.name %>:</strong> <%= comment.body %></p>
+        <% else %>
+          <p><strong>匿名:</strong> <%= comment.body %></p>
+        <% end %>
+        <small><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+      </div>
+    <% end %>
+  <% else %>
+    <p>コメントはありません。</p>
   <% end %>
-<% else %>
-  <p>コメントはありません。</p>
-<% end %>
+</div>
 
-<%= form_with(model: [@post, @comment], local: true) do |form| %>
+<!-- コメント投稿フォーム -->
+<%= form_with model: [@post, @post.comments.build], url: post_comments_path(@post), local: false, html: { id: "comment_form_#{@post.id}" } do |form| %>
   <div>
     <%= form.label :body, "コメント" %>
     <%= form.text_area :body, rows: 3 %>

@@ -1,0 +1,6 @@
+<%= turbo_stream.append "comments_for_post_#{@post.id}", partial: "comments/comment", locals: { comment: @comment } %>
+  <div class="comment">
+    <p><%= @comment.body %></p>
+    <small><%= @comment.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+  </div>
+<% end %>

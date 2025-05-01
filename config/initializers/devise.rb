@@ -24,7 +24,15 @@ Devise.setup do |config|
   # Configure the e-mail address which will be shown in Devise::Mailer,
   # note that it will be overwritten if you use your own mailer class
   # with default "from" parameter.
-  # config.mailer_sender = ""MyApp Support" <no-reply@yourdomain.com>"
+  # config/initializers/devise.rb
+
+  Devise.setup do |config|
+    # ここを追加・修正！
+    config.mailer_sender = "dummy@example.com"
+
+    # 他の設定はそのままでOK
+  end
+
 
   # Configure the class responsible to send e-mails.
   # config.mailer = 'Devise::Mailer'
@@ -252,7 +260,7 @@ Devise.setup do |config|
 
   # Set this configuration to false if you want /users/sign_out to sign out
   # only the current scope. By default, Devise signs out all scopes.
-  #ログアウト先のリダイレクト先を指定
+  # ログアウト先のリダイレクト先を指定
   config.sign_out_all_scopes = true
 
   # ==> Navigation configuration

@@ -5,7 +5,6 @@ class Post < ApplicationRecord
     validates :title, presence: true
     validates :body, presence: true
     has_many :comments, dependent: :destroy
-    belongs_to :user
-    
+    belongs_to :user, optional: true
     # validates :video, presence: true  # この行をコメントアウトして無効にする
   end

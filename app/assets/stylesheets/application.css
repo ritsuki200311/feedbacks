@@ -13,4 +13,117 @@
     max-height: 200px;
     object-fit: cover;
     display: block;
+  }
+
+  body {
+    font-family: 'Helvetica Neue', sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 2rem;
+    color: #333;
+  }
+  
+  h1, h2 {
+    color: #333;
+    margin-bottom: 1rem;
+  }
+  
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  nav a.btn {
+    background-color: #007bff;
+    color: white;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  
+  nav a.btn:hover {
+    background-color: #0056b3;
+  }
+  
+  .post {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+  }
+  
+  .post h2 a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .post h2 a:hover {
+    text-decoration: underline;
+  }
+  
+  .post small {
+    color: #888;
+    display: block;
+    margin-bottom: 1rem;
+  }
+  
+  video {
+    max-width: 100%;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+  }
+  
+  form {
+    margin-top: 1rem;
+  }
+  
+  form textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    resize: vertical;
+  }
+  
+  form input[type="submit"] {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  form input[type="submit"]:hover {
+    background-color: #218838;
+  }
+  
+  a.delete-link {
+    color: #dc3545;
+    font-weight: bold;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 1rem;
+  }
+  
+  a.delete-link:hover {
+    text-decoration: underline;
+  }
+
+  .post-thumbnail {
+    width: 300px;          /* 横幅を指定 */
+    height: auto;          /* 縦横比を保って縮小 */
+    object-fit: cover;     /* 画像を枠内に収めて切り抜く */
+    border-radius: 8px;    /* 角を丸めて柔らかい印象に */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* 影を付けて立体感 */
+    margin-top: 8px;
   }  
+
+  

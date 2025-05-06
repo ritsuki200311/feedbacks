@@ -1,0 +1,23 @@
+<h1>マイページ</h1>
+<%= link_to "パスワード変更", edit_user_registration_path, class: "btn" %>
+<%= link_to "トップに戻る", root_path, class: "btn" %>
+<% if user_signed_in? %>
+  <p><%= current_user.name %> </p>
+  <p><%= current_user.email %></p>
+
+    <h2>あなたの投稿一覧</h2>
+    <% if @posts.any? %>
+        <% @posts.each do |post| %>
+        <div class="post">
+            <h3><%= link_to post.title, post_path(post) %></h3>
+            <p><%= truncate(post.body, length: 100) %></p>
+            <small>投稿日: <%= post.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+        </div>
+        <hr>
+        <% end %>
+    <% else %>
+        <p>まだ投稿がありません。</p>
+    <% end %>
+<% else %>
+  <p>ログインしていません。</p>
+<% end %>

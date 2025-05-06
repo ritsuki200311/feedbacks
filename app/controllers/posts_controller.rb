@@ -6,21 +6,22 @@ class PostsController < ApplicationController
   end
 
   def create
-    @comment = @post.comments.build(comment_params)
-    @comment.user = current_user  # ユーザーを設定
-  
-    if @comment.save
-      respond_to do |format|
-        format.html { redirect_to @post, notice: "コメントが投稿されました！" }
-        format.turbo_stream { render turbo_stream: turbo_stream.append("comments_for_post_#{@post.id}", partial: "comments/comment", locals: { comment: @comment }) }
-      end
+    @post = Post.new(post_params)
+    @post.user = current_user  # 投稿者のユーザー情報を設定（任意）
+
+    if @post.save
+      redirect_to @post, notice: "投稿が作成されました！"
     else
-      redirect_to @post, alert: "コメントの投稿に失敗しました。"
+      render :new, alert: "投稿の作成に失敗しました。"
     end
-  end 
+  end
+
+  def show
+    @comment = @post.comments.build  # コメント投稿フォーム用
+  end
 
   def edit
-    # @post は :set_post コールバックでセットされます
+    # @post は before_action でセット済み
   end
 
   def update
@@ -31,19 +32,15 @@ class PostsController < ApplicationController
     end
   end
 
-  def show
-    @comment = @post.comments.build  # 新しいコメントのインスタンスを作成
-  end
-
   def destroy
     @post.destroy
-    redirect_to posts_path, notice: "投稿が削除されました。"
+    redirect_to root_path, notice: "投稿が削除されました。"
   end
 
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :thumbnail, :video)  # 必要なパラメータを許可
+    params.require(:post).permit(:title, :body, :thumbnail, :video)
   end
 
   def set_post

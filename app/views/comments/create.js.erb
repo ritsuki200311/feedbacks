@@ -1,0 +1,5 @@
+// コメント一覧を更新（HTMLを再読み込み）
+$("#comments_for_post_<%= @post.id %>").append("<%= j render partial: 'comments/comment', locals: { comment: @comment } %>");
+
+// フォームをリセット
+$("#comment_form_<%= @post.id %>")[0].reset();

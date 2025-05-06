@@ -1,3 +1,5 @@
+<%= link_to "← ホームに戻る", root_path %>
+
 <h1><%= @post.title %></h1>
 <p><%= @post.body %></p>
 
@@ -25,26 +27,23 @@
   <% if @post.comments.any? %>
     <% @post.comments.each do |comment| %>
       <div class="comment">
-        <% if comment.user %>
+        <% if comment.user == current_user %>
+          <p><strong>あなた:</strong> <%= comment.body %></p>
+        <% elsif comment.user.present? %> <!-- comment.userがnilでない場合のみ名前を表示 -->
           <p><strong><%= comment.user.name %>:</strong> <%= comment.body %></p>
         <% else %>
-          <p><strong>匿名:</strong> <%= comment.body %></p>
+          <p><strong>匿名:</strong> <%= comment.body %></p> <!-- userがnilの場合は"匿名"と表示 -->
         <% end %>
-        <small><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+        <small>
+          <% if comment.created_at.present? %> <!-- created_atがnilでない場合のみ表示 -->
+            <%= comment.created_at.strftime("%Y-%m-%d %H:%M") %>
+          <% else %>
+            <%= "日時不明" %> <!-- created_atがnilの場合 -->
+          <% end %>
+        </small>
       </div>
     <% end %>
   <% else %>
     <p>コメントはありません。</p>
   <% end %>
 </div>
-
-<!-- コメント投稿フォーム -->
-<%= form_with model: [@post, @post.comments.build], url: post_comments_path(@post), local: false, html: { id: "comment_form_#{@post.id}" } do |form| %>
-  <div>
-    <%= form.label :body, "コメント" %>
-    <%= form.text_area :body, rows: 3 %>
-  </div>
-  <div>
-    <%= form.submit "コメントを投稿" %>
-  </div>
-<% end %>

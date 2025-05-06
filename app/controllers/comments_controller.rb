@@ -1,17 +1,18 @@
 class CommentsController < ApplicationController
+  before_action :authenticate_user!  # ログインしていないとコメントできないように
   before_action :set_post
-  
+
   def create
+    @post = Post.find(params[:post_id])
     @comment = @post.comments.build(comment_params)
-    @comment.user = current_user  # ユーザーを設定
+    @comment.user = current_user
   
     if @comment.save
-      respond_to do |format|
-        format.html { redirect_to @post, notice: "コメントが投稿されました！" }
-        format.turbo_stream # Turbo Streamに応答
-      end
+      # 成功したら投稿詳細ページにリダイレクト
+      redirect_to post_path(@post), notice: "コメントを投稿しました。"
     else
-      redirect_to @post, alert: "コメントの投稿に失敗しました。"
+      # 失敗したら元の投稿一覧ページに戻すなど（適宜調整）
+      redirect_to posts_path, alert: "コメントの投稿に失敗しました。"
     end
   end  
 

@@ -43,22 +43,9 @@
             お使いのブラウザは video タグをサポートしていません。
           </video>
         </div>
-      <% else %>
-        <p>動画はありません</p>
       <% end %>
 
-      <!-- コメント一覧 -->
-      <div id="comments_for_post_<%= post.id %>">
-        <% post.comments.each do |comment| %>
-          <div class="comment">
-            <p><%= comment.body %></p>
-            <small><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></small>
-          </div>
-        <% end %>
-      </div>
-
-      <!-- コメント投稿フォーム（非同期） -->
-<%= form_with model: [post, post.comments.build], url: post_comments_path(post), local: false, html: { id: "comment_form_#{post.id}" } do |form| %>
+   <%= form_with model: [post, post.comments.build], url: post_comments_path(post), local: true do |form| %>
   <div>
     <%= form.label :body, "コメント" %>
     <%= form.text_area :body, rows: 3 %>
@@ -67,6 +54,7 @@
     <%= form.submit "コメントする" %>
   </div>
 <% end %>
+
       <!-- 投稿削除ボタン -->
       <div>
         <%= link_to "削除", post_path(post), method: :delete, data: { confirm: "本当に削除しますか？" }, class: "delete-link" %>

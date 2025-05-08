@@ -1,0 +1,12 @@
+<h1>ダイレクトメッセージ</h1>
+
+<div id="messages">
+  <% @messages.each do |message| %>
+    <p><strong><%= message.user.name %>:</strong> <%= message.body %></p>
+  <% end %>
+</div>
+
+<%= form_with model: [@room, @message], url: room_messages_path(@room), local: true do |f| %>
+  <%= f.text_area :body, rows: 3 %>
+  <%= f.submit "送信" %>
+<% end %>

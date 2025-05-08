@@ -37,6 +37,10 @@ class PostsController < ApplicationController
     redirect_to root_path, notice: "投稿が削除されました。"
   end
 
+  def index
+    @posts = Post.all.includes(:comments)  # コメントを含めて全投稿を取得
+  end
+
   private
 
   def post_params

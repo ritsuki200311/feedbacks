@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+  # DM機能のルート（新規作成・表示）
+  resources :rooms, only: [:create, :show] do
+    resources :messages, only: [:create]
+  end
+
   # 投稿のルートを生成
   resources :posts, only: [:create, :show, :new, :destroy] do
     # 投稿に関連するコメントのルート
@@ -11,13 +16,12 @@ Rails.application.routes.draw do
   # ユーザー認証（Devise）
   devise_for :users
 
-  # ユーザー関連のルート（必要な場合 -これは今はHello World-
+  # ユーザー関連のルート
   get "users/index"
-
-  # マイページ（あとで作る）
   get "users/mypage", to: "users#mypage", as: :mypage
+  resources :users, only: [:show]
 
-  # 投稿検索（あとで作る）
+  # 投稿検索
   get "posts/search", to: "posts#search", as: :search_posts
 
   # ヘルスチェック用ルート

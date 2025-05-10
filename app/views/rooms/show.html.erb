@@ -1,12 +1,14 @@
-<h1>ダイレクトメッセージ</h1>
+<h2>チャットルーム</h2>
 
-<div id="messages">
+<div class="chat-box">
   <% @messages.each do |message| %>
-    <p><strong><%= message.user.name %>:</strong> <%= message.body %></p>
+    <div class="message <%= message.user_id == current_user.id ? 'sent' : 'received' %>">
+      <%= message.body %>
+    </div>
   <% end %>
 </div>
 
-<%= form_with model: [@room, @message], url: room_messages_path(@room), local: true do |f| %>
-  <%= f.text_area :body, rows: 3 %>
-  <%= f.submit "送信" %>
+<%= form_with(model: [@room, @message], local: true, html: { class: "message-form" }) do |form| %>
+  <%= form.text_area :body, rows: 1, placeholder: "メッセージを入力…" %>
+  <%= form.submit "送信" %>
 <% end %>

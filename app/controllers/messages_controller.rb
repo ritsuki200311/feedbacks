@@ -5,10 +5,13 @@ class MessagesController < ApplicationController
     @room = Room.find(params[:room_id])
     @message = @room.messages.build(message_params)
     @message.user = current_user
+    @message.is_read = false
+
     if @message.save
       redirect_to room_path(@room)
     else
-      render "rooms/show"
+      @messages = @room.messages.includes(:user)
+      render 'rooms/show'
     end
   end
 

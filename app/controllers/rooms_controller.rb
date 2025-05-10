@@ -23,7 +23,17 @@ class RoomsController < ApplicationController
 
   def show
     @room = Room.find(params[:id])
+  
+    unless @room.entries.exists?(user_id: current_user.id)
+      redirect_to root_path, alert: "そのチャットルームにはアクセスできません"
+      return
+    end
+  
     @messages = @room.messages.includes(:user)
     @message = Message.new
-  end
+    @other_user = @room.entries.where.not(user_id: current_user.id).first&.user
+  
+    # 🔽 ここで「自分以外のユーザーが送った未読メッセージ」を既読にする
+    @room.messages.where(user_id: @other_user.id, is_read: false).update_all(is_read: true)
+  end  
 end

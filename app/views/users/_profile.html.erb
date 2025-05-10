@@ -1,16 +1,24 @@
-<h1><%= user.name %>のプロフィール</h1>
-<p>メール: <%= user.email %></p>
+<%= link_to "トップに戻る", root_path, class: "btn" %>
+<h1>
+  <% if user == current_user %>
+    <%= link_to "#{user.name}さんのマイページ", mypage_path %>
+  <% else %>
+    <%= link_to "#{user.name}さんのプロフィール", user_path(user) %>
+  <% end %>
+</h1>
+
 <h2>投稿一覧</h2>
 <% if posts.any? %>
   <% posts.each do |post| %>
     <div class="post">
-      <h3>
+    <h2><%= link_to post.title, post_path(post) %></h2>
+      <%# <h3>
         <% if user == current_user %>
-          <%= link_to post.title, mypage_path %>
-        <% else %>
-          <%= link_to post.title, user_path(user) %>
-        <% end %>
-      </h3>
+          <%# <%= link_to post.title, mypage_path %>
+        <%# <% else %>
+          <%# <%= link_to post.title, user_path(user) %> 
+        <%# <% end %> 
+      <%# </h3> %>
       <p><%= truncate(post.body, length: 100) %></p>
       <small>投稿日: <%= post.created_at.strftime("%Y-%m-%d %H:%M") %></small>
     </div>

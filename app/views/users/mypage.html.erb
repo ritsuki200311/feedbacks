@@ -1,8 +1,29 @@
-<h1>マイページ</h1>
+<p>メール: <%= current_user.email %></p>
 <%= link_to "パスワード変更", edit_user_registration_path, class: "btn" %>
-<%= link_to "トップに戻る", root_path, class: "btn" %>
+
 <% if user_signed_in? %>
 <%= render partial: "profile", locals: { user: current_user, posts: @posts } %>
 <% else %>
   <p>ログインしていません。</p>
+<% end %>
+
+<h2>あなたのトーク一覧</h2>
+<% current_user.entries.each do |entry| %>
+  <% room = entry.room %>
+  <% other_user = room.entries.where.not(user_id: current_user.id).first.user %>
+  <%= link_to "#{other_user.name}さんとのチャット", room_path(room) %>
+<% end %>
+
+<% if @unread_rooms.any? %>
+  <h3>未読メッセージのあるチャットルーム</h3>
+  <ul>
+    <% @unread_rooms.each do |room| %>
+      <li>
+        <%= link_to "ルーム #{room.id}", room_path(room) %>
+        （未読 <%= @unread_counts[room.id] || 0 %> 件）
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>未読メッセージはありません。</p>
 <% end %>

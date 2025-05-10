@@ -125,3 +125,41 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* 影を付けて立体感 */
     margin-top: 8px;
   }
+
+  .chat-box {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 10px;
+    border: 1px solid #ccc;
+    height: 400px;
+    overflow-y: auto;
+    background: #f9f9f9;
+  }
+  
+  .message {
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 20px;
+    margin: 8px 0;
+    clear: both;
+  }
+  
+  .message.sent {
+    background: #dcf8c6;
+    float: right;
+    text-align: right;
+  }
+  
+  .message.received {
+    background: #ffffff;
+    float: left;
+    text-align: left;
+  }
+  
+  .message-form {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  

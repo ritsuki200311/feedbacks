@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_10_071155) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_15_144806) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -78,6 +78,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_10_071155) do
     t.integer "user_id"
   end
 
+  create_table "preferences", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.text "selected_items"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "genre"
+    t.string "instrument_experience"
+    t.string "favorite_artist"
+    t.string "career"
+    t.index ["user_id"], name: "index_preferences_on_user_id"
+  end
+
   create_table "rooms", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -104,4 +116,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_10_071155) do
   add_foreign_key "entries", "users"
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users"
+  add_foreign_key "preferences", "users"
 end

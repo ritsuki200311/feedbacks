@@ -11,6 +11,16 @@ class ApplicationController < ActionController::Base
   end
 
   protected
+
+  # # サインアップ後のリダイレクト先を設定
+  # def after_sign_up_path_for(resource)
+  #   new_preference_path
+  # end
+  
+  # def after_inactive_sign_up_path_for(resource)
+  #   new_preference_path
+  # end
+
   
 
   def configure_permitted_parameters

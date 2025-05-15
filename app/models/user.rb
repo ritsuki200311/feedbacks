@@ -11,4 +11,7 @@ class User < ApplicationRecord
   has_many :entries
   has_many :rooms, through: :entries
   has_many :messages
+
+  # 好み（Preference）の関連
+  has_one :preference, dependent: :destroy
 end

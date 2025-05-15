@@ -27,3 +27,14 @@
 <% else %>
   <p>未読メッセージはありません。</p>
 <% end %>
+
+<h2>あなたの好み</h2>
+<% if current_user.preference.present? %>
+  <ul>
+    <%# もし preference が複数の属性を持つなら、その属性をここで表示 %>
+    <li><%= current_user.preference.genre %></li>
+    <%# 他に表示したい属性があれば追加 %>
+  </ul>
+<% else %>
+  <p>選択された好みはありません。</p>
+<% end %>

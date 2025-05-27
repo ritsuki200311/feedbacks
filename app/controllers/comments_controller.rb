@@ -9,8 +9,8 @@ class CommentsController < ApplicationController
       # 成功したら投稿詳細ページにリダイレクト
       redirect_to post_path(@post), notice: "コメントを投稿しました。"
     else
-      # 失敗したら元の投稿一覧ページに戻すなど（適宜調整）
-      redirect_to posts_path, alert: "コメントの投稿に失敗しました。"
+      error_messages = @comment.errors.full_messages.join(", ")
+      redirect_to post_path(@post), alert: "コメントの投稿に失敗しました: #{error_messages}"
     end
   end
 
@@ -23,5 +23,7 @@ class CommentsController < ApplicationController
 
   def set_post
     @post = Post.find(params[:post_id])
+  rescue ActiveRecord::RecordNotFound
+    redirect_to root_path, alert: "指定された投稿が見つかりませんでした。"
   end
 end

@@ -162,4 +162,40 @@
     margin-top: 10px;
   }
 
+  /* 好み情報のスタイル */
+  .preference-info {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .preference-info p {
+    margin: 10px 0;
+    line-height: 1.6;
+  }
+
+  .preference-info strong {
+    color: #495057;
+    margin-right: 8px;
+  }
+
+  .selected-items {
+    margin-top: 20px;
+  }
+
+  .item-tag {
+    display: inline-block;
+    background: #e9ecef;
+    color: #495057;
+    padding: 4px 12px;
+    border-radius: 16px;
+    margin: 4px;
+    font-size: 0.9em;
+  }
+
+  .item-tag:hover {
+    background: #dee2e6;
+  }
   

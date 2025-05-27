@@ -1,6 +1,4 @@
 Rails.application.routes.draw do
-  get "preferences/new"
-  get "preferences/create"
   # DM機能のルート（新規作成・表示）
   resources :rooms, only: [:create, :show] do
     resources :messages, only: [:create]
@@ -18,7 +16,10 @@ Rails.application.routes.draw do
   # ユーザー認証（Devise）
   devise_for :users, controllers: {
     registrations: 'users/registrations'
-  }  
+  }
+
+  # 好みの設定（シングルリソースとして定義）
+  resource :preference, controller: 'preferences', only: [:new, :create, :edit, :update]
 
   # ユーザー関連のルート
   get "users/index"
@@ -35,8 +36,4 @@ Rails.application.routes.draw do
   if Rails.env.development?
     mount LetterOpenerWeb::Engine, at: "/letter_opener"
   end
-
-  #　登録直後の好みのジャンル
-  resources :preferences, only: [:new, :create]
-
 end

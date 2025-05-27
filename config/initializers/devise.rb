@@ -27,8 +27,8 @@ Devise.setup do |config|
   # config/initializers/devise.rb
 
   Devise.setup do |config|
-    # ここを追加・修正！
-    config.mailer_sender = "dummy@example.com"
+    # メール送信者を環境変数から設定
+    config.mailer_sender = ENV.fetch("MAILER_SENDER", "noreply@example.com")
 
     # 他の設定はそのままでOK
   end

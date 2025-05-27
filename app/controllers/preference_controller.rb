@@ -15,7 +15,7 @@ class PreferencesController < ApplicationController
   def create
     @preference = current_user.build_preference(preference_params)
     if @preference.save
-      redirect_to mypage_path, notice: "好みを登録しました"
+      redirect_to root_path, notice: "好みを登録しました"
     else
       flash.now[:alert] = "登録に失敗しました"
       render :new
@@ -27,7 +27,7 @@ class PreferencesController < ApplicationController
 
   def update
     if @preference.update(preference_params)
-      redirect_to mypage_path, notice: "好みを更新しました"
+      redirect_to root_path, notice: "好みを更新しました"
     else
       flash.now[:alert] = "更新に失敗しました"
       render :edit

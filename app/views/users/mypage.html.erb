@@ -7,6 +7,41 @@
   <p>ログインしていません。</p>
 <% end %>
 
+<h2>あなたの好み</h2>
+<% if current_user.preference.present? %>
+  <div class="preference-info">
+    <% if current_user.preference.genre.present? %>
+      <p><strong>ジャンル:</strong> <%= current_user.preference.genre %></p>
+    <% end %>
+    
+    <% if current_user.preference.instrument_experience.present? %>
+      <p><strong>楽器経験:</strong> <%= current_user.preference.instrument_experience %></p>
+    <% end %>
+    
+    <% if current_user.preference.favorite_artist.present? %>
+      <p><strong>好きなアーティスト:</strong> <%= current_user.preference.favorite_artist %></p>
+    <% end %>
+    
+    <% if current_user.preference.career.present? %>
+      <p><strong>経歴:</strong> <%= current_user.preference.career %></p>
+    <% end %>
+
+    <% if current_user.preference.selected_items.present? %>
+      <div class="selected-items">
+        <h3>選択した項目:</h3>
+        <% JSON.parse(current_user.preference.selected_items).each do |item| %>
+          <span class="item-tag"><%= item %></span>
+        <% end %>
+      </div>
+    <% end %>
+    
+    <%= link_to "好みを編集", edit_preference_path, class: "btn" %>
+  </div>
+<% else %>
+  <p>好みが設定されていません。</p>
+  <%= link_to "好みを登録", new_preference_path, class: "btn" %>
+<% end %>
+
 <h2>あなたのトーク一覧</h2>
 <% current_user.entries.each do |entry| %>
   <% room = entry.room %>
@@ -26,15 +61,4 @@
   </ul>
 <% else %>
   <p>未読メッセージはありません。</p>
-<% end %>
-
-<h2>あなたの好み</h2>
-<% if current_user.preference.present? %>
-  <ul>
-    <%# もし preference が複数の属性を持つなら、その属性をここで表示 %>
-    <li><%= current_user.preference.genre %></li>
-    <%# 他に表示したい属性があれば追加 %>
-  </ul>
-<% else %>
-  <p>選択された好みはありません。</p>
 <% end %>

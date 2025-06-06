@@ -31,7 +31,13 @@
       <h2><%= link_to post.title, post_path(post) %></h2>
       
       <!-- 投稿者名の表示 -->
-      <p>投稿者: <%= link_to post.user.name, user_path(post.user) %></p>
+      <p>投稿者:
+        <% if post.user %>
+          <%= link_to post.user.name, user_path(post.user) %>
+        <% else %>
+          匿名
+        <% end %>
+      </p>
       
       <p><%= truncate(post.body, length: 100) %></p>
       <small><%= post.created_at.strftime("%Y-%m-%d %H:%M") %></small>

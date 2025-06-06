@@ -2,12 +2,12 @@ require "test_helper"
 
 class RoomsControllerTest < ActionDispatch::IntegrationTest
   test "should get show" do
-    get rooms_show_url
-    assert_response :success
+    get room_url(rooms(:one))
+    assert_response :found
   end
 
-  test "should get create" do
-    get rooms_create_url
-    assert_response :success
+  test "should create room" do
+    post rooms_url, params: { user_id: users(:two).id }
+    assert_response :found
   end
 end

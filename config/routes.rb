@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  get "supporter_profiles/new"
+  get "supporter_profiles/create"
+  get "supporter_profiles/edit"
+  get "supporter_profiles/update"
   # DM機能のルート（新規作成・表示）
   resources :rooms, only: [:create, :show] do
     resources :messages, only: [:create]
@@ -36,4 +40,12 @@ Rails.application.routes.draw do
   if Rails.env.development?
     mount LetterOpenerWeb::Engine, at: "/letter_opener"
   end
+
+  # 管理者用ルーティング
+  namespace :admin do
+    resources :users, only: [:index]
+  end
+
+  resources :supporter_profiles, only: [:new, :create, :edit, :update]
+
 end

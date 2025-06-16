@@ -13,7 +13,18 @@ class Post < ApplicationRecord
   belongs_to :user, optional: true
   # validates :video, presence: true  # この行をコメントアウトして無効にする
 
-  private
+
+
+    # ✅ publicメソッドとして明示的に定義
+    def tag_list
+      tag.to_s.split(',')
+    end
+  
+    def tag_list=(value)
+      self.tag = value.reject(&:blank?).join(',')
+    end
+    
+    private
 
   def validate_video_format
     return unless video.attached?

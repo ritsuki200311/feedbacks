@@ -1,76 +1,118 @@
-<h1>ホーム<h1>
+<div class="w-full mx-auto px-4 py-8 space-y-8">
 
-<!-- ナビゲーションリンク -->
-<nav>
-  <%= link_to "投稿検索", search_posts_path, class: "btn" %>
-  <%= link_to "新規投稿", new_post_path, class: "btn" %>
-  <%= link_to "マイページ", mypage_path, class: "btn" %>
-  <%= link_to "アカウント編集", edit_user_registration_path, class: "btn" %>
-  <%= link_to "アカウント削除", user_registration_path, method: :delete, data: { confirm: "本当にアカウントを削除しますか？" }, class: "btn" %>
-  <%= link_to "パスワード変更", edit_user_password_path, class: "btn" %>
-  <%= link_to "ログイン", new_user_session_path, class: "btn" %>
-  <%= link_to "新規登録", new_user_registration_path, class: "btn" %>
-  <%= button_to "ログアウト", destroy_user_session_path, method: :delete, class: "btn" %>
-  <%= link_to "好みを登録", new_preference_path, class: "btn" %>
-</nav>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>好み選択</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <%# <script src="https://cdn.tailwindcss.com"></script> これを直してみたい%>
+</head>
 
-<hr>
+  <!-- ヘッダー -->
+  <h1 class="text-3xl font-bold justify-start text-gray-800">ホーム</h1>
 
-<% if user_signed_in? %>
-  <p>ようこそ、<%= current_user.name %> さん！</p>
-  <p>メール: <%= current_user.email %></p>
-<% else %>
-  <p>ログインしていません。</p>
-<% end %>
+  <!-- ナビゲーション -->
+  <nav class="flex flex-wrap gap-2 justify-start">
+    <%= link_to "投稿検索", search_posts_path, class: "btn btn-nav" %>
+    <%= link_to "新規投稿", new_post_path, class: "btn btn-nav" %>
+    <%= link_to "マイページ", mypage_path, class: "btn btn-nav" %>
+    <%= link_to "アカウント編集", edit_user_registration_path, class: "btn btn-nav" %>
+    <%= link_to "アカウント削除", user_registration_path, method: :delete, data: { confirm: "本当にアカウントを削除しますか？" }, class: "btn btn-nav" %>
+    <%= link_to "パスワード変更", edit_user_password_path, class: "btn btn-nav" %>
+    <%= link_to "ログイン", new_user_session_path, class: "btn btn-nav" %>
+    <%= link_to "新規登録", new_user_registration_path, class: "btn btn-nav" %>
+    <%= button_to "ログアウト", destroy_user_session_path, method: :delete, class: "btn btn-nav" %>
+    <%= link_to "ログアウト", destroy_user_session_path, method: :delete, data: { confirm: "本当にログアウトしますか？" }, class: "bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded shadow transition duration-200" %>
+    <%= link_to "好みを登録", new_preference_path, class: "btn btn-nav" %>
+    <%= link_to "プロフィール登録", new_supporter_profile_path, class: "btn btn-primary" %>
+  </nav>
 
-<h1>投稿一覧</h1>
+  <!-- ユーザー情報 -->
+  <div class="justify-start text-gray-700">
+    <% if user_signed_in? %>
+      <p><strong><%= current_user.name %></strong> さん</p>
+      <p>保有コイン: <%= current_user.coins %></p>
+      <p>メール: <%= current_user.email %></p>
+    <% else %>
+      <p>ログインしていません。</p>
+    <% end %>
+  </div>
+
+  <hr class="my-4">
+
+  <!-- 投稿一覧 -->
+  <h2 class="text-2xl font-semibold mb-4">投稿一覧</h2>
 
 <% if @posts.any? %>
   <% @posts.each do |post| %>
-    <div class="post">
-      <h2><%= link_to post.title, post_path(post) %></h2>
-      
-      <!-- 投稿者名の表示 -->
-      <p>投稿者: <%= link_to post.user.name, user_path(post.user) %></p>
-      
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6 space-y-4">
+      <h3 class="text-xl font-bold text-indigo-700">
+        <%= link_to post.title, post_path(post) %>
+      </h3>
+
+      <p class="text-gray-500 text-sm">
+        投稿者: <%= link_to post.user.name, user_path(post.user), class: "text-indigo-600 hover:underline" %>
+      </p>
+
       <p><%= truncate(post.body, length: 100) %></p>
-      <small><%= post.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+
+      <% if post.tag.present? %>
+        <div class="flex flex-wrap gap-2">
+          <% post.tag_list.each do |tag| %>
+            <span class="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-medium"><%= tag %></span>
+          <% end %>
+        </div>
+      <% end %>
 
       <% if post.thumbnail.attached? %>
         <div>
-          <%= image_tag post.thumbnail, class: "post-thumbnail" %>
+          <%= image_tag post.thumbnail, class: "w-full max-w-sm mx-auto rounded shadow" %>
         </div>
       <% end %>
 
       <% if post.video.attached? %>
         <div>
-          <video width="400" controls>
+          <video class="w-full max-w-md mx-auto" controls>
             <source src="<%= url_for(post.video) %>" type="<%= post.video.content_type %>">
             お使いのブラウザは video タグをサポートしていません。
           </video>
         </div>
       <% end %>
 
-<p>コメント数: <%= post.comments.count %></p>
+      <p class="text-sm text-gray-500">コメント数: <%= post.comments.count %></p>
 
-
-      <%= form_with model: [post, post.comments.build], url: post_comments_path(post), local: true do |form| %>
-        <div>
-          <%= form.label :body, "コメント" %>
-          <%= form.text_area :body, rows: 3 %>
-        </div>
-        <div>
-          <%= form.submit "コメントする" %>
-        </div>
-      <% end %>
+      <!-- コメントフォーム -->
+      <div class="mt-4">
+        <%= form_with model: [post, post.comments.build], url: post_comments_path(post), local: true do |form| %>
+          <div>
+            <%= form.label :body, "コメント", class: "block text-sm font-medium text-gray-700" %>
+            <%= form.text_area :body, rows: 3, class: "mt-1 w-full border-gray-300 rounded-md shadow-sm" %>
+          </div>
+          <div class="mt-2">
+            <%= form.submit "コメントする", class: "bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded" %>
+          </div>
+        <% end %>
+      </div>
 
       <!-- 投稿削除ボタン -->
-      <div>
-        <%= link_to "削除", post_path(post), method: :delete, data: { confirm: "本当に削除しますか？" }, class: "delete-link" %>
+      <div class="text-right mt-2">
+        <%= link_to "削除", post_path(post), method: :delete, data: { confirm: "本当に削除しますか？" }, class: "text-red-600 hover:underline" %>
       </div>
     </div>
-    <hr>
   <% end %>
+
 <% else %>
-  <p>まだ投稿がありません。</p>
+  <p class="text-gray-500">まだ投稿がありません。</p>
 <% end %>
+
+<!-- ✅ 開発環境限定：ここが一番下 -->
+<% if Rails.env.development? %>
+  <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mt-8">
+    <p class="font-semibold">開発者向け機能</p>
+    <p class="mt-1">
+      <%= link_to "開発用ユーザー情報一覧", admin_users_path, class: "underline hover:text-yellow-900" %>
+    </p>
+  </div>
+<% end %>
+
+</div> <!-- ← 最初の .max-w-5xl の閉じタグ -->

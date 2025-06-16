@@ -1,4 +1,5 @@
 <p>メール: <%= current_user.email %></p>
+<p>保有コイン: <%= current_user.coins %></p>
 <%= link_to "パスワード変更", edit_user_registration_path, class: "btn" %>
 
 <% if user_signed_in? %>

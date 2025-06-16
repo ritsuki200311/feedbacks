@@ -6,15 +6,23 @@ class PostsController < ApplicationController
   end
 
   def create
-    @post = Post.new(post_params)
-    @post.user = current_user  # 投稿者のユーザー情報を設定（任意）
+    @post = Post.new(post_params.except(:tag_list)) # 仮想属性を除く
+    @post.user = current_user
+    @post.tag_list = post_params[:tag_list]         # 手動で代入
+
+    cost = Rails.application.config.x.coin.post_cost
+    if current_user.coins < cost
+      redirect_to new_post_path, alert: "コインが不足しています。" and return
+    end
 
     if @post.save
-      redirect_to @post, notice: "投稿が作成されました！"
+      current_user.decrement!(:coins, cost)  # コインを減らす
+      redirect_to posts_path, notice: '投稿が作成されました。'
     else
-      render :new, alert: "投稿の作成に失敗しました。"
+      render :new
     end
   end
+  
 
   def show
     @comment = @post.comments.build  # コメント投稿フォーム用
@@ -44,8 +52,9 @@ class PostsController < ApplicationController
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :thumbnail, :video)
+    params.require(:post).permit(:title, :body, :thumbnail, :video, tag_list: [])
   end
+  
 
   def set_post
     @post = Post.find(params[:id])

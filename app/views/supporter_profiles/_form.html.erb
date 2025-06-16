@@ -1,0 +1,89 @@
+<%= form_with(model: @supporter_profile, local: true) do |f| %>
+  <% if @supporter_profile.errors.any? %>
+    <div class="bg-red-100 text-red-700 p-4 rounded mb-6">
+      <p class="font-bold">入力エラーがあります：</p>
+      <ul class="list-disc pl-5">
+        <% @supporter_profile.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <!-- 立場 -->
+  <div>
+    <label class="block font-semibold mb-2">1. 現在の立場</label>
+    <% ['学生', '社会人', 'フリーランス', 'アーティスト / クリエイター志望', 'その他'].each do |option| %>
+      <label class="inline-flex items-center mr-4 mb-1">
+        <%= check_box_tag 'supporter_profile[standing][]', option, @supporter_profile.standing.to_a.include?(option), class: "mr-1" %>
+        <%= option %>
+      </label>
+    <% end %>
+  </div>
+
+  <!-- 創作歴 -->
+  <div>
+    <label class="block font-semibold mb-2 mt-4">2. 創作歴</label>
+    <%= f.select :creation_experience, ['自分も創作している', '未経験だが興味がある', '興味なし'], prompt: "選択してください", class: "form-select mt-1 block w-full rounded border-gray-300" %>
+  </div>
+
+  <!-- 趣味ジャンル -->
+  <div>
+    <label class="block font-semibold mb-2 mt-4">3. 趣味・関心ジャンル</label>
+    <% ['音楽', '映像・映画・アニメ', 'イラスト・漫画', 'ゲーム・実況', '小説・エッセイ', 'ファッション・アート', 'その他'].each do |interest| %>
+      <label class="inline-flex items-center mr-4 mb-1">
+        <%= check_box_tag 'supporter_profile[interests][]', interest, @supporter_profile.interests.to_a.include?(interest), class: "mr-1" %>
+        <%= interest %>
+      </label>
+    <% end %>
+  </div>
+
+  <!-- アーティスト -->
+  <div>
+    <label class="block font-semibold mb-2 mt-4">4. 好きなアーティスト・作品</label>
+    <%= f.text_area :favorite_artists, rows: 3, class: "form-textarea mt-1 block w-full rounded border-gray-300", placeholder: "#YOASOBI, #細田守 など" %>
+  </div>
+
+  <!-- 年齢 -->
+  <div>
+    <label class="block font-semibold mb-2 mt-4">5. 年齢層</label>
+    <%= f.select :age_group, ['～15歳', '16～18歳', '19～22歳', '23～29歳', '30代', '40代以上'], prompt: "選択してください", class: "form-select mt-1 block w-full rounded border-gray-300" %>
+  </div>
+
+  <!-- 支援ジャンル -->
+  <div>
+    <label class="block font-semibold mb-2 mt-4">6. 支援したいジャンル</label>
+    <% ['音楽', '映像・動画', 'イラスト・マンガ', '小説・文章', 'ゲーム・実況', 'ファッション・アート', '舞台・パフォーマンス', 'その他'].each do |genre| %>
+      <label class="inline-flex items-center mr-4 mb-1">
+        <%= check_box_tag 'supporter_profile[support_genres][]', genre, @supporter_profile.support_genres.to_a.include?(genre), class: "mr-1" %>
+        <%= genre %>
+      </label>
+    <% end %>
+  </div>
+
+  <!-- 応援スタイル -->
+  <div>
+    <label class="block font-semibold mb-2 mt-4">7. 応援スタイル</label>
+    <% ['金銭的支援をしたい', '感想コメントを書きたい', 'SNSで広めたい', 'コラボ・アドバイスしたい', '見守りたい', 'イベントに参加したい'].each do |style| %>
+      <label class="inline-flex items-center mr-4 mb-1">
+        <%= check_box_tag 'supporter_profile[support_styles][]', style, @supporter_profile.support_styles.to_a.include?(style), class: "mr-1" %>
+        <%= style %>
+      </label>
+    <% end %>
+  </div>
+
+  <!-- 性格傾向 -->
+  <div>
+    <label class="block font-semibold mb-2 mt-4">8. 性格傾向・関わり方の好み</label>
+    <% ['熱く語りたいタイプ', '静かに応援したい', '質問したい・話しかけたい', '遠くからそっと見ていたい'].each do |trait| %>
+      <label class="inline-flex items-center mr-4 mb-1">
+        <%= check_box_tag 'supporter_profile[personality_traits][]', trait, @supporter_profile.personality_traits.to_a.include?(trait), class: "mr-1" %>
+        <%= trait %>
+      </label>
+    <% end %>
+  </div>
+
+  <div class="mt-6 text-center">
+    <%= f.submit "保存する", class: "bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded font-semibold" %>
+  </div>
+<% end %>

@@ -1,0 +1,45 @@
+<%# app/views/admin/users/index.html.erb %>
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold">開発用ユーザー情報一覧</h1>
+    <%= link_to "ホームに戻る", root_path, class: "text-blue-500 hover:text-blue-700" %>
+  </div>
+
+  <% if @show_sensitive_info %>
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-8" role="alert">
+      <strong class="font-bold">警告！</strong>
+      <span class="block sm:inline">この画面は開発環境でのみ表示されています。本番環境では決して使用しないでください。</span>
+    </div>
+  <% end %>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名前</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">メールアドレス</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">暗号化パスワード</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作成日時</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">更新日時</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">アクション</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @users.each do |user| %>
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= user.id %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= user.name %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= user.email %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate"><%= user.encrypted_password %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= user.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= user.updated_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <%= link_to "詳細", user_path(user), class: "text-blue-600 hover:text-blue-900" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div> 

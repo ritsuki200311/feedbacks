@@ -6,145 +6,27 @@
     <title>好み選択</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        html, body {
-            height: 100%; /* Ensure html and body take full height */
-            margin: 0;
-            overflow: hidden; /* Prevent scrollbars on body/html */
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            display: flex;
-            flex-direction: column;
-            background-color: #f0f0f0; /* 背景色 */
-        }
-        #header {
-            background-color: #333;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 1.5em;
-            border-bottom-left-radius: 8px;
-            border-bottom-right-radius: 8px;
-            flex-shrink: 0;
-        }
-        #matter-container-wrapper {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 15px; /* Reduced padding slightly */
-            position: relative;
-            min-height: 0; /* Crucial for flex-grow to work in a fixed height parent */
-            overflow: hidden; /* Prevent its own scrollbars if content overflows temporarily */
-        }
-        #matter-container {
-            width: 100%; /* Take full width of wrapper */
-            max-width: 800px;
-            height: 100%; /* Take full height of wrapper */
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            position: relative;
-            overflow: hidden; /* Matter.js canvas should not overflow this */
-        }
-        canvas {
-            display: block;
-            border-radius: 8px;
-        }
-        #selected-items-bar {
-            background-color: #4A5568; /* Tailwindのgray-700 */
-            color: white;
-            padding: 10px 15px; /* Adjusted padding */
-            text-align: center;
-            max-height: 120px; /* Adjusted max-height */
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-            flex-shrink: 0;
-            overflow-y: auto; /* Enable vertical scroll if content exceeds max-height */
-        }
-        #selected-items-bar h3 {
-            margin: 0 0 8px 0; /* Adjusted margin */
-            font-size: 1.0em; /* Adjusted font size */
-        }
-        .selected-item-tag {
-            display: inline-block;
-            background-color: #63B3ED; /* Tailwindのblue-400 */
-            color: white;
-            padding: 4px 8px; /* Adjusted padding */
-            margin: 3px; /* Adjusted margin */
-            border-radius: 12px; /* Adjusted border-radius */
-            font-size: 0.85em; /* Adjusted font size */
-        }
-        #reset-button-container {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            z-index: 1000;
-        }
-        #reset-button {
-            background-color: #EF4444; /* Tailwindのred-500 */
-            color: white;
-            padding: 7px 14px; /* Adjusted padding */
-            border: none;
-            border-radius: 18px; /* Adjusted border-radius */
-            cursor: pointer;
-            font-size: 0.85em; /* Adjusted font size */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: background-color 0.3s ease;
-        }
-        #reset-button:hover {
-            background-color: #DC2626; /* Tailwindのred-600 */
-        }
-
-        @media (max-width: 640px) {
-            #header {
-                font-size: 1.2em;
-                padding: 10px;
-            }
-            #matter-container-wrapper {
-                padding: 10px;
-            }
-            #selected-items-bar {
-                max-height: 100px; /* Max height for mobile */
-                padding: 8px 10px;
-            }
-            #selected-items-bar h3 {
-                font-size: 0.9em;
-            }
-            .selected-item-tag {
-                padding: 3px 6px;
-                font-size: 0.75em;
-            }
-            #reset-button {
-                padding: 6px 12px;
-                font-size: 0.75em;
-            }
-        }
-    </style>
 </head>
 
-<body>
-
-    <div id="header" class="rounded-b-lg">
+<body class="h-full flex flex-col bg-gray-100">
+    <div id="header" class="bg-gray-800 text-white p-4 text-center text-lg rounded-b-lg">
         あなたの好みを教えてください
     </div>
 
-    <div id="matter-container-wrapper">
-        <div id="matter-container">
-            </div>
-        <div id="reset-button-container">
-            <button id="reset-button">最初から</button>
+    <div id="matter-container-wrapper" class="flex-grow flex justify-center items-center p-4 relative overflow-hidden">
+        <div id="matter-container" class="w-full max-w-3xl h-full bg-white rounded-lg shadow-lg overflow-hidden"></div>
+        <div id="reset-button-container" class="absolute top-2 right-2">
+            <button id="reset-button" class="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition">
+                最初から
+            </button>
         </div>
     </div>
 
-    <div id="selected-items-bar" class="rounded-t-lg">
-        <h3>選択中の好み:</h3>
-        <div id="selected-items-display">
-        </div>
+    <div id="selected-items-bar" class="bg-gray-700 text-white p-3 text-center rounded-t-lg shadow-md max-h-32 overflow-y-auto">
+        <h3 class="text-sm font-medium mb-2">選択中の好み:</h3>
+        <div id="selected-items-display"></div>
     </div>
-    <!-- 選択内容を送信するフォーム -->
+
     <% if @preference.persisted? %>
       <%= form_with model: @preference, url: preference_path(@preference), method: :patch, local: true, data: { turbo: false } do |f| %>
         <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
@@ -166,9 +48,6 @@
         <%= f.submit "好みを送信して次へ", class: "mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
       <% end %>
     <% end %>
-
-
-    
 
     <script>
         // Matter.jsのモジュール
@@ -629,7 +508,7 @@
             const uniqueSelectedItems = [...new Set(selectedItems)];
             uniqueSelectedItems.forEach(item => {
                 const tag = document.createElement('span');
-                tag.className = 'selected-item-tag';
+                tag.className = 'selected-item-tag bg-blue-400 text-white px-2 py-1 m-1 rounded-full text-xs';
                 tag.textContent = item;
                 selectedItemsDisplay.appendChild(tag);
             });

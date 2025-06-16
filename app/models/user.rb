@@ -14,4 +14,6 @@ class User < ApplicationRecord
 
   # 好み（Preference）の関連
   has_one :preference, dependent: :destroy
+
+  has_one :supporter_profile, dependent: :destroy
 end

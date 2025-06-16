@@ -1,3 +1,6 @@
+<!-- ホームに戻るリンク -->
+<%= link_to "← ホームに戻る", root_path, class: "bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200" %>
+
 <h1>新規投稿</h1>
 
 <% if @post.errors.any? %>
@@ -27,12 +30,51 @@
     <%= form.file_field :thumbnail %>
   </div>
 
-<div>
-  <%= form.label :video, "動画ファイル" %><br>
-  <%= form.file_field :video %>
+  <div>
+    <%= form.label :video, "動画ファイル" %><br>
+    <%= form.file_field :video %>
+  </div>
+
+<div class="mt-4">
+  <p class="font-semibold mb-2">タグを選んでください（複数選択可）</p>
+  <div id="tag-options" class="flex flex-wrap gap-2">
+    <% ["批評ください", "優しい意見ください", "どう感じたのか", "厳しい意見お待ちしています"].each_with_index do |tag_option, index| %>
+      <label
+        for="tag_<%= index %>"
+        class="tag-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition"
+      >
+        <%= check_box_tag "post[tag_list][]", tag_option, @post.tag.to_s.include?(tag_option), id: "tag_#{index}", class: "hidden" %>
+        <span><%= tag_option %></span>
+      </label>
+    <% end %>
+  </div>
 </div>
 
-  <div>
-    <%= form.submit "投稿する" %>
+  <div class="mt-4">
+    <%= form.submit "投稿する", class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
   </div>
 <% end %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('#tag-options input[type="checkbox"]').forEach(function (checkbox) {
+      checkbox.addEventListener('change', function () {
+        const label = this.closest('label');
+        if (this.checked) {
+          label.classList.add('bg-blue-400', 'text-white');
+          label.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+        } else {
+          label.classList.remove('bg-blue-400', 'text-white');
+          label.classList.add('bg-gray-200', 'hover:bg-gray-300');
+        }
+      });
+
+      // 初期状態の反映
+      if (checkbox.checked) {
+        const label = checkbox.closest('label');
+        label.classList.add('bg-blue-400', 'text-white');
+        label.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+      }
+    });
+  });
+</script>

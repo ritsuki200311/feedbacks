@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  standing: MyString
+  creation_experience: MyString
+  interests: MyString
+  favorite_artists: MyText
+  age_group: MyString
+  support_genres: MyString
+  support_styles: MyString
+  personality_traits: MyString
+
+two:
+  user: two
+  standing: MyString
+  creation_experience: MyString
+  interests: MyString
+  favorite_artists: MyText
+  age_group: MyString
+  support_genres: MyString
+  support_styles: MyString
+  personality_traits: MyString

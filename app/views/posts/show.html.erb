@@ -25,6 +25,9 @@
   <p>動画はありません</p>
 <% end %>
 
+<!-- app/views/posts/show.html.erb など -->
+<p><strong>タグ:</strong> <%= @post.tag %></p>
+
 <h3>コメント</h3>
 
 <% @post.comments.where(parent_id: nil).each do |comment| %>

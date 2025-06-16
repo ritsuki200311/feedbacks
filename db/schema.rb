@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_15_144806) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_16_133025) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -76,6 +76,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_15_144806) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.text "tag"
   end
 
   create_table "preferences", force: :cascade do |t|
@@ -95,6 +96,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_15_144806) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "supporter_profiles", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "standing"
+    t.string "creation_experience"
+    t.string "interests"
+    t.text "favorite_artists"
+    t.string "age_group"
+    t.string "support_genres"
+    t.string "support_styles"
+    t.string "personality_traits"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_supporter_profiles_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -104,6 +120,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_15_144806) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "name"
+    t.integer "coins", default: 0, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
@@ -117,4 +134,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_15_144806) do
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users"
   add_foreign_key "preferences", "users"
+  add_foreign_key "supporter_profiles", "users"
 end

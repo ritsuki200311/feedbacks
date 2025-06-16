@@ -8,6 +8,12 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+ 
+ /* @import "tailwindcss";
+ @tailwind base;
+ @tailwind components;
+ @tailwind utilities; */
+
  .thumbnail {
     max-width: 200px;
     max-height: 200px;

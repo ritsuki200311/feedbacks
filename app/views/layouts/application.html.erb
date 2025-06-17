@@ -4,20 +4,17 @@
     <title>アプリ名</title>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
-    <!-- ✅ Tailwind含むCSSはこれ1行でOK -->
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-
-    <%= javascript_importmap_tags %> 
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
   </head>
 
-  <body>
+  <body class="bg-gray-100 text-gray-800">
     <% if notice %>
-      <div class="notice"><%= notice %></div>
+      <div class="bg-green-100 text-green-800 p-4 rounded mb-4"><%= notice %></div>
     <% end %>
 
     <% if alert %>
-      <div class="alert"><%= alert %></div>
+      <div class="bg-red-100 text-red-800 p-4 rounded mb-4"><%= alert %></div>
     <% end %>
 
     <%= yield %>

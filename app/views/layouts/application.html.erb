@@ -6,7 +6,8 @@
     <%= csp_meta_tag %>
 
     <!-- ✅ Tailwind + application.css を読み込む -->
-<script src="https://cdn.application.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 
     <!-- ✅ 必要なJSも読み込み -->
     <%= javascript_importmap_tags %>

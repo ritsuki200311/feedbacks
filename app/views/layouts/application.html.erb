@@ -4,7 +4,11 @@
     <title>アプリ名</title>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+
+    <!-- ✅ Tailwind + application.css を読み込む -->
+<%= stylesheet_link_tag "application.tailwind", "data-turbo-track": "reload" %>
+
+    <!-- ✅ 必要なJSも読み込み -->
     <%= javascript_importmap_tags %>
   </head>
 

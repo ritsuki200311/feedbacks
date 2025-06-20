@@ -1,53 +1,44 @@
+<div class="max-w-2xl mx-auto bg-white rounded p-6 shadow mt-6">
+  <h1 class="text-2xl font-bold mb-4">
+    <%= @user == current_user ? "マイページ" : "#{@user.name}さんのプロフィール" %>
+  </h1>
 <p>メール: <%= current_user.email %></p>
 <p>保有コイン: <%= current_user.coins %></p>
 <%= link_to "パスワード変更", edit_user_registration_path, class: "btn" %>
 
 <% if user_signed_in? %>
-<%= render partial: "profile", locals: { user: current_user, posts: @posts } %>
+  <%= render partial: "profile", locals: { user: current_user, posts: @posts } %>
 <% else %>
   <p>ログインしていません。</p>
 <% end %>
 
-<h2>あなたの好み</h2>
-<% if current_user.preference.present? %>
-  <div class="preference-info">
-    <% if current_user.preference.genre.present? %>
-      <p><strong>ジャンル:</strong> <%= current_user.preference.genre %></p>
-    <% end %>
-    
-    <% if current_user.preference.instrument_experience.present? %>
-      <p><strong>楽器経験:</strong> <%= current_user.preference.instrument_experience %></p>
-    <% end %>
-    
-    <% if current_user.preference.favorite_artist.present? %>
-      <p><strong>好きなアーティスト:</strong> <%= current_user.preference.favorite_artist %></p>
-    <% end %>
-    
-    <% if current_user.preference.career.present? %>
-      <p><strong>経歴:</strong> <%= current_user.preference.career %></p>
-    <% end %>
+<% if @supporter_profile %>
+  <h1 class="text-xl font-bold mb-4">プロフィール内容</h1>
+  <p><strong>立場:</strong> <%= @supporter_profile.standing_array&.join(", ") %></p>
+  <p><strong>創作歴:</strong> <%= @supporter_profile.creation_experience %></p>
+  <p><strong>趣味ジャンル:</strong> <%= @supporter_profile.interests_array&.join(", ") %></p>
+  <p><strong>好きな作品:</strong> <%= @supporter_profile.favorite_artists %></p>
+  <p><strong>年齢層:</strong> <%= @supporter_profile.age_group %></p>
+  <p><strong>支援ジャンル:</strong> <%= @supporter_profile.support_genres_array&.join(", ") %></p>
+  <p><strong>応援スタイル:</strong> <%= @supporter_profile.support_styles_array&.join(", ") %></p>
+  <p><strong>性格傾向:</strong> <%= @supporter_profile.personality_traits_array&.join(", ") %></p>
 
-    <% if current_user.preference.selected_items.present? %>
-      <div class="selected-items">
-        <h3>選択した項目:</h3>
-        <% JSON.parse(current_user.preference.selected_items).each do |item| %>
-          <span class="item-tag"><%= item %></span>
-        <% end %>
-      </div>
-    <% end %>
-    
-    <%= link_to "好みを編集", edit_preference_path, class: "btn" %>
+  <div class="mt-4">
+    <%= link_to "プロフィールを編集", edit_supporter_profile_path(@supporter_profile), class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
   </div>
 <% else %>
-  <p>好みが設定されていません。</p>
-  <%= link_to "好みを登録", new_preference_path, class: "btn" %>
+  <p class="text-gray-500">プロフィールが未登録です。</p>
 <% end %>
 
 <h2>あなたのトーク一覧</h2>
-<% current_user.entries.each do |entry| %>
-  <% room = entry.room %>
-  <% other_user = room.entries.where.not(user_id: current_user.id).first.user %>
-  <%= link_to "#{other_user.name}さんとのチャット", room_path(room) %>
+<% if current_user.entries.any? %>
+  <% current_user.entries.each do |entry| %>
+    <% room = entry.room %>
+    <% other_user = room.entries.where.not(user_id: current_user.id).first.user %>
+    <%= link_to "#{other_user.name}さんとのチャット", room_path(room) %>
+  <% end %>
+<% else %>
+  <p>トーク履歴がありません。</p>
 <% end %>
 
 <% if @unread_rooms.any? %>
@@ -63,3 +54,5 @@
 <% else %>
   <p>未読メッセージはありません。</p>
 <% end %>
+
+

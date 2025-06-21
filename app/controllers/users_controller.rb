@@ -12,17 +12,15 @@ class UsersController < ApplicationController
 
   def show
     @user = User.find(params[:id])
-    @posts = @user.posts.order(created_at: :desc) # ユーザーの投稿を新しい順に取得
-
-    # 自分のプロフィールページにアクセスしようとしたらマイページへ
-    if @user == current_user
-      redirect_to mypage_path and return
-    end
+    @posts = @user.posts.order(created_at: :desc)
+    @supporter_profile = @user.supporter_profile
   end
+  
 
   def mypage
     @user = current_user
     @posts = current_user.posts.order(created_at: :desc)
+    @supporter_profile = @user.supporter_profile
   
     # 自分が参加しているルームの中で未読メッセージがあるもの
     @unread_rooms = Room.joins(:messages, :entries)

@@ -7,6 +7,13 @@ Rails.application.routes.draw do
     registrations: 'users/registrations'
   }
 
+  # この順番が大事！
+  get "users/mypage", to: "users#mypage", as: :mypage
+  resources :users, only: [:show]
+  get "users/index"
+
+
+
   # プロフィール（シングルリソースでルーティング）
   resource :supporter_profile, only: [:new, :create, :show, :edit, :update]
 
@@ -18,10 +25,6 @@ Rails.application.routes.draw do
   # 投稿検索
   get "posts/search", to: "posts#search", as: :search_posts
 
-  # ユーザー
-  resources :users, only: [:show]
-  get "users/index"
-  get "users/mypage", to: "users#mypage", as: :mypage
 
   # DM機能
   resources :rooms, only: [:create, :show] do

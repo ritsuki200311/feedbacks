@@ -1,7 +1,12 @@
 <!-- ホームに戻るリンク -->
-<%= link_to "← ホームに戻る", root_path, class: "bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200" %>
+<%= link_to root_path, class: "inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-600 hover:text-gray-700 transition font-semibold px-4 py-2 rounded-lg shadow-md text-lg mb-6 mt-8" do %>
+  <svg class="w-5 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 24">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19l-7-7 7-7" />
+  </svg>
+  ホームに戻る
+<% end %>
 
-<h1>新規投稿</h1>
+<h1 class="text-2xl font-bold mt-6 mb-4">新規投稿</h1>
 
 <% if @post.errors.any? %>
   <div class="error-messages">
@@ -15,24 +20,31 @@
 <% end %>
 
 <%= form_with model: @post, local: true, html: { multipart: true } do |form| %>
-  <div>
-    <%= form.label :title, "タイトル" %><br>
-    <%= form.text_field :title %>
+ <div>
+    <%= form.label :title, "タイトル", class: "block text-gray-700 mb-1" %>
+    <%= form.text_field :title,
+        class: "w-full rounded border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 p-2" %>
   </div>
 
+  <!-- 本文 -->
   <div>
-    <%= form.label :body, "本文" %><br>
-    <%= form.text_area :body %>
+    <%= form.label :body, "本文", class: "block text-gray-700 mb-1" %>
+    <%= form.text_area :body,
+        class: "w-full rounded border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 p-2 h-40" %>
   </div>
 
+  <!-- サムネイル -->
   <div>
-    <%= form.label :thumbnail, "サムネイル画像" %><br>
-    <%= form.file_field :thumbnail %>
+    <%= form.label :thumbnail, "サムネイル画像", class: "block text-gray-700 mb-1" %>
+    <%= form.file_field :thumbnail,
+        class: "block w-full text-gray-600" %>
   </div>
 
+  <!-- 動画ファイル -->
   <div>
-    <%= form.label :video, "動画ファイル" %><br>
-    <%= form.file_field :video %>
+    <%= form.label :video, "動画ファイル", class: "block text-gray-700 mb-1" %>
+    <%= form.file_field :video,
+        class: "block w-full text-gray-600" %>
   </div>
 
 <div class="mt-4">

@@ -77,6 +77,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_16_133025) do
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.text "tag"
+    t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
   create_table "preferences", force: :cascade do |t|
@@ -98,14 +99,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_16_133025) do
 
   create_table "supporter_profiles", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.string "standing"
+    t.text "standing"
     t.string "creation_experience"
-    t.string "interests"
+    t.text "interests"
     t.text "favorite_artists"
     t.string "age_group"
-    t.string "support_genres"
-    t.string "support_styles"
-    t.string "personality_traits"
+    t.text "support_genres"
+    t.text "support_styles"
+    t.text "personality_traits"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_supporter_profiles_on_user_id"
@@ -120,7 +121,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_16_133025) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "name"
-    t.integer "coins", default: 0, null: false
+    t.integer "coins", default: 1, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end

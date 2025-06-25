@@ -55,7 +55,7 @@
         for="tag_<%= index %>"
         class="tag-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition"
       >
-        <%= check_box_tag "post[tag_list][]", tag_option, @post.tag.to_s.include?(tag_option), id: "tag_#{index}", class: "hidden" %>
+        <%= check_box_tag "post[tag_list][]", tag_option, @post.tag.to_s.include?(tag_option), id: "tag_#{index}", class: "sr-only" %>
         <span><%= tag_option %></span>
       </label>
     <% end %>
@@ -71,7 +71,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('#tag-options input[type="checkbox"]').forEach(function (checkbox) {
       checkbox.addEventListener('change', function () {
-        const label = this.closest('label');
+        const label = this.parentElement;
         if (this.checked) {
           label.classList.add('bg-blue-400', 'text-white');
           label.classList.remove('bg-gray-200', 'hover:bg-gray-300');
@@ -83,7 +83,7 @@
 
       // 初期状態の反映
       if (checkbox.checked) {
-        const label = checkbox.closest('label');
+        const label = checkbox.parentElement;
         label.classList.add('bg-blue-400', 'text-white');
         label.classList.remove('bg-gray-200', 'hover:bg-gray-300');
       }

@@ -53,7 +53,7 @@
     <div id="tag-options" class="flex flex-wrap gap-2">
       <% ["批評ください", "優しい意見ください", "どう感じたのか", "厳しい意見お待ちしています"].each_with_index do |tag_option, index| %>
         <label
-          for="tag_<%= index %>"
+          for="tag_<%= index %>">
           class="tag-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition"
         >
           <%= check_box_tag "post[tag_list][]", tag_option, @post.tag.to_s.include?(tag_option), id: "tag_#{index}", class: "hidden" %>

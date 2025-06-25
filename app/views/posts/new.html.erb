@@ -47,20 +47,37 @@
         class: "block w-full text-gray-600" %>
   </div>
 
-<div class="mt-4">
-  <p class="font-semibold mb-2">タグを選んでください（複数選択可）</p>
-  <div id="tag-options" class="flex flex-wrap gap-2">
-    <% ["批評ください", "優しい意見ください", "どう感じたのか", "厳しい意見お待ちしています"].each_with_index do |tag_option, index| %>
-      <label
-        for="tag_<%= index %>"
-        class="tag-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition"
-      >
-        <%= check_box_tag "post[tag_list][]", tag_option, @post.tag.to_s.include?(tag_option), id: "tag_#{index}", class: "hidden" %>
-        <span><%= tag_option %></span>
-      </label>
-    <% end %>
+  <!-- タグを選んでください（複数選択可） -->
+  <div class="mt-4">
+    <p class="font-semibold mb-2">タグを選んでください（複数選択可）</p>
+    <div id="tag-options" class="flex flex-wrap gap-2">
+      <% ["批評ください", "優しい意見ください", "どう感じたのか", "厳しい意見お待ちしています"].each_with_index do |tag_option, index| %>
+        <label
+          for="tag_<%= index %>"
+          class="tag-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition"
+        >
+          <%= check_box_tag "post[tag_list][]", tag_option, @post.tag.to_s.include?(tag_option), id: "tag_#{index}", class: "hidden" %>
+          <span><%= tag_option %></span>
+        </label>
+      <% end %>
+    </div>
   </div>
-</div>
+
+  <!-- 送る人を絞る -->
+  <div class="mt-4">
+    <p class="font-semibold mb-2">送る人を絞る</p>
+    <div class="flex flex-wrap gap-2">
+      <% ["趣味が似ている人", "応援スタイルが合う人", "特定のジャンルのプロフィールを持つ人"].each_with_index do |filter_option, index| %>
+        <label
+          for="filter_<%= index %>"
+          class="filter-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition"
+        >
+          <%= check_box_tag "post[filter_list][]", filter_option, false, id: "filter_#{index}", class: "hidden" %>
+          <span><%= filter_option %></span>
+        </label>
+      <% end %>
+    </div>
+  </div>
 
   <div class="mt-4">
     <%= form.submit "投稿する", class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>

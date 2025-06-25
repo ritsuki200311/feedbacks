@@ -1,0 +1,35 @@
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <!-- ヘッダー -->
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">届いた動画</h1>
+
+  <!-- ナビゲーションに戻るボタン -->
+  <%= link_to "ホームに戻る", root_path, class: "mb-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+
+  <!-- 動画一覧 -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% if @received_videos.any? %>
+      <% @received_videos.each do |video| %>
+        <div class="bg-white rounded-lg shadow p-6">
+          <div class="aspect-w-16 aspect-h-9">
+            <%= image_tag video.thumbnail_url, class: "w-full h-full object-cover rounded-lg" %>
+          </div>
+          <div class="mt-4">
+            <h3 class="text-xl font-semibold text-gray-900">
+              <%= video.title %>
+            </h3>
+            <p class="mt-2 text-gray-600">
+              送信者: <%= video.sender.name %>
+            </p>
+            <div class="mt-4">
+              <%= link_to "動画を再生", video_path(video), class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="text-center py-12">
+        <p class="text-lg text-gray-600">まだ届いた動画はありません。</p>
+      </div>
+    <% end %>
+  </div>
+</div>

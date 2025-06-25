@@ -7,6 +7,9 @@ class User < ApplicationRecord
   has_many :comments, dependent: :destroy
   has_many :posts
 
+  # 受信した動画の関連
+  has_many :received_videos, class_name: 'Post', foreign_key: 'received_user_id'
+
   # DM機能に必要な関連
   has_many :entries
   has_many :rooms, through: :entries

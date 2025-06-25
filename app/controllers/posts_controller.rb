@@ -9,6 +9,7 @@ class PostsController < ApplicationController
     @post = Post.new(post_params.except(:tag_list)) # 仮想属性を除く
     @post.user = current_user
     @post.tag_list = post_params[:tag_list]         # 手動で代入
+    @post.filter_list = post_params[:filter_list]   # フィルター選択を保存
 
     cost = Rails.application.config.x.coin.post_cost
     if current_user.coins < cost
@@ -22,7 +23,6 @@ class PostsController < ApplicationController
       render :new
     end
   end
-  
 
   def show
     @comment = @post.comments.build  # コメント投稿フォーム用
@@ -45,16 +45,15 @@ class PostsController < ApplicationController
     redirect_to root_path, notice: "投稿が削除されました。"
   end
 
-  def index
-    @posts = Post.all.includes(:comments)  # コメントを含めて全投稿を取得
-  end
-
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :thumbnail, :video, tag_list: [])
+    params.require(:post).permit(
+      :title, :body, :thumbnail, :video,
+      tag_list: [],
+      filter_list: []
+    )
   end
-  
 
   def set_post
     @post = Post.find(params[:id])

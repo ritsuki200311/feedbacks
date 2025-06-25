@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  get "received_videos/index"
   # ホーム
   root "home#index"
 
@@ -12,8 +13,6 @@ Rails.application.routes.draw do
   resources :users, only: [:show]
   get "users/index"
 
-
-
   # プロフィール（シングルリソースでルーティング）
   resource :supporter_profile, only: [:new, :create, :show, :edit, :update]
 
@@ -24,7 +23,6 @@ Rails.application.routes.draw do
 
   # 投稿検索
   get "posts/search", to: "posts#search", as: :search_posts
-
 
   # DM機能
   resources :rooms, only: [:create, :show] do

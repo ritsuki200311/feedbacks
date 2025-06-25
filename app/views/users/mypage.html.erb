@@ -18,7 +18,8 @@
   </h1>
 <p>メール: <%= current_user.email %></p>
 <p>保有コイン: <%= current_user.coins %></p>
-<%= link_to "パスワード変更", edit_user_registration_path, class: "btn" %>
+<p>ランク: <%= current_user.rank %></p>
+
 
 <% if user_signed_in? %>
   <%= render partial: "profile", locals: { user: current_user, posts: @posts } %>

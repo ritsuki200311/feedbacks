@@ -19,4 +19,18 @@ class User < ApplicationRecord
   has_one :preference, dependent: :destroy
 
   has_one :supporter_profile, dependent: :destroy
+
+  # ランク判定メソッド
+  def rank
+    point = rank_point || 0
+    return "C" if point < 0
+    case
+    when rank_point >= 40
+      "A"
+    when rank_point >= 11
+      "B"
+    else
+      "C"
+    end
+  end
 end

@@ -43,6 +43,7 @@
     <% if user_signed_in? %>
       <p><strong><%= current_user.name %></strong> さん</p>
       <p>保有コイン: <%= current_user.coins %></p>
+      <p>ランク: <%= current_user.rank %></p>
       <p>メール: <%= current_user.email %></p>
     <% else %>
       <p>ログインしていません。</p>

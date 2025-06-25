@@ -47,21 +47,18 @@
         class: "block w-full text-gray-600" %>
   </div>
 
-  <!-- タグを選んでください（複数選択可） -->
-  <div class="mt-4">
-    <p class="font-semibold mb-2">タグを選んでください（複数選択可）</p>
-    <div id="tag-options" class="flex flex-wrap gap-2">
-      <% ["批評ください", "優しい意見ください", "どう感じたのか", "厳しい意見お待ちしています"].each_with_index do |tag_option, index| %>
-        <label
-          for="tag_<%= index %>">
-          class="tag-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition"
-        >
-          <%= check_box_tag "post[tag_list][]", tag_option, @post.tag.to_s.include?(tag_option), id: "tag_#{index}", class: "hidden" %>
-          <span><%= tag_option %></span>
-        </label>
-      <% end %>
-    </div>
-  </div>
+ <div class="mt-4">
+  <p class="font-semibold mb-2">タグを選んでください（複数選択可）</p>
+  <div id="tag-options" class="flex flex-wrap gap-2">
+    <% ["批評ください", "優しい意見ください", "どう感じたのか", "厳しい意見お待ちしています"].each_with_index do |tag_option, index| %>
+      <label
+        for="tag_<%= index %>"
+        class="tag-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition"
+      >
+        <%= check_box_tag "post[tag_list][]", tag_option, @post.tag.to_s.include?(tag_option), id: "tag_#{index}", class: "sr-only" %>
+        <span><%= tag_option %></span>
+      </label>
+    <% end %>
 
   <!-- 送る人を絞る -->
   <div class="mt-4">
@@ -77,6 +74,7 @@
         </label>
       <% end %>
     </div>
+
   </div>
 
   <div class="mt-4">
@@ -88,7 +86,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('#tag-options input[type="checkbox"]').forEach(function (checkbox) {
       checkbox.addEventListener('change', function () {
-        const label = this.closest('label');
+        const label = this.parentElement;
         if (this.checked) {
           label.classList.add('bg-blue-400', 'text-white');
           label.classList.remove('bg-gray-200', 'hover:bg-gray-300');
@@ -100,7 +98,7 @@
 
       // 初期状態の反映
       if (checkbox.checked) {
-        const label = checkbox.closest('label');
+        const label = checkbox.parentElement;
         label.classList.add('bg-blue-400', 'text-white');
         label.classList.remove('bg-gray-200', 'hover:bg-gray-300');
       }

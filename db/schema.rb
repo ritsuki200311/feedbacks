@@ -10,9 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-
-ActiveRecord::Schema[8.0].define(version: 2025_06_25_055907) do
-
+ActiveRecord::Schema[8.0].define(version: 2025_06_27_042550) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -80,6 +78,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_25_055907) do
     t.integer "user_id"
     t.text "tag"
     t.integer "received_user_id"
+    t.text "recipient_standing"
+    t.text "recipient_support_styles"
     t.index ["received_user_id"], name: "index_posts_on_received_user_id"
   end
 
@@ -93,6 +93,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_25_055907) do
     t.string "favorite_artist"
     t.string "career"
     t.index ["user_id"], name: "index_preferences_on_user_id"
+  end
+
+  create_table "received_videos", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "sender_id", null: false
+    t.integer "post_id", null: false
+    t.string "title"
+    t.string "thumbnail_url"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["post_id"], name: "index_received_videos_on_post_id"
+    t.index ["sender_id"], name: "index_received_videos_on_sender_id"
+    t.index ["user_id"], name: "index_received_videos_on_user_id"
   end
 
   create_table "rooms", force: :cascade do |t|
@@ -124,10 +137,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_25_055907) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "name"
-
-    t.integer "coins", default: 1, null: false
-    t.integer "rank_point"
-
+    t.integer "coins", default: 0, null: false
+    t.integer "rank_point", default: 0, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
@@ -141,5 +152,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_25_055907) do
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users"
   add_foreign_key "preferences", "users"
+  add_foreign_key "received_videos", "posts"
+  add_foreign_key "received_videos", "users"
+  add_foreign_key "received_videos", "users", column: "sender_id"
   add_foreign_key "supporter_profiles", "users"
 end

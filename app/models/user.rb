@@ -20,6 +20,11 @@ class User < ApplicationRecord
 
   has_one :supporter_profile, dependent: :destroy
 
+  
+  has_many :received_videos
+  has_many :sent_videos, class_name: 'ReceivedVideo', foreign_key: :sender_id
+
+
   # ランク判定メソッド
   def rank
     point = rank_point || 0

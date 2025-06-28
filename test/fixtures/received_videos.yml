@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  sender: one
+  post: one
+  title: MyString
+  thumbnail_url: MyString
+
+two:
+  user: two
+  sender: two
+  post: two
+  title: MyString
+  thumbnail_url: MyString

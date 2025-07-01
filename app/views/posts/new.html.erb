@@ -35,7 +35,6 @@
     <p class="font-semibold mb-2">タグを選んでください（複数選択可）</p>
     <div id="tag-options" class="flex flex-wrap gap-2">
       <% ["批評ください", "優しい意見ください", "どう感じたのか", "厳しい意見お待ちしています"].each_with_index do |tag_option, index| %>
-
         <label for="tag_<%= index %>" class="tag-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
           <%= check_box_tag "post[tag_list][]", tag_option, @post.tag.to_s.include?(tag_option), id: "tag_#{index}", class: "hidden" %>
           <span><%= tag_option %></span>
@@ -44,21 +43,104 @@
     </div>
   </div>
 
-  <!-- 送る人を絞る -->
-  <div class="mt-4">
-    <p class="font-semibold mb-2">送る人を絞る</p>
-    <div class="flex flex-wrap gap-2">
-      <% ["趣味が似ている人", "応援スタイルが合う人", "特定のジャンルのプロフィールを持つ人"].each_with_index do |filter_option, index| %>
-        <label
-          for="filter_<%= index %>">
-          class="filter-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition"
-        >
-          <%= check_box_tag "post[filter_list][]", filter_option, false, id: "filter_#{index}", class: "hidden" %>
-          <span><%= filter_option %></span>
-        </label>
-      <% end %>
-    </div>
+<!-- 1. 送りたい人の立場 -->
+<div class="mt-4">
+  <p class="font-semibold mb-2">送りたい人の立場</p>
+  <div class="flex flex-wrap gap-2">
+    <% ['学生', '社会人', 'フリーランス', 'アーティスト / クリエイター志望', 'その他'].each_with_index do |option, index| %>
+      <label for="recipient_standing_<%= index %>"
+             class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
+        <%= check_box_tag "post[recipient_standing][]", option, false, id: "recipient_standing_#{index}", class: "hidden" %>
+        <span><%= option %></span>
+      </label>
+    <% end %>
   </div>
+</div>
+
+<!-- 2. 創作歴 -->
+<div class="mt-4">
+  <p class="font-semibold mb-2">送りたい人の創作歴</p>
+  <div class="flex flex-wrap gap-2">
+    <% ['自分も創作している', '未経験だが興味がある', '興味なし'].each_with_index do |option, index| %>
+      <label for="recipient_creation_experience_<%= index %>"
+             class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
+        <%= check_box_tag "post[recipient_creation_experience][]", option, false, id: "recipient_creation_experience_#{index}", class: "hidden" %>
+        <span><%= option %></span>
+      </label>
+    <% end %>
+  </div>
+</div>
+
+<!-- 3. 趣味・関心ジャンル -->
+<div class="mt-4">
+  <p class="font-semibold mb-2">送りたい人の趣味・関心ジャンル</p>
+  <div class="flex flex-wrap gap-2">
+    <% ['音楽', '映像・映画・アニメ', 'イラスト・漫画', 'ゲーム・実況', '小説・エッセイ', 'ファッション・アート', 'その他'].each_with_index do |option, index| %>
+      <label for="recipient_interests_<%= index %>"
+             class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
+        <%= check_box_tag "post[recipient_interests][]", option, false, id: "recipient_interests_#{index}", class: "hidden" %>
+        <span><%= option %></span>
+      </label>
+    <% end %>
+  </div>
+</div>
+
+<!-- 4. 年齢層 -->
+<div class="mt-4">
+  <p class="font-semibold mb-2">送りたい人の年齢層</p>
+  <div class="flex flex-wrap gap-2">
+    <% ['～15歳', '16～18歳', '19～22歳', '23～29歳', '30代', '40代以上'].each_with_index do |option, index| %>
+      <label for="recipient_age_group_<%= index %>"
+             class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
+        <%= check_box_tag "post[recipient_age_group][]", option, false, id: "recipient_age_group_#{index}", class: "hidden" %>
+        <span><%= option %></span>
+      </label>
+    <% end %>
+  </div>
+</div>
+
+<!-- 5. 支援したいジャンル -->
+<div class="mt-4">
+  <p class="font-semibold mb-2">送りたい人が支援したいジャンル</p>
+  <div class="flex flex-wrap gap-2">
+    <% ['音楽', '映像・動画', 'イラスト・マンガ', '小説・文章', 'ゲーム・実況', 'ファッション・アート', '舞台・パフォーマンス', 'その他'].each_with_index do |option, index| %>
+      <label for="recipient_support_genres_<%= index %>"
+             class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
+        <%= check_box_tag "post[recipient_support_genres][]", option, false, id: "recipient_support_genres_#{index}", class: "hidden" %>
+        <span><%= option %></span>
+      </label>
+    <% end %>
+  </div>
+</div>
+
+<!-- 6. 応援スタイル -->
+<div class="mt-4">
+  <p class="font-semibold mb-2">送りたい人の応援スタイル</p>
+  <div class="flex flex-wrap gap-2">
+    <% ['金銭的支援をしたい', '感想コメントを書きたい', 'SNSで広めたい', 'コラボ・アドバイスしたい', '見守りたい', 'イベントに参加したい'].each_with_index do |option, index| %>
+      <label for="recipient_support_styles_<%= index %>"
+             class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
+        <%= check_box_tag "post[recipient_support_styles][]", option, false, id: "recipient_support_styles_#{index}", class: "hidden" %>
+        <span><%= option %></span>
+      </label>
+    <% end %>
+  </div>
+</div>
+
+<!-- 7. 性格傾向 -->
+<div class="mt-4">
+  <p class="font-semibold mb-2">送りたい人の性格傾向</p>
+  <div class="flex flex-wrap gap-2">
+    <% ['熱く語りたいタイプ', '静かに応援したい', '質問したい・話しかけたい', '遠くからそっと見ていたい'].each_with_index do |option, index| %>
+      <label for="recipient_personality_traits_<%= index %>"
+             class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
+        <%= check_box_tag "post[recipient_personality_traits][]", option, false, id: "recipient_personality_traits_#{index}", class: "hidden" %>
+        <span><%= option %></span>
+      </label>
+    <% end %>
+  </div>
+</div>
+
 
   <!-- 以下、支援者プロフィールセクション（立場〜性格傾向） -->
   <!-- ここは今のままでOKです、class構成は統一されています -->

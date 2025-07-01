@@ -16,4 +16,14 @@ class User < ApplicationRecord
   has_one :preference, dependent: :destroy
 
   has_one :supporter_profile, dependent: :destroy
+
+  def rank
+    if rank_points >= 40
+      "A"
+    elsif rank_points < 10
+      "C"
+    else
+      "B"
+    end
+  end
 end

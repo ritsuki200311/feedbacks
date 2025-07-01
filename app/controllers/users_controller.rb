@@ -12,6 +12,10 @@ class UsersController < ApplicationController
 
   def show
     @user = User.find(params[:id])
+    if user_signed_in? && @user == current_user
+      redirect_to mypage_path
+      return
+    end
     @posts = @user.posts.order(created_at: :desc)
     @supporter_profile = @user.supporter_profile
   end

@@ -1,4 +1,8 @@
 class Post < ApplicationRecord
+  attr_accessor :recipient_standing, :recipient_creation_experience, :recipient_interests, 
+                :recipient_age_group, :recipient_support_genres, :recipient_support_styles, 
+                :recipient_personality_traits
+
   # 動画ファイルのバリデーションを一時的に無効化
   has_one_attached :video
   has_one_attached :thumbnail

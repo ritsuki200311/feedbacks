@@ -34,144 +34,91 @@
     <%= form.text_area :body, class: "w-full rounded border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 p-2 h-40" %>
   </div>
 
-  <!-- タグを選んでください（複数選択可） -->
-  <div class="mt-4">
-    <p class="font-semibold mb-2">タグを選んでください（複数選択可）</p>
-    <div id="tag-options" class="flex flex-wrap gap-2">
-      <% ["批評ください", "優しい意見ください", "どう感じたのか", "厳しい意見お待ちしています"].each_with_index do |tag_option, index| %>
-        <label for="tag_<%= index %>" class="tag-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
-          <%= check_box_tag "post[tag_list][]", tag_option, @post.tag.to_s.include?(tag_option), id: "tag_#{index}", class: "hidden" %>
-          <span><%= tag_option %></span>
-        </label>
-      <% end %>
-    </div>
-  </div>
+  <!-- タグ -->
+  <%= render 'checkbox_options',
+             title: "タグを選んでください（複数選択可）",
+             field_name: "post[tag_list][]",
+             options: tag_options,
+             selected: @post.tag_list %>
 
-  <!-- 1. 送りたい人の立場 -->
-  <div class="mt-4">
-    <p class="font-semibold mb-2">送りたい人の立場</p>
-    <div class="flex flex-wrap gap-2">
-      <% ['学生', '社会人', 'フリーランス', 'アーティスト / クリエイター志望', 'その他'].each_with_index do |option, index| %>
-        <label for="recipient_standing_<%= index %>"
-               class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
-          <%= check_box_tag "post[recipient_standing][]", option, false, id: "recipient_standing_#{index}", class: "hidden" %>
-          <span><%= option %></span>
-        </label>
-      <% end %>
-    </div>
-  </div>
+  <!-- 送りたい人の情報 -->
+  <%= render 'checkbox_options',
+             title: "1. 送りたい人の立場",
+             field_name: "post[recipient_standing][]",
+             options: recipient_standing_options,
+             selected: @post.recipient_standing %>
 
-  <!-- 2. 創作歴 -->
-  <div class="mt-4">
-    <p class="font-semibold mb-2">送りたい人の創作歴</p>
-    <div class="flex flex-wrap gap-2">
-      <% ['自分も創作している', '未経験だが興味がある', '興味なし'].each_with_index do |option, index| %>
-        <label for="recipient_creation_experience_<%= index %>"
-               class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
-          <%= check_box_tag "post[recipient_creation_experience][]", option, false, id: "recipient_creation_experience_#{index}", class: "hidden" %>
-          <span><%= option %></span>
-        </label>
-      <% end %>
-    </div>
-  </div>
+  <%= render 'checkbox_options',
+             title: "2. 創作歴",
+             field_name: "post[recipient_creation_experience][]",
+             options: recipient_creation_experience_options,
+             selected: @post.recipient_creation_experience %>
 
-  <!-- 3. 趣味・関心ジャンル -->
-  <div class="mt-4">
-    <p class="font-semibold mb-2">送りたい人の趣味・関心ジャンル</p>
-    <div class="flex flex-wrap gap-2">
-      <% ['音楽', '映像・映画・アニメ', 'イラスト・漫画', 'ゲーム・実況', '小説・エッセイ', 'ファッション・アート', 'その他'].each_with_index do |option, index| %>
-        <label for="recipient_interests_<%= index %>"
-               class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
-          <%= check_box_tag "post[recipient_interests][]", option, false, id: "recipient_interests_#{index}", class: "hidden" %>
-          <span><%= option %></span>
-        </label>
-      <% end %>
-    </div>
-  </div>
+  <%= render 'checkbox_options',
+             title: "3. 趣味・関心ジャンル",
+             field_name: "post[recipient_interests][]",
+             options: recipient_interests_options,
+             selected: @post.recipient_interests %>
 
-  <!-- 4. 年齢層 -->
-  <div class="mt-4">
-    <p class="font-semibold mb-2">送りたい人の年齢層</p>
-    <div class="flex flex-wrap gap-2">
-      <% ['～15歳', '16～18歳', '19～22歳', '23～29歳', '30代', '40代以上'].each_with_index do |option, index| %>
-        <label for="recipient_age_group_<%= index %>"
-               class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
-          <%= check_box_tag "post[recipient_age_group][]", option, false, id: "recipient_age_group_#{index}", class: "hidden" %>
-          <span><%= option %></span>
-        </label>
-      <% end %>
-    </div>
-  </div>
+  <%= render 'checkbox_options',
+             title: "4. 年齢層",
+             field_name: "post[recipient_age_group][]",
+             options: recipient_age_group_options,
+             selected: @post.recipient_age_group %>
 
-  <!-- 5. 支援したいジャンル -->
-  <div class="mt-4">
-    <p class="font-semibold mb-2">送りたい人が支援したいジャンル</p>
-    <div class="flex flex-wrap gap-2">
-      <% ['音楽', '映像・動画', 'イラスト・マンガ', '小説・文章', 'ゲーム・実況', 'ファッション・アート', '舞台・パフォーマンス', 'その他'].each_with_index do |option, index| %>
-        <label for="recipient_support_genres_<%= index %>"
-               class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
-          <%= check_box_tag "post[recipient_support_genres][]", option, false, id: "recipient_support_genres_#{index}", class: "hidden" %>
-          <span><%= option %></span>
-        </label>
-      <% end %>
-    </div>
-  </div>
+  <%= render 'checkbox_options',
+             title: "5. 支援したいジャンル",
+             field_name: "post[recipient_support_genres][]",
+             options: recipient_support_genres_options,
+             selected: @post.recipient_support_genres %>
 
-  <!-- 6. 応援スタイル -->
-  <div class="mt-4">
-    <p class="font-semibold mb-2">送りたい人の応援スタイル</p>
-    <div class="flex flex-wrap gap-2">
-      <% ['金銭的支援をしたい', '感想コメントを書きたい', 'SNSで広めたい', 'コラボ・アドバイスしたい', '見守りたい', 'イベントに参加したい'].each_with_index do |option, index| %>
-        <label for="recipient_support_styles_<%= index %>"
-               class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
-          <%= check_box_tag "post[recipient_support_styles][]", option, false, id: "recipient_support_styles_#{index}", class: "hidden" %>
-          <span><%= option %></span>
-        </label>
-      <% end %>
-    </div>
-  </div>
+  <%= render 'checkbox_options',
+             title: "6. 応援スタイル",
+             field_name: "post[recipient_support_styles][]",
+             options: recipient_support_styles_options,
+             selected: @post.recipient_support_styles %>
 
-  <!-- 7. 性格傾向 -->
-  <div class="mt-4">
-    <p class="font-semibold mb-2">送りたい人の性格傾向</p>
-    <div class="flex flex-wrap gap-2">
-      <% ['熱く語りたいタイプ', '静かに応援したい', '質問したい・話しかけたい', '遠くからそっと見ていたい'].each_with_index do |option, index| %>
-        <label for="recipient_personality_traits_<%= index %>"
-               class="inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
-          <%= check_box_tag "post[recipient_personality_traits][]", option, false, id: "recipient_personality_traits_#{index}", class: "hidden" %>
-          <span><%= option %></span>
-        </label>
-      <% end %>
-    </div>
-  </div>
+  <%= render 'checkbox_options',
+             title: "7. 性格傾向",
+             field_name: "post[recipient_personality_traits][]",
+             options: recipient_personality_traits_options,
+             selected: @post.recipient_personality_traits %>
+
 
   <!-- 送信ボタン -->
   <div class="mt-6">
-    <%= form.submit "投稿する", class: "btn-primary" %>
+    <%= form.submit "投稿する", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
   </div>
 
 <% end %>
 
 <!-- チェックボックス選択時のスタイル調整 -->
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('#tag-options input[type="checkbox"]').forEach(function (checkbox) {
-      checkbox.addEventListener('change', function () {
-        const label = this.closest('label');
-        if (this.checked) {
-          label.classList.add('bg-blue-400', 'text-white');
-          label.classList.remove('bg-gray-200', 'hover:bg-gray-300');
-        } else {
-          label.classList.remove('bg-blue-400', 'text-white');
-          label.classList.add('bg-gray-200', 'hover:bg-gray-300');
-        }
-      });
+  document.addEventListener('turbo:load', function () {
+    const containers = document.querySelectorAll('.checkbox-options-container');
 
+    function updateLabelStyle(checkbox) {
+      const label = checkbox.closest('label');
       if (checkbox.checked) {
-        const label = checkbox.closest('label');
         label.classList.add('bg-blue-400', 'text-white');
         label.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+      } else {
+        label.classList.remove('bg-blue-400', 'text-white');
+        label.classList.add('bg-gray-200', 'hover:bg-gray-300');
       }
+    }
+
+    containers.forEach(function (container) {
+      const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(function (checkbox) {
+        // 初期状態のスタイル設定
+        updateLabelStyle(checkbox);
+
+        // 変更イベントにリスナーを追加
+        checkbox.addEventListener('change', function () {
+          updateLabelStyle(this);
+        });
+      });
     });
   });
 </script>

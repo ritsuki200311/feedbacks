@@ -1,72 +1,90 @@
-<%= link_to root_path, class: "inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-600 hover:text-gray-700 transition font-semibold px-4 py-2 rounded-lg shadow text-lg mb-6 mt-8" do %>
-  <svg class="inline-block w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 24">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19l-7-7 7-7" />
-  </svg>
-  ホームに戻る
-<% end %>
-
-<%= link_to edit_user_password_path, class: "inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-600 hover:text-gray-700 transition font-semibold px-4 py-2 rounded-lg shadow text-lg mb-6 mt-8" do %>
-  <svg class="inline-block w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M12 17a2 2 0 002-2 2 2 0 00-4 0 2 2 0 002 2zm6-6V9a6 6 0 00-12 0v2H5v10h14V11h-1z" />
-  </svg>
-  パスワード変更
-<% end %>
-
-<div class="max-w-2xl mx-auto bg-white rounded p-6 shadow mt-6">
-  <h1 class="text-2xl font-bold mb-4">
-    <%= @user == current_user ? "マイページ" : "#{@user.name}さんのプロフィール" %>
-  </h1>
-<p>メール: <%= current_user.email %></p>
-<p>保有コイン: <%= current_user.coins %></p>
-<%= link_to "パスワード変更", edit_user_registration_path, class: "btn" %>
-
-<% if user_signed_in? %>
-  <%= render partial: "profile", locals: { user: current_user, posts: @posts } %>
-<% else %>
-  <p>ログインしていません。</p>
-<% end %>
-
-<% if @supporter_profile %>
-  <h1 class="text-xl font-bold mb-4">プロフィール内容</h1>
-  <p><strong>立場:</strong> <%= @supporter_profile.standing_array&.join(", ") %></p>
-  <p><strong>創作歴:</strong> <%= @supporter_profile.creation_experience %></p>
-  <p><strong>趣味ジャンル:</strong> <%= @supporter_profile.interests_array&.join(", ") %></p>
-  <p><strong>好きな作品:</strong> <%= @supporter_profile.favorite_artists %></p>
-  <p><strong>年齢層:</strong> <%= @supporter_profile.age_group %></p>
-  <p><strong>支援ジャンル:</strong> <%= @supporter_profile.support_genres_array&.join(", ") %></p>
-  <p><strong>応援スタイル:</strong> <%= @supporter_profile.support_styles_array&.join(", ") %></p>
-  <p><strong>性格傾向:</strong> <%= @supporter_profile.personality_traits_array&.join(", ") %></p>
-
-  <div class="mt-4">
-    <%= link_to "プロフィールを編集", edit_supporter_profile_path(@supporter_profile), class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-  </div>
-<% else %>
-  <p class="text-gray-500">プロフィールが未登録です。</p>
-<% end %>
-
-<h2>あなたのトーク一覧</h2>
-<% if current_user.entries.any? %>
-  <% current_user.entries.each do |entry| %>
-    <% room = entry.room %>
-    <% other_user = room.entries.where.not(user_id: current_user.id).first.user %>
-    <%= link_to "#{other_user.name}さんとのチャット", room_path(room) %>
-  <% end %>
-<% else %>
-  <p>トーク履歴がありません。</p>
-<% end %>
-
-<% if @unread_rooms.any? %>
-  <h3>未読メッセージのあるチャットルーム</h3>
-  <ul>
-    <% @unread_rooms.each do |room| %>
-      <li>
-        <%= link_to "ルーム #{room.id}", room_path(room) %>
-        （未読 <%= @unread_counts[room.id] || 0 %> 件）
-      </li>
+<div class="container mx-auto px-4 mt-6">
+  <div class="flex justify-between items-center mb-4">
+    <%= link_to root_path, class: "inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-600 hover:text-gray-700 transition font-semibold px-4 py-2 rounded-lg shadow text-lg" do %>
+      <svg class="inline-block w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19l-7-7 7-7" />
+      </svg>
+      ホームに戻る
     <% end %>
-  </ul>
-<% else %>
-  <p>未読メッセージはありません。</p>
-<% end %>
 
+    <%= link_to edit_user_password_path, class: "inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-600 hover:text-gray-700 transition font-semibold px-4 py-2 rounded-lg shadow text-lg" do %>
+      <svg class="inline-block w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 17a2 2 0 002-2 2 2 0 00-4 0 2 2 0 002 2zm6-6V9a6 6 0 00-12 0v2H5v10h14V11h-1z" />
+      </svg>
+      パスワード変更
+    <% end %>
+  </div>
 
+  <div class="bg-white rounded p-6 shadow mb-6">
+    <h1 class="text-2xl font-bold mb-4">マイページ</h1>
+    <p>メール: <%= current_user.email %></p>
+    <p>保有コイン: <%= current_user.coins %></p>
+    <p>ランク: <%= current_user.rank %></p>
+    <p>ランクポイント: <%= current_user.rank_points %></p>
+
+    <% if user_signed_in? %>
+      <%= render partial: "profile", locals: { user: current_user, posts: @posts } %>
+    <% else %>
+      <p>ログインしていません。</p>
+    <% end %>
+
+    <% if @supporter_profile %>
+      <h2 class="text-xl font-bold mt-6 mb-4">プロフィール内容</h2>
+      <p><strong>立場:</strong> <%= @supporter_profile.standing_array&.join(", ") %></p>
+      <p><strong>創作歴:</strong> <%= @supporter_profile.creation_experience %></p>
+      <p><strong>趣味ジャンル:</strong> <%= @supporter_profile.interests_array&.join(", ") %></p>
+      <p><strong>好きな作品:</strong> <%= @supporter_profile.favorite_artists %></p>
+      <p><strong>年齢層:</strong> <%= @supporter_profile.age_group %></p>
+      <p><strong>支援ジャンル:</strong> <%= @supporter_profile.support_genres_array&.join(", ") %></p>
+      <p><strong>応援スタイル:</strong> <%= @supporter_profile.support_styles_array&.join(", ") %></p>
+      <p><strong>性格傾向:</strong> <%= @supporter_profile.personality_traits_array&.join(", ") %></p>
+
+      <div class="mt-4">
+        <%= link_to "プロフィールを編集", edit_supporter_profile_path(@supporter_profile), class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
+      </div>
+    <% else %>
+      <p class="text-gray-500">プロフィールが未登録です。</p>
+      <%= link_to "プロフィールを登録", new_supporter_profile_path, class: "bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mt-2 inline-block" %>
+    <% end %>
+
+    <h2 class="text-xl font-bold mt-6 mb-4">あなたのトーク一覧</h2>
+    <% if current_user.entries.any? %>
+      <div class="grid grid-cols-1 gap-2">
+        <% current_user.entries.each do |entry| %>
+          <% room = entry.room %>
+          <% other_user = room.entries.where.not(user_id: current_user.id).first.user %>
+          <div class="bg-gray-100 p-3 rounded shadow-sm">
+            <%= link_to "#{other_user.name}さんとのチャット", room_path(room), class: "text-blue-600 hover:underline" %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p>トーク履歴がありません。</p>
+    <% end %>
+
+    <% if @unread_rooms.any? %>
+      <h3 class="text-xl font-bold mt-6 mb-4">未読メッセージのあるチャットルーム</h3>
+      <ul class="list-disc list-inside ml-4">
+        <% @unread_rooms.each do |room| %>
+          <li>
+            <%= link_to "ルーム #{room.id}", room_path(room), class: "text-blue-600 hover:underline" %>
+            （未読 <%= @unread_counts[room.id] || 0 %> 件）
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p>未読メッセージはありません。</p>
+    <% end %>
+  </div>
+
+  <h2 class="text-2xl font-bold mt-8 mb-4">あなたの投稿一覧</h2>
+  <% if @posts.any? %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <% @posts.each do |post| %>
+        <%= render "posts/post_card", post: post %>
+      <% end %>
+    </div>
+  <% else %>
+    <p>まだ投稿がありません。</p>
+  <% end %>
+</div>

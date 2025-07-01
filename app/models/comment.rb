@@ -9,4 +9,16 @@ class Comment < ApplicationRecord
          class_name: 'Comment', 
          foreign_key: :parent_id, 
          dependent: :destroy
+
+  after_create :update_rank_points
+
+  private
+
+  def update_rank_points
+    # コメントしたユーザーにポイントを加算
+    user.increment!(:rank_points, 12) if user
+
+    # コメントされた投稿の所有ユーザーにポイントを加算
+    post.user.increment!(:rank_points, 12) if post.user
+  end
 end

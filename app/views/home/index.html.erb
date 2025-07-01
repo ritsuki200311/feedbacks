@@ -40,8 +40,9 @@
   <!-- ユーザー情報 -->
   <div class="text-gray-700">
     <% if user_signed_in? %>
-      <p><strong><%= current_user.name %></strong> さん</p>
+      <p><strong><%= link_to current_user.name, mypage_path, class: "text-blue-600 hover:underline" %></strong> さん</p>
       <p>保有コイン: <%= current_user.coins %></p>
+<p>ランク: <%= current_user.rank %></p>
       <p>メール: <%= current_user.email %></p>
     <% else %>
       <p>ログインしていません。</p>

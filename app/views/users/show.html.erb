@@ -1,38 +1,58 @@
 <!-- app/views/users/show.html.erb -->
-<div class="max-w-2xl mx-auto bg-white rounded p-6 shadow mt-6">
-  <h1 class="text-2xl font-bold mb-4">
-    <%= @user == current_user ? "マイページ" : "#{@user.name}さんのプロフィール" %>
-  </h1>
-
-  <p>メール: <%= @user.email %></p>
-  <p>保有コイン: <%= @user.coins %></p>
-
-  <% if @user == current_user %>
-    <%= link_to "パスワード変更", edit_user_registration_path, class: "btn" %>
+<div class="container mx-auto px-4 mt-6">
+  <%= link_to :back, class: "inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-600 hover:text-gray-700 transition font-semibold px-4 py-2 rounded-lg shadow text-lg mb-6" do %>
+    <svg class="inline-block w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 19l-7-7 7-7" />
+    </svg>
+    戻る
   <% end %>
 
-  <%= render partial: "profile", locals: { user: @user, posts: @posts } %>
+  <div class="bg-white rounded p-6 shadow mt-6">
+    <h1 class="text-2xl font-bold mb-4">
+      <%= @user == current_user ? "マイページ" : "#{@user.name}さんのプロフィール" %>
+    </h1>
 
- <% if @supporter_profile %>
-    <h2 class="text-xl font-bold mb-4">プロフィール内容</h2>
-    <p><strong>立場:</strong> <%= @supporter_profile.standing_array&.join(", ") %></p>
-    <p><strong>創作歴:</strong> <%= @supporter_profile.creation_experience %></p>
-    <p><strong>趣味ジャンル:</strong> <%= @supporter_profile.interests_array&.join(", ") %></p>
-    <p><strong>好きな作品:</strong> <%= @supporter_profile.favorite_artists %></p>
-    <p><strong>年齢層:</strong> <%= @supporter_profile.age_group %></p>
-    <p><strong>支援ジャンル:</strong> <%= @supporter_profile.support_genres_array&.join(", ") %></p>
-    <p><strong>応援スタイル:</strong> <%= @supporter_profile.support_styles_array&.join(", ") %></p>
-    <p><strong>性格傾向:</strong> <%= @supporter_profile.personality_traits_array&.join(", ") %></p>
-  <% end %>
-  
-  <% if @user == current_user %>
-    <!-- 自分用のトーク・未読メッセージ等だけここに表示 -->
-  <% end %>
+    <p>メール: <%= @user.email %></p>
+    <p>保有コイン: <%= @user.coins %></p>
 
-  <% unless current_user == @user %>
-    <%= form_with url: rooms_path, method: :post do |f| %>
-      <%= hidden_field_tag :user_id, @user.id %>
-      <%= f.submit "DMする", class: "btn" %>
+    <% if @user == current_user %>
+      <%= link_to "パスワード変更", edit_user_registration_path, class: "btn" %>
     <% end %>
+
+    <%= render partial: "profile", locals: { user: @user, posts: @posts } %>
+
+    <% if @supporter_profile %>
+      <h2 class="text-xl font-bold mb-4">プロフィール内容</h2>
+      <p><strong>立場:</strong> <%= @supporter_profile.standing_array&.join(", ") %></p>
+      <p><strong>創作歴:</strong> <%= @supporter_profile.creation_experience %></p>
+      <p><strong>趣味ジャンル:</strong> <%= @supporter_profile.interests_array&.join(", ") %></p>
+      <p><strong>好きな作品:</strong> <%= @supporter_profile.favorite_artists %></p>
+      <p><strong>年齢層:</strong> <%= @supporter_profile.age_group %></p>
+      <p><strong>支援ジャンル:</strong> <%= @supporter_profile.support_genres_array&.join(", ") %></p>
+      <p><strong>応援スタイル:</strong> <%= @supporter_profile.support_styles_array&.join(", ") %></p>
+      <p><strong>性格傾向:</strong> <%= @supporter_profile.personality_traits_array&.join(", ") %></p>
+    <% end %>
+    
+    <% if @user == current_user %>
+      <!-- 自分用のトーク・未読メッセージ等だけここに表示 -->
+    <% end %>
+
+    <% unless current_user == @user %>
+      <%= form_with url: rooms_path, method: :post do |f| %>
+        <%= hidden_field_tag :user_id, @user.id %>
+        <%= f.submit "DMする", class: "btn" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <h2 class="text-2xl font-bold mt-8 mb-4">投稿一覧</h2>
+  <% if @posts.any? %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <% @posts.each do |post| %>
+        <%= render "posts/post_card", post: post %>
+      <% end %>
+    </div>
+  <% else %>
+    <p>まだ投稿がありません。</p>
   <% end %>
 </div>

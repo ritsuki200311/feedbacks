@@ -14,6 +14,7 @@ class Post < ApplicationRecord
   validate :validate_thumbnail_format
 
   has_many :comments, dependent: :destroy
+  has_many :votes, as: :votable, dependent: :destroy
   belongs_to :user, optional: true
     # validates :video, presence: true  # この行をコメントアウトして無効にする
 

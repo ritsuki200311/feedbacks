@@ -6,6 +6,7 @@ class User < ApplicationRecord
   # 投稿・コメント関連
   has_many :comments, dependent: :destroy
   has_many :posts
+  has_many :votes, dependent: :destroy
 
   # DM機能に必要な関連
   has_many :entries

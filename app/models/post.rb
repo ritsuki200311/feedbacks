@@ -4,8 +4,8 @@ class Post < ApplicationRecord
                 :recipient_personality_traits
 
   # 動画ファイルのバリデーションを一時的に無効化
-  has_one_attached :video
-  has_one_attached :thumbnail
+  has_many_attached :images
+  has_many_attached :videos
   
   validates :title, presence: true, length: { minimum: 3, maximum: 100 }
   validates :body, presence: true, length: { minimum: 10, maximum: 10000 }

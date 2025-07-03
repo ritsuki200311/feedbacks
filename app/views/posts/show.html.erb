@@ -39,6 +39,19 @@
     <span class="font-semibold text-gray-600">タグ:</span>
     <span class="bg-blue-50 text-blue-500 px-2 py-1 rounded-full text-sm"><%= @post.tag %></span>
   </p>
+
+  <!-- 投票ボタン -->
+  <div class="flex items-center justify-end gap-4 mt-6 border-t pt-4">
+    <%= button_to vote_path(votable_type: 'Post', votable_id: @post.id, value: 1), method: :post, class: "text-gray-500 hover:text-green-500" do %>
+      👍
+    <% end %>
+    <span class="text-gray-600 font-semibold">
+      <%= @post.votes.where(value: 1).count - @post.votes.where(value: -1).count %>
+    </span>
+    <%= button_to vote_path(votable_type: 'Post', votable_id: @post.id, value: -1), method: :post, class: "text-gray-500 hover:text-red-500" do %>
+      👎
+    <% end %>
+  </div>
 </div>
 
 <div class="max-w-2xl mx-auto mt-8">
@@ -51,6 +64,19 @@
         <span class="text-xs text-gray-400"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></span>
       </div>
       <p class="mb-3 text-gray-800"><%= comment.body %></p>
+
+      <!-- 投票ボタン -->
+      <div class="flex items-center justify-end gap-3 text-sm">
+        <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500" do %>
+          👍
+        <% end %>
+        <span class="text-gray-600 font-semibold">
+          <%= comment.votes.where(value: 1).count - comment.votes.where(value: -1).count %>
+        </span>
+        <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500" do %>
+          👎
+        <% end %>
+      </div>
       
       <!-- 返信フォーム -->
       <%= form_with model: [@post, Comment.new], local: true, class: "flex gap-2 mb-2" do |f| %>
@@ -69,6 +95,18 @@
                 <span class="text-xs text-gray-400"><%= reply.created_at.strftime("%Y-%m-%d %H:%M") %></span>
               </div>
               <p class="text-gray-700"><%= reply.body %></p>
+              <!-- 投票ボタン -->
+              <div class="flex items-center justify-end gap-2 text-xs mt-1">
+                <%= button_to vote_path(votable_type: 'Comment', votable_id: reply.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500" do %>
+                  👍
+                <% end %>
+                <span class="text-gray-500 font-semibold">
+                  <%= reply.votes.where(value: 1).count - reply.votes.where(value: -1).count %>
+                </span>
+                <%= button_to vote_path(votable_type: 'Comment', votable_id: reply.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500" do %>
+                  👎
+                <% end %>
+              </div>
             </div>
           <% end %>
         </div>

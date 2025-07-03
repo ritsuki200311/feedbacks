@@ -21,6 +21,9 @@
     <p>保有コイン: <%= current_user.coins %></p>
     <p>ランク: <%= current_user.rank %></p>
     <p>ランクポイント: <%= current_user.rank_points %></p>
+    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+      <div class="bg-blue-600 h-2.5 rounded-full" style="width: <%= current_user.rank_points %>%"></div>
+    </div>
 
     <% if user_signed_in? %>
       <%= render partial: "profile", locals: { user: current_user, posts: @posts } %>

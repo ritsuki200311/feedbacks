@@ -75,18 +75,22 @@
         </div>
       <% end %>
 
-      <% if post.thumbnail.attached? %>
+      <% if post.images.attached? %>
         <div>
-          <%= image_tag post.thumbnail, class: "w-full max-w-sm mx-auto rounded shadow" %>
+          <% post.images.each do |image| %>
+            <%= image_tag image, class: "w-full max-w-sm mx-auto rounded shadow" %>
+          <% end %>
         </div>
       <% end %>
 
-      <% if post.video.attached? %>
+      <% if post.videos.attached? %>
         <div>
-          <video class="w-full max-w-md mx-auto" controls>
-            <source src="<%= url_for(post.video) %>" type="<%= post.video.content_type %>">
-            お使いのブラウザは video タグをサポートしていません。
-          </video>
+          <% post.videos.each do |video| %>
+            <video class="w-full max-w-md mx-auto" controls>
+              <source src="<%= url_for(video) %>" type="<%= video.content_type %>">
+              お使いのブラウザは video タグをサポートしていません。
+            </video>
+          <% end %>
         </div>
       <% end %>
 

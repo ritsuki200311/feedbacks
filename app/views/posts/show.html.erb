@@ -18,18 +18,22 @@
   <h2 class="text-xl font-semibold text-gray-800 mb-2"><%= @post.title %></h2>
   <p class="mb-4 text-gray-700"><%= @post.body %></p>
 
-  <% if @post.thumbnail.attached? %>
+  <% if @post.images.attached? %>
     <div class="mb-4">
-      <%= image_tag @post.thumbnail, class: "rounded-lg max-w-xs" %>
+      <% @post.images.each do |image| %>
+        <%= image_tag image, class: "rounded-lg max-w-xs" %>
+      <% end %>
     </div>
   <% end %>
 
-  <% if @post.video.attached? %>
+  <% if @post.videos.attached? %>
     <div class="mb-4">
-      <video class="rounded-lg w-full max-w-md" controls>
-        <source src="<%= url_for(@post.video) %>" type="<%= @post.video.content_type %>">
-        お使いのブラウザは video タグをサポートしていません。
-      </video>
+      <% @post.videos.each do |video| %>
+        <video class="rounded-lg w-full max-w-md" controls>
+          <source src="<%= url_for(video) %>" type="<%= video.content_type %>">
+          お使いのブラウザは video タグをサポートしていません。
+        </video>
+      <% end %>
     </div>
   <% else %>
     <p class="mb-4 text-sm text-gray-400">動画はありません</p>

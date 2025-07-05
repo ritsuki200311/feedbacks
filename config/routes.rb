@@ -23,7 +23,7 @@ Rails.application.routes.draw do
   end
 
   # 投票機能
-  post 'vote', to: 'votes#vote'
+  post "vote", to: "votes#vote"
 
   # 投稿検索
   get "posts/search", to: "posts#search", as: :search_posts

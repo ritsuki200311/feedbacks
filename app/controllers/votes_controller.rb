@@ -20,7 +20,16 @@ class VotesController < ApplicationController
   private
 
   def set_votable
-    votable_type = params[:votable_type].classify.constantize
+    votable_type_name = params[:votable_type]
+    # 許可するモデル名のリスト
+    allowed_types = %w[Post Comment]
+
+    unless allowed_types.include?(votable_type_name)
+      # 不正な値が来た場合はエラーを発生させて処理を中断
+      raise "Invalid votable type: #{votable_type_name}"
+    end
+
+    votable_type = votable_type_name.classify.constantize
     @votable = votable_type.find(params[:votable_id])
   end
 end

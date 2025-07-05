@@ -19,17 +19,17 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create room and redirect to existing room if it exists" do
     # users(:one)とusers(:two)の間に既存のルームがあることを確認
-    existing_room = Room.joins(:entries).where(entries: { user_id: [@user_one.id, @user_two.id] }).group("rooms.id").having("COUNT(rooms.id) = 2").first
+    existing_room = Room.joins(:entries).where(entries: { user_id: [ @user_one.id, @user_two.id ] }).group("rooms.id").having("COUNT(rooms.id) = 2").first
 
     if existing_room
       # 既存のルームがある場合は、新しいルームが作成されずに既存のルームにリダイレクトされることを期待
-      assert_no_difference('Room.count') do
+      assert_no_difference("Room.count") do
         post rooms_url, params: { user_id: @user_two.id }
       end
       assert_redirected_to room_url(existing_room)
     else
       # 既存のルームがない場合は、新しいルームが作成されることを期待
-      assert_difference('Room.count') do
+      assert_difference("Room.count") do
         post rooms_url, params: { user_id: @user_two.id }
       end
       assert_redirected_to room_url(Room.last)

@@ -23,8 +23,8 @@ class PreferencesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create preference" do
     sign_in @user_two
-    assert_difference('Preference.count') do
-      post preference_path, params: { preference: { genre: 'Rock', instrument_experience: 'Guitar', favorite_artist: 'Artist', career: 'Hobby' } }
+    assert_difference("Preference.count") do
+      post preference_path, params: { preference: { genre: "Rock", instrument_experience: "Guitar", favorite_artist: "Artist", career: "Hobby" } }
     end
 
     assert_redirected_to mypage_url

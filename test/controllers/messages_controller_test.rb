@@ -8,8 +8,8 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create message" do
-    assert_difference('Message.count') do
-      post room_messages_url(@room), params: { message: { body: 'Test message' } }
+    assert_difference("Message.count") do
+      post room_messages_url(@room), params: { message: { body: "Test message" } }
     end
 
     assert_redirected_to room_url(@room)

@@ -1,6 +1,6 @@
 class SupporterProfilesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_supporter_profile, only: [:edit, :update]
+  before_action :set_supporter_profile, only: [ :edit, :update ]
   before_action :authenticate_user!
 
   def new
@@ -50,12 +50,11 @@ class SupporterProfilesController < ApplicationController
       :creation_experience, :favorite_artists, :age_group,
       standing: [], interests: [], support_genres: [], support_styles: [], personality_traits: []
     ).tap do |whitelisted|
-      whitelisted[:standing] = whitelisted[:standing].join(',') if whitelisted[:standing].is_a?(Array)
-      whitelisted[:interests] = whitelisted[:interests].join(',') if whitelisted[:interests].is_a?(Array)
-      whitelisted[:support_genres] = whitelisted[:support_genres].join(',') if whitelisted[:support_genres].is_a?(Array)
-      whitelisted[:support_styles] = whitelisted[:support_styles].join(',') if whitelisted[:support_styles].is_a?(Array)
-      whitelisted[:personality_traits] = whitelisted[:personality_traits].join(',') if whitelisted[:personality_traits].is_a?(Array)
+      whitelisted[:standing] = whitelisted[:standing].join(",") if whitelisted[:standing].is_a?(Array)
+      whitelisted[:interests] = whitelisted[:interests].join(",") if whitelisted[:interests].is_a?(Array)
+      whitelisted[:support_genres] = whitelisted[:support_genres].join(",") if whitelisted[:support_genres].is_a?(Array)
+      whitelisted[:support_styles] = whitelisted[:support_styles].join(",") if whitelisted[:support_styles].is_a?(Array)
+      whitelisted[:personality_traits] = whitelisted[:personality_traits].join(",") if whitelisted[:personality_traits].is_a?(Array)
     end
   end
-
 end

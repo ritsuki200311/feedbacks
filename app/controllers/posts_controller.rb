@@ -1,5 +1,5 @@
 class PostsController < ApplicationController
-  before_action :set_post, only: [:show, :edit, :update, :destroy]
+  before_action :set_post, only: [ :show, :edit, :update, :destroy ]
 
   def new
     @post = Post.new
@@ -17,12 +17,12 @@ class PostsController < ApplicationController
 
     if @post.save
       current_user.decrement!(:coins, cost)  # コインを減らす
-      redirect_to posts_path, notice: '投稿が作成されました。'
+      redirect_to posts_path, notice: "投稿が作成されました。"
     else
       render :new
     end
   end
-  
+
 
   def show
     @comment = @post.comments.build  # コメント投稿フォーム用
@@ -54,7 +54,7 @@ class PostsController < ApplicationController
   def post_params
     params.require(:post).permit(:title, :body, :tag_list, images: [], videos: [])
   end
-  
+
 
   def set_post
     @post = Post.find(params[:id])

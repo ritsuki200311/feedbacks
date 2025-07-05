@@ -1,7 +1,7 @@
 # app/controllers/preferences_controller.rb
 class PreferencesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_preference, only: [:edit, :update]
+  before_action :set_preference, only: [ :edit, :update ]
 
   def new
     # すでに好みがある場合は編集フォームへリダイレクト

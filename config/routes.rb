@@ -22,6 +22,9 @@ Rails.application.routes.draw do
     resources :comments, only: [:create]
   end
 
+  # 投票機能
+  post 'vote', to: 'votes#vote'
+
   # 投稿検索
   get "posts/search", to: "posts#search", as: :search_posts
 

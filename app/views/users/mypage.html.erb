@@ -55,10 +55,13 @@
       <div class="grid grid-cols-1 gap-2">
         <% current_user.entries.each do |entry| %>
           <% room = entry.room %>
-          <% other_user = room.entries.where.not(user_id: current_user.id).first.user %>
-          <div class="bg-gray-100 p-3 rounded shadow-sm">
-            <%= link_to "#{other_user.name}さんとのチャット", room_path(room), class: "text-blue-600 hover:underline" %>
-          </div>
+          <% other_entry = room.entries.where.not(user_id: current_user.id).first %>
+          <% if other_entry %>
+            <% other_user = other_entry.user %>
+            <div class="bg-gray-100 p-3 rounded shadow-sm">
+              <%= link_to "#{other_user.name}さんとのチャット", room_path(room), class: "text-blue-600 hover:underline" %>
+            </div>
+          <% end %>
         <% end %>
       </div>
     <% else %>

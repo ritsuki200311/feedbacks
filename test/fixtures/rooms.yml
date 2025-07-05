@@ -1,5 +1,3 @@
-one:
-  user: one
+one: {}
 
-two:
-  user: two
+two: {}

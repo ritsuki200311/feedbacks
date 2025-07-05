@@ -2,7 +2,7 @@
   <%= link_to "← 投稿一覧に戻る", root_path, class: "text-blue-600 hover:underline" %>
 </div>
 
-<%= form_with(model: @supporter_profile, local: true) do |f| %>
+<%= form_with(model: @supporter_profile, url: supporter_profile_path(@supporter_profile), local: true) do |f| %>
   <% if @supporter_profile.errors.any? %>
     <div class="bg-red-100 text-red-700 p-4 rounded mb-6">
       <p class="font-bold">入力エラーがあります：</p>

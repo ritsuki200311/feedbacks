@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>チャット</title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <style>
+      /* LINE風チャットルームのスタイル */
+      body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: sans-serif;
+      }
+
+      .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background-color: #79a2d1;
+      }
+
+      .chat-header {
+        background-color: #3d4a5d;
+        color: white;
+        padding: 15px;
+        text-align: center;
+      }
+
+      .chat-header h2 {
+        margin: 0;
+        font-size: 1.2em;
+      }
+
+      .chat-box {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .message-row {
+        display: flex;
+        margin-bottom: 15px;
+      }
+
+      .message-row.sent {
+        justify-content: flex-end;
+      }
+
+      .message-row.received {
+        justify-content: flex-start;
+      }
+
+      .message {
+        max-width: 70%;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .message-body {
+        padding: 10px 15px;
+        border-radius: 20px;
+        color: #333;
+        word-wrap: break-word;
+      }
+
+      .sent .message-body {
+        background-color: #8de055;
+        color: black;
+      }
+
+      .received .message-body {
+        background-color: #ffffff;
+      }
+
+      .message-time {
+        font-size: 0.75em;
+        color: #999;
+        margin: 0 5px;
+        white-space: nowrap;
+      }
+
+      .message-form-container {
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-top: 1px solid #ddd;
+      }
+
+      .message-form {
+        display: flex;
+        align-items: center;
+      }
+
+      .message-form textarea {
+        flex-grow: 1;
+        border-radius: 20px;
+        border: 1px solid #ccc;
+        padding: 10px 15px;
+        resize: none;
+        min-height: 20px;
+        max-height: 100px;
+        overflow-y: auto;
+      }
+
+      .send-button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 20px;
+        margin-left: 10px;
+        cursor: pointer;
+      }
+
+      .send-button:hover {
+        background-color: #45a049;
+      }
+    </style>
+
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <%= yield %>
+  </body>
+</html>

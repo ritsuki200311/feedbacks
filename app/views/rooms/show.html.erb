@@ -1,8 +1,9 @@
-<h1>【テスト】このファイルは読み込まれています</h1>
-
 <div class="chat-container">
   <div class="chat-header">
-    <h2>チャットルーム</h2>
+    <div class="chat-header-back-button">
+      <%= link_to '‹', :back, class: 'back-link' %>
+    </div>
+    <h2><%= @other_user&.name || 'チャットルーム' %></h2>
   </div>
   <div class="chat-box" id="chat-box">
     <% @messages.each do |message| %>

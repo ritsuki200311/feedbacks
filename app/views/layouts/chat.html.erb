@@ -6,31 +6,48 @@
     <%= csp_meta_tag %>
 
     <style>
-      /* LINE風チャットルームのスタイル */
       body, html {
         margin: 0;
         padding: 0;
         height: 100%;
-        font-family: sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #F0F2F5;
       }
 
       .chat-container {
         display: flex;
         flex-direction: column;
         height: 100vh;
-        background-color: #79a2d1;
       }
 
       .chat-header {
-        background-color: #3d4a5d;
-        color: white;
-        padding: 15px;
+        background-color: #E9EBEF;
+        color: #1C1E21;
+        padding: 10px 15px;
         text-align: center;
+        border-bottom: 1px solid #CED0D4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      
+      .chat-header-back-button {
+        position: absolute;
+        left: 15px;
+      }
+
+      .back-link {
+        color: #007AFF;
+        text-decoration: none;
+        font-size: 24px;
+        font-weight: bold;
       }
 
       .chat-header h2 {
         margin: 0;
-        font-size: 1.2em;
+        font-size: 17px;
+        font-weight: 600;
       }
 
       .chat-box {
@@ -62,31 +79,32 @@
 
       .message-body {
         padding: 10px 15px;
-        border-radius: 20px;
-        color: #333;
+        border-radius: 18px;
+        color: #050505;
         word-wrap: break-word;
+        box-shadow: 0 1px 1px rgba(0,0,0,0.05);
       }
 
       .sent .message-body {
-        background-color: #8de055;
-        color: black;
+        background-color: #007AFF;
+        color: white;
       }
 
       .received .message-body {
-        background-color: #ffffff;
+        background-color: #FFFFFF;
       }
 
       .message-time {
-        font-size: 0.75em;
-        color: #999;
-        margin: 0 5px;
+        font-size: 12px;
+        color: #65676B;
+        margin: 0 8px;
         white-space: nowrap;
       }
 
       .message-form-container {
         padding: 10px;
-        background-color: #f0f0f0;
-        border-top: 1px solid #ddd;
+        background-color: #F0F2F5;
+        border-top: 1px solid #CED0D4;
       }
 
       .message-form {
@@ -96,27 +114,29 @@
 
       .message-form textarea {
         flex-grow: 1;
-        border-radius: 20px;
-        border: 1px solid #ccc;
+        border-radius: 18px;
+        border: 1px solid #CED0D4;
         padding: 10px 15px;
         resize: none;
         min-height: 20px;
         max-height: 100px;
         overflow-y: auto;
+        background-color: #FFFFFF;
       }
 
       .send-button {
-        background-color: #4CAF50;
+        background-color: #007AFF;
         color: white;
         border: none;
         padding: 10px 15px;
-        border-radius: 20px;
+        border-radius: 18px;
         margin-left: 10px;
         cursor: pointer;
+        font-weight: 600;
       }
 
       .send-button:hover {
-        background-color: #45a049;
+        background-color: #0056b3;
       }
     </style>
 

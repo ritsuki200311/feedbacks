@@ -1,14 +1,35 @@
-<h2>チャットルーム</h2>
-
-<div class="chat-box">
-  <% @messages.each do |message| %>
-    <div class="message <%= message.user_id == current_user.id ? 'sent' : 'received' %>">
-      <%= message.body %>
+<div class="chat-container">
+  <div class="chat-header">
+    <div class="chat-header-back-button">
+      <%= link_to '‹', :back, class: 'back-link' %>
     </div>
-  <% end %>
+    <h2><%= @other_user&.name || 'チャットルーム' %></h2>
+  </div>
+  <div class="chat-box" id="chat-box">
+    <% @messages.each do |message| %>
+      <div class="message-row <%= message.user_id == current_user.id ? 'sent' : 'received' %>">
+        <div class="message">
+          <div class="message-body">
+            <%= message.body %>
+          </div>
+          <div class="message-time">
+            <%= message.created_at.strftime("%H:%M") %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <div class="message-form-container">
+    <%= form_with(model: [@room, @message], local: true, html: { class: "message-form" }) do |form| %>
+      <%= form.text_area :body, rows: 1, placeholder: "メッセージを入力…" %>
+      <%= form.submit "送信", class: "send-button" %>
+    <% end %>
+  </div>
 </div>
 
-<%= form_with(model: [@room, @message], local: true, html: { class: "message-form" }) do |form| %>
-  <%= form.text_area :body, rows: 1, placeholder: "メッセージを入力…" %>
-  <%= form.submit "送信" %>
-<% end %>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const chatBox = document.getElementById("chat-box");
+    chatBox.scrollTop = chatBox.scrollHeight;
+  });
+</script>

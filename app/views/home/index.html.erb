@@ -101,7 +101,7 @@
         <%= form_with model: [post, post.comments.build], url: post_comments_path(post), local: true do |form| %>
           <div>
             <%= form.label :body, "コメント", class: "block text-sm font-medium text-gray-700" %>
-            <%= form.text_area :body, rows: 3, class: "mt-1 w-full border-gray-300 rounded-md shadow-sm" %>
+            <%= form.text_area :body, rows: 2, placeholder: "コメントを追加...", class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 bg-gray-50 p-2" %>
           </div>
           <div class="mt-2">
             <%= form.submit "コメントする", class: "bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded" %>

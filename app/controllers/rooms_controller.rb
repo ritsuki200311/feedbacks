@@ -1,5 +1,6 @@
 class RoomsController < ApplicationController
   before_action :authenticate_user!
+  layout "chat", only: [ :show ]
 
   def create
     other_user = User.find(params[:user_id])

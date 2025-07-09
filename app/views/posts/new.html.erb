@@ -1,136 +1,63 @@
-<!-- ホームに戻るリンク -->
-<%= link_to root_path, class: "inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-600 hover:text-gray-700 transition font-semibold px-4 py-2 rounded-lg shadow-md text-lg mb-6 mt-8" do %>
-  <svg class="w-5 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 24">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19l-7-7 7-7" />
-  </svg>
-  ホームに戻る
-<% end %>
 
-<h1 class="text-2xl font-bold mt-6 mb-4">新規投稿</h1>
 
-<%= form_with model: @post, local: true do |form| %>
+<div class="flex">
+  <!-- メインコンテンツ（左側） -->
+  <div class="flex-1 p-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-4">新規投稿を作成</h1>
 
-  <!-- エラー表示 -->
-  <% if @post.errors.any? %>
-    <div class="error-messages mb-6 p-4 border border-red-400 bg-red-100 rounded">
-      <h2 class="font-bold text-red-700 mb-2"><%= pluralize(@post.errors.count, "件のエラー") %>が発生しました：</h2>
-      <ul class="list-disc list-inside text-red-600">
-        <% @post.errors.full_messages.each do |msg| %>
-          <li><%= msg %></li>
-        <% end %>
-      </ul>
+    <%= form_with model: @post, local: true, class: "space-y-6 bg-white p-6 rounded-lg shadow-md" do |form| %>
+
+      <% if @post.errors.any? %>
+        <div class="bg-red-100 text-red-700 p-4 rounded">
+          <h2 class="font-bold mb-2"><%= pluralize(@post.errors.count, "件のエラー") %>が発生しました：</h2>
+          <ul class="list-disc list-inside">
+            <% @post.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div>
+        <%= form.label :title, "タイトル", class: "block text-lg font-semibold text-gray-800 mb-3" %>
+        <%= form.text_field :title, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "投稿のタイトルを入力" %>
+      </div>
+
+      <div>
+        <%= form.label :body, "本文", class: "block text-lg font-semibold text-gray-800 mb-3" %>
+        <%= form.text_area :body, rows: 4, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "伝えたいことを詳しく書きましょう" %>
+      </div>
+
+      <%= render 'checkbox_options', title: "タグを選んでください（複数選択可）", field_name: "post[tag_list][]", options: tag_options, selected: @post.tag_list %>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <%= form.label :images, "画像", class: "block text-lg font-semibold text-gray-800 mb-3" %>
+          <%= form.file_field :images, multiple: true, class: "block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" %>
+        </div>
+        <div>
+          <%= form.label :videos, "動画", class: "block text-lg font-semibold text-gray-800 mb-3" %>
+          <%= form.file_field :videos, multiple: true, class: "block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" %>
+        </div>
+      </div>
+
+      <div class="pt-6 text-center">
+        <%= form.submit "投稿する", class: "w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105" %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- 右側のタグ選択カラム -->
+  <div class="w-1/3 p-8 bg-white rounded-lg shadow-md ml-8 max-h-[80vh] overflow-y-hidden hover:overflow-y-auto">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">送りたい人の情報</h2>
+    <div class="space-y-6">
+      <%= render 'checkbox_options', title: "1. 送りたい人の立場", field_name: "post[recipient_standing][]", options: recipient_standing_options, selected: @post.recipient_standing %>
+      <%= render 'checkbox_options', title: "2. 創作歴", field_name: "post[recipient_creation_experience][]", options: recipient_creation_experience_options, selected: @post.recipient_creation_experience %>
+      <%= render 'checkbox_options', title: "3. 趣味・関心ジャンル", field_name: "post[recipient_interests][]", options: recipient_interests_options, selected: @post.recipient_interests %>
+      <%= render 'checkbox_options', title: "4. 年齢層", field_name: "post[recipient_age_group][]", options: recipient_age_group_options, selected: @post.recipient_age_group %>
+      <%= render 'checkbox_options', title: "5. 支援したいジャンル", field_name: "post[recipient_support_genres][]", options: recipient_support_genres_options, selected: @post.recipient_support_genres %>
+      <%= render 'checkbox_options', title: "6. 応援スタイル", field_name: "post[recipient_support_styles][]", options: recipient_support_styles_options, selected: @post.recipient_support_styles %>
+      <%= render 'checkbox_options', title: "7. 性格傾向", field_name: "post[recipient_personality_traits][]", options: recipient_personality_traits_options, selected: @post.recipient_personality_traits %>
     </div>
-  <% end %>
-
-  <!-- タイトル -->
-  <div>
-    <%= form.label :title, "タイトル", class: "block text-gray-700 mb-1" %>
-    <%= form.text_field :title, class: "w-full rounded border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 p-2" %>
   </div>
-
-  <!-- 本文 -->
-  <div class="mt-4">
-    <%= form.label :body, "本文", class: "block text-gray-700 mb-1" %>
-    <%= form.text_area :body, class: "w-full rounded border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 p-2 h-40" %>
-  </div>
-
-  <!-- 画像 -->
-  <div class="mt-4">
-    <%= form.label :images, "画像", class: "block text-gray-700 mb-1" %>
-    <%= form.file_field :images, multiple: true, class: "w-full" %>
-  </div>
-
-  <!-- 動画 -->
-  <div class="mt-4">
-    <%= form.label :videos, "動画", class: "block text-gray-700 mb-1" %>
-    <%= form.file_field :videos, multiple: true, class: "w-full" %>
-  </div>
-
-  <!-- タグ -->
-  <%= render 'checkbox_options',
-             title: "タグを選んでください（複数選択可）",
-             field_name: "post[tag_list][]",
-             options: tag_options,
-             selected: @post.tag_list %>
-
-  <!-- 送りたい人の情報 -->
-  <%= render 'checkbox_options',
-             title: "1. 送りたい人の立場",
-             field_name: "post[recipient_standing][]",
-             options: recipient_standing_options,
-             selected: @post.recipient_standing %>
-
-  <%= render 'checkbox_options',
-             title: "2. 創作歴",
-             field_name: "post[recipient_creation_experience][]",
-             options: recipient_creation_experience_options,
-             selected: @post.recipient_creation_experience %>
-
-  <%= render 'checkbox_options',
-             title: "3. 趣味・関心ジャンル",
-             field_name: "post[recipient_interests][]",
-             options: recipient_interests_options,
-             selected: @post.recipient_interests %>
-
-  <%= render 'checkbox_options',
-             title: "4. 年齢層",
-             field_name: "post[recipient_age_group][]",
-             options: recipient_age_group_options,
-             selected: @post.recipient_age_group %>
-
-  <%= render 'checkbox_options',
-             title: "5. 支援したいジャンル",
-             field_name: "post[recipient_support_genres][]",
-             options: recipient_support_genres_options,
-             selected: @post.recipient_support_genres %>
-
-  <%= render 'checkbox_options',
-             title: "6. 応援スタイル",
-             field_name: "post[recipient_support_styles][]",
-             options: recipient_support_styles_options,
-             selected: @post.recipient_support_styles %>
-
-  <%= render 'checkbox_options',
-             title: "7. 性格傾向",
-             field_name: "post[recipient_personality_traits][]",
-             options: recipient_personality_traits_options,
-             selected: @post.recipient_personality_traits %>
-
-
-  <!-- 送信ボタン -->
-  <div class="mt-6">
-    <%= form.submit "投稿する", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
-  </div>
-
-<% end %>
-
-<!-- チェックボックス選択時のスタイル調整 -->
-<script>
-  document.addEventListener('turbo:load', function () {
-    const containers = document.querySelectorAll('.checkbox-options-container');
-
-    function updateLabelStyle(checkbox) {
-      const label = checkbox.closest('label');
-      if (checkbox.checked) {
-        label.classList.add('bg-blue-400', 'text-white');
-        label.classList.remove('bg-gray-200', 'hover:bg-gray-300');
-      } else {
-        label.classList.remove('bg-blue-400', 'text-white');
-        label.classList.add('bg-gray-200', 'hover:bg-gray-300');
-      }
-    }
-
-    containers.forEach(function (container) {
-      const checkboxes = container.querySelectorAll('input[type="checkbox"]');
-      checkboxes.forEach(function (checkbox) {
-        // 初期状態のスタイル設定
-        updateLabelStyle(checkbox);
-
-        // 変更イベントにリスナーを追加
-        checkbox.addEventListener('change', function () {
-          updateLabelStyle(this);
-        });
-      });
-    });
-  });
-</script>
+</div>

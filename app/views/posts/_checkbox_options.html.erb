@@ -1,11 +1,10 @@
-<div class="mt-4 checkbox-options-container">
-  <p class="font-semibold mb-2"><%= title %></p>
-  <div class="flex flex-wrap gap-2">
-    <% options.each_with_index do |option, index| %>
-      <% field_id = "#{field_name.parameterize}_#{index}" %>
-      <label for="<%= field_id %>" class="tag-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition">
-        <%= check_box_tag field_name, option, selected.to_a.include?(option), id: field_id, class: "hidden" %>
-        <span><%= option %></span>
+<div class="checkbox-options-container">
+  <label class="block text-lg font-semibold text-gray-800 mb-2"><%= title %></label>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1">
+    <% options.each do |option| %>
+      <label class="flex items-center p-0.5 rounded-lg border cursor-pointer transition-colors hover:bg-gray-50 has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-400">
+        <%= check_box_tag field_name, option, selected.to_a.include?(option), class: "h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" %>
+        <span class="ml-1 text-sm text-gray-700 whitespace-nowrap"><%= option %></span>
       </label>
     <% end %>
   </div>

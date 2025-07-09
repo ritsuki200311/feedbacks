@@ -10,7 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_03_024807) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_06_083258) do
+  create_schema "_heroku"
+
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_stat_statements"
+
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -137,7 +143,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_03_024807) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "name"
-    t.integer "coins", default: 0, null: false
+    t.integer "coins", default: 1, null: false
     t.integer "rank_point", default: 0, null: false
     t.integer "rank_points", default: 0
     t.index ["email"], name: "index_users_on_email", unique: true

@@ -14,14 +14,22 @@
   </head>
 
   <body class="bg-gray-100 text-gray-800">
-    <% if notice %>
-      <div class="bg-green-100 text-green-800 p-4 rounded mb-4"><%= notice %></div>
-    <% end %>
+    <div class="flex">
+      <!-- サイドバー -->
+      <%= render 'layouts/sidebar' %>
 
-    <% if alert %>
-      <div class="bg-red-100 text-red-800 p-4 rounded mb-4"><%= alert %></div>
-    <% end %>
+      <!-- メインコンテンツ -->
+      <main class="flex-1 p-8 ml-64">
+        <% if notice %>
+          <div class="bg-green-100 text-green-800 p-4 rounded mb-4"><%= notice %></div>
+        <% end %>
 
-    <%= yield %>
+        <% if alert %>
+          <div class="bg-red-100 text-red-800 p-4 rounded mb-4"><%= alert %></div>
+        <% end %>
+
+        <%= yield %>
+      </main>
+    </div>
   </body>
 </html>

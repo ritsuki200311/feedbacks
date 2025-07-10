@@ -26,7 +26,7 @@
       <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
         <% section[:options].each do |option| %>
           <label class="flex items-center p-3 rounded-lg border cursor-pointer transition-colors hover:bg-gray-50">
-            <%= check_box_tag "supporter_profile[#{section[:field]}][]", option, @supporter_profile.send("#{section[:field]}_array").include?(option), class: "h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" %>
+            <%= check_box_tag "supporter_profile[#{section[:field]}][]", option, @supporter_profile.send("#{section[:field]}").include?(option), class: "h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" %>
             <span class="ml-3 text-gray-700"><%= option %></span>
           </label>
         <% end %>

@@ -26,5 +26,8 @@ module Hello
 
     # Active Jobのキューアダプターをasyncに設定し、Solid Queueのデータベース接続を不要にする
     config.active_job.queue_adapter = :async
+
+    # Solid Queueを完全に無効化する
+    config.solid_queue.enabled = false
   end
 end

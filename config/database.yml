@@ -6,7 +6,7 @@ default: &default
 
 development:
   <<: *default
-  url: <%= ENV['DATABASE_URL'] %>
+  database: feedbacks_development
 
 test:
 

@@ -1,6 +1,8 @@
 class Comment < ApplicationRecord
-  belongs_to :post
   belongs_to :user, optional: true
+  belongs_to :post
+
+  has_many_attached :attachments
 
   has_many :votes, as: :votable, dependent: :destroy
 
@@ -12,15 +14,11 @@ class Comment < ApplicationRecord
          foreign_key: :parent_id,
          dependent: :destroy
 
-  after_create :update_rank_points
+  after_create :increment_user_rank_points
 
   private
 
-  def update_rank_points
-    # コメントしたユーザーにポイントを加算
-    user.increment!(:rank_points, 12) if user
-
-    # コメントされた投稿の所有ユーザーにポイントを加算
+  def increment_user_rank_points
     post.user.increment!(:rank_points, 12) if post.user
   end
 end

@@ -24,7 +24,7 @@ class CommentsController < ApplicationController
 
   def comment_params
     # 🔽 :parent_id を許可して、返信元のコメントIDを受け取るようにする
-    params.require(:comment).permit(:body, :parent_id)
+    params.require(:comment).permit(:body, attachments: [])
   end
 
   def set_post

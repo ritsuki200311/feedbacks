@@ -9,8 +9,15 @@ development:
   url: <%= ENV['DATABASE_URL'] %>
 
 test:
-  <<: *default
-  database: feedbacks_test # テスト環境用のデータベース名
+
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+  username: <%= ENV['PGUSER'] %>
+  password: <%= ENV['PGPASSWORD'] %>
+  host: <%= ENV['PGHOST'] %>
+  database: <%= ENV['PGDATABASE'] %>
+
 
 production:
   primary:

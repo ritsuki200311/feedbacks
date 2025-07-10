@@ -1,9 +1,6 @@
 <div class="chat-container">
   <div class="chat-header">
-    <div class="chat-header-back-button">
-      <%= link_to '‹', :back, class: 'back-link' %>
-    </div>
-    <h2><%= @other_user&.name || 'チャットルーム' %></h2>
+    <h2>チャットルーム</h2>
   </div>
   <div class="chat-box" id="chat-box">
     <% @messages.each do |message| %>
@@ -15,6 +12,7 @@
           <div class="message-time">
             <%= message.created_at.strftime("%H:%M") %>
           </div>
+          
         </div>
       </div>
     <% end %>

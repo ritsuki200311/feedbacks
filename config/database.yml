@@ -6,9 +6,10 @@ default: &default
 
 development:
   <<: *default
-  url: <%= ENV['DATABASE_URL'] %>
+  database: feedbacks_development
 
 test:
+
   adapter: postgresql
   encoding: unicode
   pool: 5
@@ -16,6 +17,7 @@ test:
   password: <%= ENV['PGPASSWORD'] %>
   host: <%= ENV['PGHOST'] %>
   database: <%= ENV['PGDATABASE'] %>
+
 
 production:
   primary:

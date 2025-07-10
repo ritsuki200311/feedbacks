@@ -151,9 +151,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_06_083258) do
   end
 
   create_table "votes", force: :cascade do |t|
-    t.integer "user_id", null: false
+    t.bigint "user_id", null: false
     t.string "votable_type", null: false
-    t.integer "votable_id", null: false
+    t.bigint "votable_id", null: false
     t.integer "value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -161,18 +161,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_06_083258) do
     t.index ["votable_type", "votable_id"], name: "index_votes_on_votable"
   end
 
-  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "comments", "posts"
-  add_foreign_key "comments", "users"
-  add_foreign_key "entries", "rooms"
-  add_foreign_key "entries", "users"
-  add_foreign_key "messages", "rooms"
-  add_foreign_key "messages", "users"
-  add_foreign_key "preferences", "users"
-  add_foreign_key "received_videos", "posts"
-  add_foreign_key "received_videos", "users"
-  add_foreign_key "received_videos", "users", column: "sender_id"
-  add_foreign_key "supporter_profiles", "users"
   add_foreign_key "votes", "users"
 end

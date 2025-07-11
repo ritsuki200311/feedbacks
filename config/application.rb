@@ -25,6 +25,9 @@ module Hello
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Active Jobのキューアダプターをasyncに設定する
-    config.active_job.queue_adapter = :async
+    config.active_job.queue.adapter = :async
+
+    # キャッシュストアをメモリに設定する
+    config.cache_store = :memory_store
   end
 end

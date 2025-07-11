@@ -25,6 +25,9 @@ module Hello
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Active Jobのキューアダプターをasyncに設定し、Solid Queueのデータベース接続を不要にする
-    config.active_job.queue_adapter = :async
+    config.active_job.queue.adapter = :async
+
+    # Solid Cacheを完全に無効化する
+    config.solid_cache.enabled = false
   end
 end

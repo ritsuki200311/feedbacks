@@ -27,3 +27,4 @@ module Hello
     # Active Jobのキューアダプターをasyncに設定する
     config.active_job.queue_adapter = :async
   end
+end

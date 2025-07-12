@@ -19,7 +19,6 @@
   <% else %>
     <p class="mb-4 text-sm text-gray-400">画像はありません</p>
   <% end %>
-
   <% if @post.videos.attached? %>
     <div class="mb-4">
       <% @post.videos.each do |video| %>

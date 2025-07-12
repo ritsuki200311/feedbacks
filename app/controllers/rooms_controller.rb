@@ -34,7 +34,6 @@ class RoomsController < ApplicationController
     @message = Message.new
     @other_user = @room.entries.where.not(user_id: current_user.id).first&.user
 
-    # 🔽 ここで「自分以外のユーザーが送った未読メッセージ」を既読にする
-    @room.messages.where(user_id: @other_user.id, is_read: false).update_all(is_read: true)
+    Message.mark_as_read_by_room_and_user(@room, @other_user)
   end
 end

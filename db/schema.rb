@@ -10,9 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_06_083258) do
-  create_schema "_heroku"
-
+ActiveRecord::Schema[8.0].define(version: 2025_07_10_024930) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -91,13 +89,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_06_083258) do
 
   create_table "preferences", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.text "selected_items"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "genre"
     t.string "instrument_experience"
     t.string "favorite_artist"
     t.string "career"
+    t.jsonb "selected_items", default: []
     t.index ["user_id"], name: "index_preferences_on_user_id"
   end
 
@@ -121,16 +119,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_06_083258) do
 
   create_table "supporter_profiles", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.string "standing"
     t.string "creation_experience"
-    t.string "interests"
     t.text "favorite_artists"
     t.string "age_group"
-    t.string "support_genres"
-    t.string "support_styles"
-    t.string "personality_traits"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "standing", default: []
+    t.jsonb "interests", default: []
+    t.jsonb "support_genres", default: []
+    t.jsonb "support_styles", default: []
+    t.jsonb "personality_traits", default: []
     t.index ["user_id"], name: "index_supporter_profiles_on_user_id"
   end
 
@@ -151,9 +149,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_06_083258) do
   end
 
   create_table "votes", force: :cascade do |t|
-    t.bigint "user_id", null: false
+    t.integer "user_id", null: false
     t.string "votable_type", null: false
-    t.bigint "votable_id", null: false
+    t.integer "votable_id", null: false
     t.integer "value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -161,5 +159,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_06_083258) do
     t.index ["votable_type", "votable_id"], name: "index_votes_on_votable"
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "comments", "posts"
+  add_foreign_key "comments", "users"
+  add_foreign_key "entries", "rooms"
+  add_foreign_key "entries", "users"
+  add_foreign_key "messages", "rooms"
+  add_foreign_key "messages", "users"
+  add_foreign_key "preferences", "users"
+  add_foreign_key "received_videos", "posts"
+  add_foreign_key "received_videos", "users"
+  add_foreign_key "received_videos", "users", column: "sender_id"
+  add_foreign_key "supporter_profiles", "users"
   add_foreign_key "votes", "users"
 end

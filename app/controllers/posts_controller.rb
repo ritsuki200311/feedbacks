@@ -10,13 +10,11 @@ class PostsController < ApplicationController
     @post.user = current_user
     @post.tag_list = post_params[:tag_list]         # 手動で代入
 
-    cost = Rails.application.config.x.coin.post_cost
-    if current_user.coins < cost
-      redirect_to new_post_path, alert: "コインが不足しています。" and return
+    unless CoinService.deduct_for_post(@post)
+      render :new and return # コイン不足の場合はrenderしてreturn
     end
 
     if @post.save
-      current_user.decrement!(:coins, cost)  # コインを減らす
       redirect_to posts_path, notice: "投稿が作成されました。"
     else
       render :new

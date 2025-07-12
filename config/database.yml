@@ -9,29 +9,9 @@ development:
   database: feedbacks_development
 
 test:
-
-  adapter: postgresql
-  encoding: unicode
-  pool: 5
-  username: <%= ENV['PGUSER'] %>
-  password: <%= ENV['PGPASSWORD'] %>
-  host: <%= ENV['PGHOST'] %>
-  database: <%= ENV['PGDATABASE'] %>
-
+  <<: *default
+  database: feedbacks_test
 
 production:
-  primary:
-    <<: *default
-    url: <%= ENV['DATABASE_URL'] %>
-  cache:
-    <<: *default
-    database: storage/production_cache.sqlite3
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *default
-    database: storage/production_queue.sqlite3
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *default
-    database: storage/production_cable.sqlite3
-    migrations_paths: db/cable_migrate
+  <<: *default
+  url: <%= ENV['DATABASE_URL'] %>

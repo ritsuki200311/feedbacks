@@ -7,4 +7,8 @@ module ApplicationHelper
       "text-gray-700 hover:bg-gray-100 #{base_class}"
     end
   end
+
+  def show_sensitive_info?
+    Rails.env.development?
+  end
 end

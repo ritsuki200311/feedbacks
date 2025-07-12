@@ -4,32 +4,38 @@ Rails.application.routes.draw do
 
   # Devise（ユーザー認証）
   devise_for :users, controllers: {
-    registrations: 'users/registrations'
+    registrations: "users/registrations"
   }
 
+  # この順番が大事！
+  get "users/mypage", to: "users#mypage", as: :mypage
+  resources :users, only: [ :show ]
+  get "users/index"
+
+
+
   # プロフィール（シングルリソースでルーティング）
-  resource :supporter_profile, only: [:new, :create, :show, :edit, :update]
+  resource :supporter_profile, only: [ :new, :create, :show, :edit, :update ]
 
   # 投稿とコメント
-  resources :posts, only: [:new, :create, :show, :destroy] do
-    resources :comments, only: [:create]
+  resources :posts, only: [ :new, :create, :show, :destroy ] do
+    resources :comments, only: [ :create ]
   end
+
+  # 投票機能
+  post "vote", to: "votes#vote"
 
   # 投稿検索
   get "posts/search", to: "posts#search", as: :search_posts
 
-  # ユーザー
-  resources :users, only: [:show]
-  get "users/index"
-  get "users/mypage", to: "users#mypage", as: :mypage
 
   # DM機能
-  resources :rooms, only: [:create, :show] do
-    resources :messages, only: [:create]
+  resources :rooms, only: [ :create, :show ] do
+    resources :messages, only: [ :create ]
   end
 
   # 好み設定（Preference）
-  resource :preference, controller: 'preferences', only: [:new, :create, :edit, :update]
+  resource :preference, controller: "preferences", only: [ :new, :create, :edit, :update ]
 
   # ヘルスチェック（開発用）
   get "up", to: "rails/health#show", as: :rails_health_check
@@ -41,6 +47,6 @@ Rails.application.routes.draw do
 
   # 管理者
   namespace :admin do
-    resources :users, only: [:index]
+    resources :users, only: [ :index ]
   end
 end

@@ -6,6 +6,7 @@ class User < ApplicationRecord
   # 投稿・コメント関連
   has_many :comments, dependent: :destroy
   has_many :posts
+  has_many :votes, dependent: :destroy
 
   # DM機能に必要な関連
   has_many :entries
@@ -16,4 +17,14 @@ class User < ApplicationRecord
   has_one :preference, dependent: :destroy
 
   has_one :supporter_profile, dependent: :destroy
+
+  def rank
+    if rank_points >= 40
+      "A"
+    elsif rank_points < 10
+      "C"
+    else
+      "B"
+    end
+  end
 end

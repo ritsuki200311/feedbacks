@@ -1,5 +1,5 @@
 class PostsController < ApplicationController
-  before_action :set_post, only: [:show, :edit, :update, :destroy]
+  before_action :set_post, only: [ :show, :edit, :update, :destroy ]
 
   def new
     @post = Post.new
@@ -10,19 +10,17 @@ class PostsController < ApplicationController
     @post.user = current_user
     @post.tag_list = post_params[:tag_list]         # 手動で代入
 
-    cost = Rails.application.config.x.coin.post_cost
-    if current_user.coins < cost
-      redirect_to new_post_path, alert: "コインが不足しています。" and return
+    unless CoinService.deduct_for_post(@post)
+      render :new and return # コイン不足の場合はrenderしてreturn
     end
 
     if @post.save
-      current_user.decrement!(:coins, cost)  # コインを減らす
-      redirect_to posts_path, notice: '投稿が作成されました。'
+      redirect_to posts_path, notice: "投稿が作成されました。"
     else
       render :new
     end
   end
-  
+
 
   def show
     @comment = @post.comments.build  # コメント投稿フォーム用
@@ -52,9 +50,9 @@ class PostsController < ApplicationController
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :thumbnail, :video, tag_list: [])
+    params.require(:post).permit(:title, :body, :tag_list, images: [], videos: [])
   end
-  
+
 
   def set_post
     @post = Post.find(params[:id])

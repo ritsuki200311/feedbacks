@@ -7,11 +7,7 @@ class CommentsController < ApplicationController
     @comment.user = current_user
     if @comment.save
 
-      if @post.user != current_user # 投稿者がコメントをした場合はコインを付与しない
-        # コメント投稿者にコインを付与
-        reward = Rails.application.config.x.coin.comment_reward
-        current_user.update!(coins: current_user.coins + reward)
-      end
+      CoinService.reward_for_comment(@comment)
       # 成功したら投稿詳細ページにリダイレクト
       redirect_to post_path(@post), notice: "コメントを投稿しました。"
     else
@@ -24,7 +20,7 @@ class CommentsController < ApplicationController
 
   def comment_params
     # 🔽 :parent_id を許可して、返信元のコメントIDを受け取るようにする
-    params.require(:comment).permit(:body, :parent_id)
+    params.require(:comment).permit(:body, attachments: [])
   end
 
   def set_post

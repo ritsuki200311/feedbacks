@@ -7,16 +7,22 @@ default: &default
 development:
   <<: *default
   database: feedbacks_development
+  host: 127.0.0.1
+  username: akimotoritsuki
+  schema_search_path: public
+  port: 5432
+  
 
 test:
 
   adapter: postgresql
   encoding: unicode
   pool: 5
-  username: <%= ENV['PGUSER'] %>
-  password: <%= ENV['PGPASSWORD'] %>
-  host: <%= ENV['PGHOST'] %>
-  database: <%= ENV['PGDATABASE'] %>
+  database: feedbacks_test
+  host: 127.0.0.1
+  username: akimotoritsuki
+  schema_search_path: public
+  port: 5432
 
 
 production:

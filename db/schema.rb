@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_10_024930) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_14_145216) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -84,6 +84,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_10_024930) do
     t.integer "received_user_id"
     t.text "recipient_standing"
     t.text "recipient_support_styles"
+    t.integer "creation_type"
+    t.string "request_tag"
     t.index ["received_user_id"], name: "index_posts_on_received_user_id"
   end
 

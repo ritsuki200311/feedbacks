@@ -6,17 +6,17 @@ class PostsController < ApplicationController
   end
 
   def create
-    @post = Post.new(post_params.except(:tag_list)) # 仮想属性を除く
+    @post = Post.new(post_params.except(:tag_list))
     @post.user = current_user
-    @post.tag_list = post_params[:tag_list]         # 手動で代入
+    @post.tag_list = post_params[:tag_list]
 
-    unless CoinService.deduct_for_post(@post)
-      render :new and return # コイン不足の場合はrenderしてreturn
-    end
-
-    if @post.save
+    if @post.valid? && CoinService.deduct_for_post(@post)
+      @post.save
       redirect_to posts_path, notice: "投稿が作成されました。"
     else
+      if @post.errors.empty?
+        flash.now[:alert] = "コインが不足しているか、投稿に問題があります。"
+      end
       render :new
     end
   end
@@ -50,7 +50,7 @@ class PostsController < ApplicationController
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :tag_list, images: [], videos: [])
+    params.require(:post).permit(:title, :body, :tag_list, :creation_type, :request_tag, images: [], videos: [])
   end
 
 

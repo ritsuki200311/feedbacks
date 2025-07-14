@@ -4,11 +4,22 @@ class Post < ApplicationRecord
                 :recipient_personality_traits
 
   # 動画ファイルのバリデーションを一時的に無効化
+  CREATION_TYPES = { 'イラスト・マンガ': 0, '詩・小説': 1, '音楽': 2 }.freeze
+
+  def self.creation_types
+    CREATION_TYPES.keys.map(&:to_s)
+  end
+
+  def creation_type_humanize
+    CREATION_TYPES.key(creation_type).to_s.humanize
+  end
   has_many_attached :images
   has_many_attached :videos
 
   validates :title, presence: true, length: { minimum: 3, maximum: 100 }
     validates :body, presence: true, length: { maximum: 10000 }
+  validates :creation_type, presence: true
+  validates :request_tag, presence: true
 
   validate :validate_video_format
   validate :validate_image_format

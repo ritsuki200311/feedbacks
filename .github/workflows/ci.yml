@@ -114,7 +114,7 @@ jobs:
         with:
           heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
           heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
-          heroku_email: your-heroku-email@example.com # あなたのHerokuアカウントのメールアドレスを設定してください
+          heroku_email: abesora@example.com # あなたのHerokuアカウントのメールアドレスに置き換えてください
           branch: main # デプロイするブランチ
           usedocker: false # Dockerを使用しない場合
           buildpacks: | # 使用するビルドパックを指定

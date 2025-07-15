@@ -1,56 +1,133 @@
-<%= link_to "← ホームに戻る", root_path %>
+<div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-4">
+  <h1 class="text-3xl font-bold mb-4 text-gray-900">投稿</h1>
 
-<p>
-  投稿者:
-  <%= link_to @post.user.name, user_path(@post.user) %>
-</p>
-
-<h1><%= @post.title %></h1>
-<p><%= @post.body %></p>
-
-<% if @post.thumbnail.attached? %>
-  <div>
-    <%= image_tag @post.thumbnail, style: "max-width: 200px; height: auto;" %>
+  <div class="flex items-center gap-2 mb-2">
+    <span class="font-semibold text-gray-700">投稿者:</span>
+    <%= link_to @post.user.name, user_path(@post.user), class: "text-blue-500 hover:underline" %>
   </div>
-<% end %>
 
-<% if @post.video.attached? %>
-  <div>
-    <video width="400" controls>
-      <source src="<%= url_for(@post.video) %>" type="<%= @post.video.content_type %>">
-      お使いのブラウザは video タグをサポートしていません。
-    </video>
-  </div>
-<% else %>
-  <p>動画はありません</p>
-<% end %>
+  <h2 class="text-xl font-semibold text-gray-800 mb-2"><%= @post.title %></h2>
+  <p class="mb-4 text-gray-700"><%= @post.body %></p>
 
-<!-- app/views/posts/show.html.erb など -->
-<p><strong>タグ:</strong> <%= @post.tag %></p>
+  <% if @post.request_tag.present? %>
+    <p class="mb-4">
+      <span class="font-semibold text-gray-600">リクエスト:</span>
+      <span class="bg-green-50 text-green-500 px-2 py-1 rounded-full text-sm"><%= @post.request_tag %></span>
+    </p>
+  <% end %>
 
-<h3>コメント</h3>
+  <% if @post.images.attached? %>
+    <div class="mb-4">
 
-<% @post.comments.where(parent_id: nil).each do |comment| %>
-  <div class="comment">
-    <p><strong><%= comment.user&.name || "匿名" %></strong>: <%= comment.body %></p>
-    <small><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+      <% @post.images.each do |image| %>
+        <%= image_tag image, class: "rounded-lg max-w-xs" %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="mb-4 text-sm text-gray-400">画像はありません</p>
+  <% end %>
+  <% if @post.videos.attached? %>
+    <div class="mb-4">
+      <% @post.videos.each do |video| %>
+        <video class="rounded-lg w-full max-w-md" controls>
+          <source src="<%= url_for(video) %>" type="<%= video.content_type %>">
+          お使いのブラウザは video タグをサポートしていません。
+        </video>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="mb-4 text-sm text-gray-400">動画はありません</p>
+  <% end %>
 
-    <!-- 返信フォーム（各コメントの下に表示）-->
-    <%= form_with model: [ @post, Comment.new ], local: true do |f| %>
-      <%= f.hidden_field :parent_id, value: comment.id %> <!-- このコメントへの返信であることを示す -->
-      <%= f.text_area :body, rows: 1, placeholder: "返信を書く…" %>
-      <%= f.submit "返信" %>
+  <p class="mb-4">
+    <span class="font-semibold text-gray-600">タグ:</span>
+    <span class="bg-blue-50 text-blue-500 px-2 py-1 rounded-full text-sm"><%= @post.tag %></span>
+  </p>
+
+  <!-- 投票ボタン -->
+  <div class="flex items-center justify-end gap-4 mt-6 border-t pt-4">
+    <%= button_to vote_path(votable_type: 'Post', votable_id: @post.id, value: 1), method: :post, class: "text-gray-500 hover:text-green-500" do %>
+      👍
     <% end %>
+    <span class="text-gray-600 font-semibold">
+      <%= @post.votes.where(value: 1).count - @post.votes.where(value: -1).count %>
+    </span>
+    <%= button_to vote_path(votable_type: 'Post', votable_id: @post.id, value: -1), method: :post, class: "text-gray-500 hover:text-red-500" do %>
+      👎
+    <% end %>
+  </div>
+</div>
 
-    <!-- 返信コメント一覧（古い順に表示）-->
-    <div class="replies">
-      <% comment.replies.each do |reply| %>
-        <div class="reply" style="margin-left: 20px; border-left: 1px solid #ccc; padding-left: 10px; margin-top: 5px;">
-          <p><strong><%= reply.user&.name || "匿名" %></strong>: <%= reply.body %></p>
-          <small><%= reply.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+<div class="max-w-2xl mx-auto mt-8">
+  <h3 class="text-xl font-bold mb-4 text-gray-900">コメント</h3>
+  <%= form_with model: [@post, @comment], local: true, class: "space-y-4" do |f| %>
+    <div>
+      
+      <%= f.text_area :body, rows: 3, placeholder: "コメントを追加...", class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
+    </div>
+    <div>
+      
+      <%= f.file_field :attachments, multiple: true, class: "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" %>
+    </div>
+    <div>
+      <%= f.submit "コメントする", class: "inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
+    </div>
+  <% end %>
+  
+  <% @post.comments.where(parent_id: nil).each do |comment| %>
+    <div class="bg-gray-50 rounded-xl shadow p-5 mb-6">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="font-bold text-gray-700"><%= comment.user&.name || "匿名" %></span>
+        <span class="text-xs text-gray-400"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+      </div>
+      <p class="mb-3 text-gray-800"><%= comment.body %></p>
+
+      <!-- 投票ボタン -->
+      <div class="flex items-center justify-end gap-3 text-sm">
+        <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500" do %>
+          👍
+        <% end %>
+        <span class="text-gray-600 font-semibold">
+          <%= comment.votes.where(value: 1).count - comment.votes.where(value: -1).count %>
+        </span>
+        <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500" do %>
+          👎
+        <% end %>
+      </div>
+      
+      <!-- 返信フォーム -->
+      <%= form_with model: [@post, Comment.new], local: true, class: "flex gap-2 mb-2" do |f| %>
+        <%= f.hidden_field :parent_id, value: comment.id %>
+        <%= f.text_area :body, rows: 1, placeholder: "返信を書く…", class: "flex-1 resize-none rounded-lg border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-300" %>
+        <%= f.submit "返信", class: "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg font-semibold" %>
+      <% end %>
+
+      <!-- 返信コメント一覧 -->
+      <% if comment.replies.any? %>
+        <div class="mt-3 space-y-3">
+          <% comment.replies.each do |reply| %>
+            <div class="bg-white border-l-4 border-blue-200 rounded-lg pl-4 py-2 shadow-sm">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-bold text-blue-600"><%= reply.user&.name || "匿名" %></span>
+                <span class="text-xs text-gray-400"><%= reply.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+              </div>
+              <p class="text-gray-700"><%= reply.body %></p>
+              <!-- 投票ボタン -->
+              <div class="flex items-center justify-end gap-2 text-xs mt-1">
+                <%= button_to vote_path(votable_type: 'Comment', votable_id: reply.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500" do %>
+                  👍
+                <% end %>
+                <span class="text-gray-500 font-semibold">
+                  <%= reply.votes.where(value: 1).count - reply.votes.where(value: -1).count %>
+                </span>
+                <%= button_to vote_path(votable_type: 'Comment', votable_id: reply.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500" do %>
+                  👎
+                <% end %>
+              </div>
+            </div>
+          <% end %>
         </div>
       <% end %>
     </div>
-  </div>
+  <% end %>
 </div>
-<% end %>

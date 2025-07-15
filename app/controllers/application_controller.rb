@@ -16,17 +16,17 @@ class ApplicationController < ActionController::Base
   # def after_sign_up_path_for(resource)
   #   new_preference_path
   # end
-  
+
   # def after_inactive_sign_up_path_for(resource)
   #   new_preference_path
   # end
 
-  
+
 
   def configure_permitted_parameters
     # ユーザー登録時に name フィールドを許可
-    devise_parameter_sanitizer.permit(:sign_up, keys: [:name])
+    devise_parameter_sanitizer.permit(:sign_up, keys: [ :name ])
     # ユーザー情報更新時に name フィールドを許可
-    devise_parameter_sanitizer.permit(:account_update, keys: [:name])
+    devise_parameter_sanitizer.permit(:account_update, keys: [ :name ])
   end
 end

@@ -1,10 +1,10 @@
 one:
   user: one
-  standing: MyString
-  creation_experience: MyString
-  interests: MyString
-  favorite_artists: MyText
-  age_group: MyString
-  support_genres: MyString
-  support_styles: MyString
-  personality_traits: MyString
+  standing: ["クリエイター", "サポーター"]
+  creation_experience: "3年"
+  interests: ["イラスト", "漫画"]
+  favorite_artists: "好きなアーティスト"
+  age_group: "20代"
+  support_genres: ["ファンタジー", "SF"]
+  support_styles: ["フィードバック", "応援メッセージ"]
+  personality_traits: ["内向的", "分析的"]

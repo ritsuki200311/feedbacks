@@ -420,6 +420,7 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   kamal
+  launchy
   letter_opener_web
   pg (~> 1.1)
   propshaft

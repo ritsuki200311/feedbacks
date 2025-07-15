@@ -16,8 +16,8 @@ development:
 test:
   <<: *default
   database: feedbacks_test
-  username: postgres
-  password: password
+  username: <%= ENV.fetch("TEST_DATABASE_USERNAME") { "postgres" } %>
+  password: <%= ENV.fetch("TEST_DATABASE_PASSWORD") { "" } %>
 
 
 production:

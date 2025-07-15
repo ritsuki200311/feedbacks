@@ -16,10 +16,8 @@ development:
 test:
   <<: *default
   database: feedbacks_test
-  host: 127.0.0.1
-  username: akimotoritsuki
-  schema_search_path: public
-  port: 5432
+  username: postgres
+  password: password
 
 production:
   <<: *default

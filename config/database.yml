@@ -16,7 +16,7 @@ development:
 test:
   <<: *default
   database: feedbacks_test
-  username: postgres
+  username: akimotoritsuki
   password: password
 
 

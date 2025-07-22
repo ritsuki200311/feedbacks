@@ -15,6 +15,7 @@ class Post < ApplicationRecord
   end
   has_many_attached :images
   has_many_attached :videos
+  has_many_attached :audios
 
   validates :title, presence: true, length: { minimum: 3, maximum: 100 }
     validates :body, presence: true, length: { maximum: 10000 }
@@ -22,6 +23,7 @@ class Post < ApplicationRecord
 
   validate :validate_video_format
   validate :validate_image_format
+  validate :validate_audio_format
 
   has_many :comments, dependent: :destroy
   has_many :votes, as: :votable, dependent: :destroy
@@ -65,6 +67,20 @@ class Post < ApplicationRecord
 
       if image.byte_size > 5.megabytes
         errors.add(:images, "は5MB以下のサイズにしてください")
+      end
+    end
+  end
+
+  def validate_audio_format
+    return unless audios.attached?
+
+    audios.each do |audio|
+      unless audio.content_type.in?(%w[audio/mpeg audio/wav audio/ogg])
+        errors.add(:audios, "はMP3、WAV、またはOGG形式のファイルを選択してください")
+      end
+
+      if audio.byte_size > 100.megabytes
+        errors.add(:audios, "は100MB以下のサイズにしてください")
       end
     end
   end

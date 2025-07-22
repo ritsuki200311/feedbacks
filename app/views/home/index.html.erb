@@ -71,15 +71,21 @@
       <% if post.videos.attached? %>
         <div>
           <% post.videos.each do |video| %>
-            <% if video.variable? %>
             <video class="w-full max-w-md mx-auto" controls>
-              <source src="<%= url_for(video.variant(format: :mp4, resize_to_limit: [1920, 1080], quality: 75)) %>" type="video/mp4">
+              <source src="<%= url_for(video) %>" type="<%= video.content_type %>">
               お使いのブラウザは video タグをサポートしていません。
             </video>
-            <% else %>
-              <p class="text-red-500">この動画は再生できません。</p>
-              <p class="text-xs text-gray-500 break-all">Generated URL: <%= url_for(video) %></p>
-            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if post.audios.attached? %>
+        <div class="mt-4">
+          <% post.audios.each do |audio| %>
+            <audio controls class="w-full">
+              <source src="<%= url_for(audio) %>" type="<%= audio.content_type %>">
+              お使いのブラウザは audio タグをサポートしていません。
+            </audio>
           <% end %>
         </div>
       <% end %>

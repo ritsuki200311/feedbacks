@@ -27,4 +27,14 @@ class User < ApplicationRecord
       "B"
     end
   end
+
+  def add_coins(amount)
+    self.coins += amount
+    save
+  end
+
+  def remove_coins(amount)
+    self.coins -= amount
+    save
+  end
 end

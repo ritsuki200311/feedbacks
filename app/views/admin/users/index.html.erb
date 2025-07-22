@@ -19,9 +19,7 @@
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名前</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">メールアドレス</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">暗号化パスワード</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作成日時</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">更新日時</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">コイン</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">アクション</th>
         </tr>
       </thead>
@@ -31,11 +29,16 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= user.id %></td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= user.name %></td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= user.email %></td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate"><%= user.encrypted_password %></td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= user.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= user.updated_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= user.coins %></td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <%= link_to "詳細", user_path(user), class: "text-blue-600 hover:text-blue-900" %>
+              <%= form_with url: add_coins_admin_user_path(user), method: :post, local: true, class: "inline-block" do |form| %>
+                <%= form.number_field :amount, min: 1, placeholder: "追加コイン数", class: "p-1 border rounded" %>
+                <%= form.submit "追加", class: "bg-blue-500 text-white px-2 py-1 rounded" %>
+              <% end %>
+              <%= form_with url: remove_coins_admin_user_path(user), method: :post, local: true, class: "inline-block" do |form| %>
+                <%= form.number_field :amount, min: 1, placeholder: "削除コイン数", class: "p-1 border rounded" %>
+                <%= form.submit "削除", class: "bg-red-500 text-white px-2 py-1 rounded" %>
+              <% end %>
             </td>
           </tr>
         <% end %>

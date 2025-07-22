@@ -6,13 +6,14 @@ class PostsController < ApplicationController
   end
 
   def create
+    puts "DEBUG: AWS Access Key ID from credentials: #{Rails.application.credentials.dig(:aws, :access_key_id)}"
     @post = Post.new(post_params.except(:tag_list))
     @post.user = current_user
     @post.tag_list = post_params[:tag_list]
 
     if @post.valid? && CoinService.deduct_for_post(@post)
       @post.save
-      redirect_to posts_path, notice: "投稿が作成されました。"
+      redirect_to root_path, notice: "投稿が作成されました。"
     else
       if @post.errors.empty?
         flash.now[:alert] = "コインが不足しているか、投稿に問題があります。"

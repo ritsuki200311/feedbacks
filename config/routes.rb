@@ -18,7 +18,7 @@ Rails.application.routes.draw do
   resource :supporter_profile, only: [ :new, :create, :show, :edit, :update ]
 
   # 投稿とコメント
-  resources :posts, only: [ :new, :create, :show, :destroy ] do
+  resources :posts, only: [ :new, :create, :show, :destroy, :index ] do
     resources :comments, only: [ :create ]
   end
 
@@ -47,6 +47,11 @@ Rails.application.routes.draw do
 
   # 管理者
   namespace :admin do
-    resources :users, only: [ :index ]
+    resources :users, only: [:index] do
+      member do
+        post :add_coins
+        post :remove_coins
+      end
+    end
   end
 end

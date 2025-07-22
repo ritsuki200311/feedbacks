@@ -10,7 +10,7 @@
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 
     <!-- ✅ 必要なJSも読み込み -->
-    <%= javascript_importmap_tags %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload" %>
   </head>
 
   <body class="bg-gray-100 text-gray-800">

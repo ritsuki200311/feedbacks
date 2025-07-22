@@ -29,10 +29,15 @@
   <% if @post.videos.attached? %>
     <div class="mb-4">
       <% @post.videos.each do |video| %>
+        <% if video.variable? %>
         <video class="rounded-lg w-full max-w-md" controls>
-          <source src="<%= url_for(video) %>" type="<%= video.content_type %>">
+          <source src="<%= url_for(video.variant(format: :mp4, resize_to_limit: [1920, 1080], quality: 75)) %>" type="video/mp4">
           お使いのブラウザは video タグをサポートしていません。
         </video>
+        <% else %>
+          <p class="text-red-500">この動画は再生できません。</p>
+          <p class="text-xs text-gray-500 break-all">Generated URL: <%= url_for(video) %></p>
+        <% end %>
       <% end %>
     </div>
   <% else %>

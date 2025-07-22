@@ -18,8 +18,7 @@ class Post < ApplicationRecord
 
   validates :title, presence: true, length: { minimum: 3, maximum: 100 }
     validates :body, presence: true, length: { maximum: 10000 }
-  validates :creation_type, presence: true
-  validates :request_tag, presence: true
+  
 
   validate :validate_video_format
   validate :validate_image_format
@@ -50,8 +49,8 @@ class Post < ApplicationRecord
         errors.add(:videos, "はMP4、MOV、またはAVI形式のファイルを選択してください")
       end
 
-      if video.byte_size > 100.megabytes
-        errors.add(:videos, "は100MB以下のサイズにしてください")
+      if video.byte_size > 500.megabytes
+        errors.add(:videos, "は500MB以下のサイズにしてください")
       end
     end
   end

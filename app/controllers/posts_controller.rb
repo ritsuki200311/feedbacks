@@ -11,14 +11,19 @@ class PostsController < ApplicationController
     @post.user = current_user
     @post.tag_list = post_params[:tag_list]
 
-    if @post.valid? && CoinService.deduct_for_post(@post)
-      @post.save
-      redirect_to root_path, notice: "投稿が作成されました。"
-    else
-      if @post.errors.empty?
-        flash.now[:alert] = "コインが不足しているか、投稿に問題があります。"
+    respond_to do |format|
+      if @post.valid? && CoinService.deduct_for_post(@post)
+        @post.save
+        format.html { redirect_to posts_path, notice: "投稿が作成されました。" }
+        format.turbo_stream { flash.now[:notice] = "投稿が作成されました。" }
+      else
+        Rails.logger.debug "Post save failed: #{@post.errors.full_messages.join(', ')}"
+        if @post.errors.empty?
+          flash.now[:alert] = "コインが不足しているか、投稿に問題があります。"
+        end
+        format.html { render :new, status: :unprocessable_entity }
+        format.turbo_stream { render turbo_stream: turbo_stream.replace("post_form", partial: "posts/form", locals: { post: @post }), status: :unprocessable_entity }
       end
-      render :new
     end
   end
 
@@ -51,7 +56,7 @@ class PostsController < ApplicationController
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :tag_list, :creation_type, :request_tag, images: [], videos: [], audios: [])
+    params.require(:post).permit(:title, :body, :creation_type, :request_tag, :tag_list, images: [], videos: [], audios: [])
   end
 
 

@@ -2,17 +2,19 @@ require "test_helper"
 require "securerandom"
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
-  driven_by :selenium, using: :chrome, screen_size: [1400, 1400], options: {
-    browser: :chrome,
-    options: Selenium::WebDriver::Chrome::Options.new.tap do |opts|
-      opts.add_argument("--headless")
-      opts.add_argument("--no-sandbox")
-      opts.add_argument("--disable-gpu")
-      opts.add_argument("--disable-dev-shm-usage")
-      opts.add_argument("--user-data-dir=/tmp/chrome-user-data-#{SecureRandom.uuid}")
-      opts.add_argument("--verbose")
-      opts.add_argument("--log-path=/tmp/chromedriver.log")
-    end
+  driven_by :selenium, using: :chrome, screen_size: [ 1400, 1400 ], options: {
+    capabilities: Selenium::WebDriver::Remote::Capabilities.chrome(
+      "goog:chromeOptions" => {
+        "args" => [
+          "headless",
+          "disable-gpu",
+          "no-sandbox",
+          "window-size=1400,1400",
+          "disable-dev-shm-usage",
+          "user-data-dir=/tmp/chrome-user-data-#{Process.pid}"
+        ]
+      }
+    )
   }
   Capybara.default_max_wait_time = 5
 

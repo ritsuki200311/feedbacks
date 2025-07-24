@@ -107,8 +107,10 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "不正な画像形式テスト"
     fill_in "本文", with: "これは不正な画像形式テストの本文です。"
-    choose "イラスト・マンガ"
-    choose "見て！感想ください！"
+    find("input[type='radio'][value='イラスト・マンガ']").click
+
+    # リクエストを選択
+    find("input[type='radio'][value='見て！感想ください！']").click
 
     attach_file "画像", Rails.root.join("tmp/test_files/invalid_image.txt")
 
@@ -123,8 +125,10 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "大きすぎる画像テスト"
     fill_in "本文", with: "これは大きすぎる画像テストの本文です。"
-    choose "イラスト・マンガ"
-    choose "見て！感想ください！"
+    find("input[type='radio'][value='イラスト・マンガ']").click
+
+    # リクエストを選択
+    find("input[type='radio'][value='見て！感想ください！']").click
 
     attach_file "画像", Rails.root.join("tmp/test_files/large_image.png")
 
@@ -139,8 +143,10 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "不正な動画形式テスト"
     fill_in "本文", with: "これは不正な動画形式テストの本文です。"
-    choose "イラスト・マンガ"
-    choose "見て！感想ください！"
+    find("input[type='radio'][value='イラスト・マンガ']").click
+
+    # リクエストを選択
+    find("input[type='radio'][value='見て！感想ください！']").click
 
     attach_file "動画", Rails.root.join("tmp/test_files/invalid_video.txt")
 
@@ -155,8 +161,10 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "大きすぎる動画テスト"
     fill_in "本文", with: "これは大きすぎる動画テストの本文です。"
-    choose "イラスト・マンガ"
-    choose "見て！感想ください！"
+    find("input[type='radio'][value='イラスト・マンガ']").click
+
+    # リクエストを選択
+    find("input[type='radio'][value='見て！感想ください！']").click
 
     attach_file "動画", Rails.root.join("tmp/test_files/large_video_501mb.mp4")
 
@@ -171,8 +179,10 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "連打テスト投稿"
     fill_in "本文", with: "これは連打テスト投稿の本文です。"
-    choose "イラスト・マンガ"
-    choose "見て！感想ください！"
+    find("input[type='radio'][value='イラスト・マンガ']").click
+
+    # リクエストを選択
+    find("input[type='radio'][value='見て！感想ください！']").click
 
     attach_file "画像", Rails.root.join("tmp/test_files/valid_image.png")
 

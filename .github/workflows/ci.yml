@@ -89,7 +89,7 @@ jobs:
           PGHOST: localhost
           PGUSER: postgres
           PGPASSWORD: password
-          PGDATABASE: test_db
+          PGDATABASE: feedbacks_test
         run: bin/rails db:test:prepare test test:system
 
       - name: Kill orphaned Chrome processes

@@ -8,6 +8,8 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     opts.add_argument("--disable-gpu")
     opts.add_argument("--disable-dev-shm-usage")
     opts.add_argument("--user-data-dir=/tmp/chrome-user-data-#{SecureRandom.uuid}")
+    opts.add_argument("--verbose")
+    opts.add_argument("--log-path=/tmp/chromedriver.log")
   end
   Capybara.default_max_wait_time = 5
 

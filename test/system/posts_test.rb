@@ -162,7 +162,7 @@ class PostsTest < ApplicationSystemTestCase
 
     click_on "投稿する"
 
-    assert_text "は500MB以下のサイズにしてください", visible: :all
+    assert page.has_text?("は500MB以下のサイズにしてください", visible: :all)
     assert_no_text "投稿が作成されました。"
   end
 

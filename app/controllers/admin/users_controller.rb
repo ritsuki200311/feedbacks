@@ -1,6 +1,6 @@
 module Admin
   class UsersController < ApplicationController
-    before_action :set_user, only: [:add_coins, :remove_coins]
+    before_action :set_user, only: [ :add_coins, :remove_coins ]
 
     def index
       @users = User.includes(:preference).all

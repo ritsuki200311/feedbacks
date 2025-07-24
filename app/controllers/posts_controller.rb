@@ -14,7 +14,7 @@ class PostsController < ApplicationController
     respond_to do |format|
       if @post.valid? && CoinService.deduct_for_post(@post)
         @post.save
-        format.html { redirect_to posts_path, notice: "投稿が作成されました。" }
+        format.html { redirect_to root_path, notice: "投稿が作成されました。" }
         format.turbo_stream { flash.now[:notice] = "投稿が作成されました。" }
       else
         Rails.logger.debug "Post save failed: #{@post.errors.full_messages.join(', ')}"
@@ -49,9 +49,7 @@ class PostsController < ApplicationController
     redirect_to root_path, notice: "投稿が削除されました。"
   end
 
-  def index
-    @posts = Post.all.includes(:comments)  # コメントを含めて全投稿を取得
-  end
+  
 
   private
 

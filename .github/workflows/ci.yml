@@ -89,8 +89,11 @@ jobs:
           PGHOST: localhost
           PGUSER: postgres
           PGPASSWORD: password
-          PGDATABASE: test_db
+          PGDATABASE: feedbacks_test
         run: bin/rails db:test:prepare test test:system
+
+      - name: Kill orphaned Chrome processes
+        run: pkill chrome || true
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4

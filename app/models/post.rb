@@ -19,7 +19,7 @@ class Post < ApplicationRecord
 
   validates :title, presence: true, length: { minimum: 3, maximum: 100 }
     validates :body, presence: true, length: { maximum: 10000 }
-  
+
 
   validate :validate_video_format
   validate :validate_image_format

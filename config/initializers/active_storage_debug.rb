@@ -11,7 +11,7 @@ end
 
 # image_processing のログを有効にする (MiniMagick または Vips の詳細ログ)
 # MiniMagick の場合
-require 'mini_magick'
+require "mini_magick"
 MiniMagick.logger.level = Logger::DEBUG
 
 # Ruby-Vips の場合

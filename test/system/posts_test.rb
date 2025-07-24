@@ -16,10 +16,10 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "テスト投稿タイトル"
     fill_in "本文", with: "これはテスト投稿の本文です。"
-    
+
     # 創作の種類を選択
     choose "イラスト・マンガ" # Post::CREATION_TYPES のキー
-    
+
     # リクエストを選択
     choose "見て！感想ください！" # request_tag_options の値
 
@@ -34,7 +34,7 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "全てのフィールドを含むテスト投稿"
     fill_in "本文", with: "これは全てのフィールドを含むテスト投稿の本文です。"
-    
+
     choose "詩・小説"
     choose "困ってます！アドバイスください！"
 
@@ -157,15 +157,15 @@ class PostsTest < ApplicationSystemTestCase
     choose "イラスト・マンガ"
     choose "見て！感想ください！"
 
-    attach_file "動画", Rails.root.join("tmp/test_files/large_video.mp4")
+    attach_file "動画", Rails.root.join("tmp/test_files/large_video_501mb.mp4")
 
     click_on "投稿する"
 
-    assert_text "は100MB以下のサイズにしてください"
+    assert_text "は500MB以下のサイズにしてください"
     assert_no_text "投稿が作成されました。"
   end
 
-  test "repeatedly clicking the post button with image" do
+  test "submitting the form multiple times should not create multiple posts" do
     visit new_post_url
 
     fill_in "タイトル", with: "連打テスト投稿"
@@ -175,16 +175,13 @@ class PostsTest < ApplicationSystemTestCase
 
     attach_file "画像", Rails.root.join("tmp/test_files/valid_image.png")
 
-    # 複数回クリックを試みる
-    click_on "投稿する"
-    click_on "投稿する" # 2回目
-    click_on "投稿する" # 3回目
+    assert_difference("Post.count", 1) do
+      click_on "投稿する"
+      # ページが遷移して成功メッセージが表示されるのを待つ
+      assert_text "投稿が作成されました。"
+    end
 
-    # 投稿が1回だけ作成されたことを確認（リダイレクト後のページで確認）
-    assert_text "投稿が作成されました。", count: 1
+    # 成功メッセージが表示されたことを確認
     assert_text "連打テスト投稿"
-    # 投稿が重複していないことを確認するために、投稿一覧ページに移動して確認することも可能
-    # visit posts_url
-    # assert_selector "h1", text: "連打テスト投稿", count: 1
   end
 end

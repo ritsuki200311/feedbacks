@@ -8,6 +8,7 @@ class PostsTest < ApplicationSystemTestCase
 
   test "visiting the new post page" do
     visit new_post_url
+    sleep 1 # デバッグ用の一時的な待機
     assert_selector "h1", text: "新規投稿を作成"
   end
 

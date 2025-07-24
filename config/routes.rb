@@ -34,6 +34,14 @@ Rails.application.routes.draw do
     resources :messages, only: [ :create ]
   end
 
+  # コミュニティ機能
+  resources :communities do
+    member do
+      post :join
+      delete :leave
+    end
+  end
+
   # 好み設定（Preference）
   resource :preference, controller: "preferences", only: [ :new, :create, :edit, :update ]
 

@@ -1,4 +1,5 @@
 <%= form_with model: post, local: true, class: "space-y-6 bg-white p-6 rounded-lg shadow-md" do |form| %>
+  <%= form.hidden_field :community_id if post.community_id.present? %>
 
   <% if post.errors.any? || flash[:alert].present? %>
     <div class="bg-red-100 text-red-700 p-4 rounded">
@@ -38,7 +39,7 @@
     </div>
   </div>
 
-  <%= render 'checkbox_options', title: "タグを選んでください（複数選択可）", field_name: "post[tag_list][]", options: tag_options, selected: post.tag_list %>
+  <%= render 'posts/checkbox_options', title: "タグを選んでください（複数選択可）", field_name: "post[tag_list][]", options: tag_options, selected: post.tag_list %>
 
   <div>
     <span class="block text-lg font-semibold text-gray-800 mb-3">リクエスト</span>

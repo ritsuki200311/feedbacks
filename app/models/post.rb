@@ -28,6 +28,7 @@ class Post < ApplicationRecord
   has_many :comments, dependent: :destroy
   has_many :votes, as: :votable, dependent: :destroy
   belongs_to :user, optional: true
+  belongs_to :community, optional: true
     # validates :video, presence: true  # この行をコメントアウトして無効にする
 
 

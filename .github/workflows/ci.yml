@@ -92,6 +92,9 @@ jobs:
           PGDATABASE: test_db
         run: bin/rails db:test:prepare test test:system
 
+      - name: Kill orphaned Chrome processes
+        run: pkill chrome || true
+
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4
         if: failure()

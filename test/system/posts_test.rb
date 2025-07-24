@@ -16,10 +16,10 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "テスト投稿タイトル"
     fill_in "本文", with: "これはテスト投稿の本文です。"
-    
+
     # 創作の種類を選択
     choose "イラスト・マンガ" # Post::CREATION_TYPES のキー
-    
+
     # リクエストを選択
     choose "見て！感想ください！" # request_tag_options の値
 
@@ -34,7 +34,7 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "全てのフィールドを含むテスト投稿"
     fill_in "本文", with: "これは全てのフィールドを含むテスト投稿の本文です。"
-    
+
     choose "詩・小説"
     choose "困ってます！アドバイスください！"
 
@@ -175,7 +175,7 @@ class PostsTest < ApplicationSystemTestCase
 
     attach_file "画像", Rails.root.join("tmp/test_files/valid_image.png")
 
-    assert_difference('Post.count', 1) do
+    assert_difference("Post.count", 1) do
       click_on "投稿する"
       # ページが遷移して成功メッセージが表示されるのを待つ
       assert_text "投稿が作成されました。"

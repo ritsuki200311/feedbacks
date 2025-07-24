@@ -49,7 +49,7 @@ class PostsController < ApplicationController
     redirect_to root_path, notice: "投稿が削除されました。"
   end
 
-  
+
 
   private
 

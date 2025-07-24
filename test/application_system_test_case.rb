@@ -21,5 +21,6 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     fill_in "Email", with: user.email
     fill_in "Password", with: "password"
     click_on "Log in"
+    assert_text user.email # ログイン成功を検証
   end
 end

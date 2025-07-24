@@ -13,6 +13,7 @@ class PostsTest < ApplicationSystemTestCase
 
   test "creating a post with only required fields" do
     visit new_post_url
+    assert_selector "h1", text: "新規投稿を作成"
 
     fill_in "タイトル", with: "テスト投稿タイトル"
     fill_in "本文", with: "これはテスト投稿の本文です。"

@@ -1,0 +1,19 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6">すべての投稿</h1>
+
+  <% if @posts.any? %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @posts.each do |post| %>
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-semibold mb-2"><%= link_to post.title, post_path(post), class: "text-blue-600 hover:underline" %></h2>
+          <p class="text-gray-700 mb-4"><%= truncate(post.body, length: 150) %></p>
+          <div class="text-sm text-gray-500">
+            投稿者: <%= post.user.present? ? post.user.name : "不明" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-gray-600">まだ投稿がありません。</p>
+  <% end %>
+</div>

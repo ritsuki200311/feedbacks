@@ -1,3 +1,74 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* LINE風チャットルームのスタイル */
+
+.chat-container {
+  @apply flex flex-col h-screen;
+  background-color: #79a2d1;
+}
+
+.chat-header {
+  @apply bg-gray-800 text-white p-4 text-center;
+}
+
+.chat-header h2 {
+  @apply m-0 text-lg;
+}
+
+.chat-box {
+  @apply flex-grow overflow-y-auto p-5 flex flex-col;
+}
+
+.message-row {
+  @apply flex mb-4;
+}
+
+.message-row.sent {
+  @apply justify-end;
+}
+
+.message-row.received {
+  @apply justify-start;
+}
+
+.message {
+  @apply max-w-md flex items-end;
+}
+
+.message-body {
+  @apply py-2 px-4 rounded-2xl text-gray-800 break-words;
+}
+
+.sent .message-body {
+  @apply bg-green-300 text-black;
+}
+
+.received .message-body {
+  @apply bg-white;
+}
+
+.message-time {
+  @apply text-xs text-gray-500 mx-1 whitespace-nowrap;
+}
+
+.message-form-container {
+  @apply p-2 bg-gray-100 border-t border-gray-300;
+}
+
+.message-form {
+  @apply flex items-center;
+}
+
+.message-form textarea {
+  @apply flex-grow rounded-2xl border border-gray-400 py-2 px-4 resize-none min-h-10 max-h-24 overflow-y-auto;
+}
+
+.send-button {
+  @apply bg-green-500 text-white border-none py-2 px-4 rounded-2xl ml-2 cursor-pointer;
+}
+
+.send-button:hover {
+  @apply bg-green-600;
+}

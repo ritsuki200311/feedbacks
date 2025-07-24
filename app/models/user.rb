@@ -18,6 +18,11 @@ class User < ApplicationRecord
 
   has_one :supporter_profile, dependent: :destroy
 
+  # コミュニティ関連
+  has_many :community_users, dependent: :destroy
+  has_many :communities, through: :community_users
+  has_many :created_communities, class_name: 'Community', foreign_key: 'user_id', dependent: :destroy
+
   def rank
     if rank_points >= 40
       "A"

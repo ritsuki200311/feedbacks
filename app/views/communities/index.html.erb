@@ -1,0 +1,15 @@
+<div class="container mx-auto px-4 mt-6">
+  <h1 class="text-2xl font-bold mb-4">公開コミュニティ一覧</h1>
+
+  <%= link_to "新しいコミュニティを作成する", new_community_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4 inline-block" %>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <% @communities.each do |community| %>
+      <div class="bg-white rounded p-6 shadow">
+        <h2 class="text-xl font-bold mb-2"><%= link_to community.name, community_path(community), class: "text-blue-600 hover:underline" %></h2>
+        <p class="text-gray-700 mb-4"><%= community.description %></p>
+        <p class="text-gray-500">参加者: <%= community.users.count %>人</p>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -14,7 +14,9 @@ class PostsController < ApplicationController
     respond_to do |format|
       if @post.valid? && CoinService.deduct_for_post(@post)
         @post.save
-        format.html { redirect_to root_path, notice: "投稿が作成されました。" }
+
+        format.html { redirect_to community_path(@post.community), notice: "投稿が作成されました。" }
+
         format.turbo_stream { flash.now[:notice] = "投稿が作成されました。" }
       else
         Rails.logger.debug "Post save failed: #{@post.errors.full_messages.join(', ')}"
@@ -54,7 +56,7 @@ class PostsController < ApplicationController
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :creation_type, :request_tag, :tag_list, images: [], videos: [], audios: [])
+    params.require(:post).permit(:title, :body, :creation_type, :request_tag, :tag_list, :community_id, images: [], videos: [], audios: [])
   end
 
 

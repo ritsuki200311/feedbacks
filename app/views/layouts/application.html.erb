@@ -7,10 +7,19 @@
 
     <!-- ✅ Tailwind + application.css を読み込む -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <link rel="stylesheet" href="/stylesheets/application.css">
 
     <!-- ✅ 必要なJSも読み込み -->
-    <%= javascript_include_tag "application", "data-turbo-track": "reload" %>
+    <script type="importmap">
+      {
+        "imports": {
+          "application": "/javascripts/application.js",
+          "@hotwired/turbo-rails": "/javascripts/turbo.min.js",
+          "@hotwired/stimulus": "/javascripts/stimulus.min.js"
+        }
+      }
+    </script>
+    <script type="module" src="/javascripts/application.js"></script>
   </head>
 
   <body class="bg-gray-100 text-gray-800">

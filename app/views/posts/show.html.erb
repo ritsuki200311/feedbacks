@@ -17,10 +17,57 @@
   <% end %>
 
   <% if @post.images.attached? %>
+    <!-- テスト用の簡単なコントローラー -->
+    <div class="mb-2 p-2 bg-yellow-100 border border-yellow-400 rounded" data-controller="image-test">
+      <p class="text-sm">テスト: この画像をクリックしてください →
+        <%= image_tag @post.images.first, class: "inline-block w-16 h-16 ml-2 cursor-pointer border-2 border-blue-500", data: { "image-test-target": "image", action: "click->image-test#imageClicked" } if @post.images.any? %>
+      </p>
+      <button type="button" data-action="click->image-test#imageClicked" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded">テストボタン</button>
+      <button type="button" onclick="testCreateMarker()" class="mt-2 ml-2 bg-green-500 text-white px-3 py-1 rounded">テストマーカー作成</button>
+      
+      <script>
+        function testCreateMarker() {
+          // 直接マーカーを作成するテスト
+          const container = document.querySelector('[data-image-comments-target="markersContainer"]');
+          if (container) {
+            const marker = document.createElement("div");
+            marker.className = "absolute w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold cursor-pointer z-10";
+            marker.style.left = "150px";
+            marker.style.top = "100px";
+            marker.textContent = "1";
+            marker.title = "テストマーカー";
+            container.appendChild(marker);
+            console.log('Test marker created directly!');
+            alert('テストマーカーを作成しました！');
+          } else {
+            console.error('Markers container not found!');
+            alert('マーカーコンテナが見つかりません');
+          }
+        }
+      </script>
+    </div>
+    
     <div class="mb-4">
-
-      <% @post.images.each do |image| %>
-        <%= image_tag image, class: "rounded-lg max-w-xs" %>
+      <% @post.images.each_with_index do |image, index| %>
+        <div class="relative inline-block mb-4 mr-4" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
+          <%= image_tag image, class: "rounded-lg max-w-md cursor-pointer", data: { "image-comments-target": "image" } %>
+          
+          <!-- 画像上コメント用のフォーム（初期は非表示） -->
+          <div class="hidden absolute z-50 bg-white border border-gray-300 rounded-lg p-3 shadow-lg" data-image-comments-target="form">
+            <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
+              <%= f.hidden_field :x_position %>
+              <%= f.hidden_field :y_position %>
+              <%= f.text_area :body, rows: 2, placeholder: "コメントを入力...", class: "w-48 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500", required: true %>
+              <div class="mt-2 flex gap-2">
+                <%= f.submit "コメントする", class: "bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm" %>
+                <button type="button" data-action="click->image-comments#hideForm" class="bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400 text-sm">キャンセル</button>
+              </div>
+            <% end %>
+          </div>
+          
+          <!-- 画像上のコメントマーカー表示エリア -->
+          <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+        </div>
       <% end %>
     </div>
   <% else %>
@@ -65,6 +112,26 @@
 
 <div class="max-w-2xl mx-auto mt-8">
   <h3 class="text-xl font-bold mb-4 text-gray-900">コメント</h3>
+  
+  <!-- 画像上コメント一覧 -->
+  <% image_comments = @post.comments.where.not(x_position: nil, y_position: nil).order(:created_at) %>
+  <% if image_comments.any? %>
+    <div class="mb-6 bg-blue-50 rounded-lg p-4">
+      <h4 class="font-semibold text-blue-900 mb-3">📍 画像上のコメント</h4>
+      <% image_comments.each_with_index do |comment, index| %>
+        <div class="mb-3 p-3 bg-white rounded border cursor-pointer hover:bg-gray-50" 
+             data-action="click->image-comments#highlightMarker" 
+             data-comment-id="<%= comment.id %>">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">#<%= index + 1 %></span>
+            <span class="font-semibold text-gray-700"><%= comment.user&.name || "匿名" %></span>
+            <span class="text-xs text-gray-400"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+          </div>
+          <p class="text-gray-800 ml-8"><%= comment.body %></p>
+        </div>
+      <% end %>
+    </div>  
+  <% end %>
   <%= form_with model: [@post, @comment], local: true, class: "space-y-4" do |f| %>
     <div>
       

@@ -14,15 +14,10 @@ class PostsController < ApplicationController
     respond_to do |format|
       if @post.valid? && CoinService.deduct_for_post(@post)
         @post.save
-<<<<<<< Updated upstream
-
-        format.html { redirect_to community_path(@post.community), notice: "投稿が作成されました。" }
-
+        
+        redirect_path = @post.community.present? ? community_path(@post.community) : root_path
+        format.html { redirect_to redirect_path, notice: "投稿が作成されました。" }
         format.turbo_stream { flash.now[:notice] = "投稿が作成されました。" }
-=======
-        format.html { redirect_to root_path, notice: "投稿が作成されました。" }
-        format.turbo_stream { redirect_to root_path, notice: "投稿が作成されました." }
->>>>>>> Stashed changes
       else
         Rails.logger.debug "Post save failed: #{@post.errors.full_messages.join(', ')}"
         flash[:alert] = @post.errors.empty? ? "コインが不足しているか、投稿に問題があります。" : @post.errors.full_messages.join(", ")

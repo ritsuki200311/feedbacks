@@ -6,30 +6,12 @@
     <%= csp_meta_tag %>
 
     <!-- ✅ Tailwind + application.css を読み込む -->
-<<<<<<< Updated upstream
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/stylesheets/application.css">
-
-    <!-- ✅ 必要なJSも読み込み -->
-    <script type="importmap">
-      {
-        "imports": {
-          "application": "/javascripts/application.js",
-          "@hotwired/turbo-rails": "/javascripts/turbo.min.js",
-          "@hotwired/stimulus": "/javascripts/stimulus.min.js"
-        }
-      }
-    </script>
-    <script type="module" src="/javascripts/application.js"></script>
-=======
-    
     <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 
     <!-- ✅ 必要なJSも読み込み -->
     <%= javascript_importmap_tags %>
     <%= javascript_include_tag "application", "data-turbo-track": "reload" %>
->>>>>>> Stashed changes
   </head>
 
   <body class="bg-gray-100 text-gray-800">

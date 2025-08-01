@@ -1,14 +1,15 @@
 class RoomsController < ApplicationController
   before_action :authenticate_user!
+  layout "chat", only: [ :show ]
 
   def create
     other_user = User.find(params[:user_id])
 
     # 既存のルームがあるか確認
     existing_room = Room.joins(:entries)
-                        .where(entries: { user_id: [current_user.id, other_user.id] })
-                        .group('rooms.id')
-                        .having('COUNT(rooms.id) = 2')
+                        .where(entries: { user_id: [ current_user.id, other_user.id ] })
+                        .group("rooms.id")
+                        .having("COUNT(rooms.id) = 2")
                         .first
 
     if existing_room
@@ -23,17 +24,16 @@ class RoomsController < ApplicationController
 
   def show
     @room = Room.find(params[:id])
-  
+
     unless @room.entries.exists?(user_id: current_user.id)
       redirect_to root_path, alert: "そのチャットルームにはアクセスできません"
       return
     end
-  
+
     @messages = @room.messages.includes(:user)
     @message = Message.new
     @other_user = @room.entries.where.not(user_id: current_user.id).first&.user
-  
-    # 🔽 ここで「自分以外のユーザーが送った未読メッセージ」を既読にする
-    @room.messages.where(user_id: @other_user.id, is_read: false).update_all(is_read: true)
-  end  
+
+    Message.mark_as_read_by_room_and_user(@room, @other_user)
+  end
 end

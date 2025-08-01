@@ -21,7 +21,7 @@ Things you may want to cover:
 
 * Deployment instructions
 
-* ...
+* export TEST_DATABASE_USERNAME=akimotoritsuki && bin/rails test:systemをすると投稿のテストができる
 =======
 # feedbacks
 >>>>>>> 8058305b75c1d2fbfebe8b52bf4c8798ce5b1446

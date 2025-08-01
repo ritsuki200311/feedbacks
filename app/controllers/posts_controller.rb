@@ -1,28 +1,34 @@
 class PostsController < ApplicationController
-  before_action :set_post, only: [:show, :edit, :update, :destroy]
+  before_action :set_post, only: [ :show, :edit, :update, :destroy ]
 
   def new
     @post = Post.new
   end
 
   def create
-    @post = Post.new(post_params.except(:tag_list)) # 仮想属性を除く
+    puts "DEBUG: AWS Access Key ID from credentials: #{Rails.application.credentials.dig(:aws, :access_key_id)}"
+    @post = Post.new(post_params.except(:tag_list))
     @post.user = current_user
-    @post.tag_list = post_params[:tag_list]         # 手動で代入
+    @post.tag_list = post_params[:tag_list]
 
-    cost = Rails.application.config.x.coin.post_cost
-    if current_user.coins < cost
-      redirect_to new_post_path, alert: "コインが不足しています。" and return
-    end
+    respond_to do |format|
+      if @post.valid? && CoinService.deduct_for_post(@post)
+        @post.save
 
-    if @post.save
-      current_user.decrement!(:coins, cost)  # コインを減らす
-      redirect_to posts_path, notice: '投稿が作成されました。'
-    else
-      render :new
+        format.html { redirect_to community_path(@post.community), notice: "投稿が作成されました。" }
+
+        format.turbo_stream { flash.now[:notice] = "投稿が作成されました。" }
+      else
+        Rails.logger.debug "Post save failed: #{@post.errors.full_messages.join(', ')}"
+        if @post.errors.empty?
+          flash.now[:alert] = "コインが不足しているか、投稿に問題があります。"
+        end
+        format.html { render :new, status: :unprocessable_entity }
+        format.turbo_stream { render turbo_stream: turbo_stream.replace("post_form", partial: "posts/form", locals: { post: @post }), status: :unprocessable_entity }
+      end
     end
   end
-  
+
 
   def show
     @comment = @post.comments.build  # コメント投稿フォーム用
@@ -45,16 +51,14 @@ class PostsController < ApplicationController
     redirect_to root_path, notice: "投稿が削除されました。"
   end
 
-  def index
-    @posts = Post.all.includes(:comments)  # コメントを含めて全投稿を取得
-  end
+
 
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :thumbnail, :video, tag_list: [])
+    params.require(:post).permit(:title, :body, :creation_type, :request_tag, :tag_list, :community_id, images: [], videos: [], audios: [])
   end
-  
+
 
   def set_post
     @post = Post.find(params[:id])

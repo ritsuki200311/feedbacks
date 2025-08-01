@@ -17,36 +17,6 @@
   <% end %>
 
   <% if @post.images.attached? %>
-    <!-- テスト用の簡単なコントローラー -->
-    <div class="mb-2 p-2 bg-yellow-100 border border-yellow-400 rounded" data-controller="image-test">
-      <p class="text-sm">テスト: この画像をクリックしてください →
-        <%= image_tag @post.images.first, class: "inline-block w-16 h-16 ml-2 cursor-pointer border-2 border-blue-500", data: { "image-test-target": "image", action: "click->image-test#imageClicked" } if @post.images.any? %>
-      </p>
-      <button type="button" data-action="click->image-test#imageClicked" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded">テストボタン</button>
-      <button type="button" onclick="testCreateMarker()" class="mt-2 ml-2 bg-green-500 text-white px-3 py-1 rounded">テストマーカー作成</button>
-      
-      <script>
-        function testCreateMarker() {
-          // 直接マーカーを作成するテスト
-          const container = document.querySelector('[data-image-comments-target="markersContainer"]');
-          if (container) {
-            const marker = document.createElement("div");
-            marker.className = "absolute w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold cursor-pointer z-10";
-            marker.style.left = "150px";
-            marker.style.top = "100px";
-            marker.textContent = "1";
-            marker.title = "テストマーカー";
-            container.appendChild(marker);
-            console.log('Test marker created directly!');
-            alert('テストマーカーを作成しました！');
-          } else {
-            console.error('Markers container not found!');
-            alert('マーカーコンテナが見つかりません');
-          }
-        }
-      </script>
-    </div>
-    
     <div class="mb-4">
       <% @post.images.each_with_index do |image, index| %>
         <div class="relative inline-block mb-4 mr-4" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
@@ -67,6 +37,18 @@
           
           <!-- 画像上のコメントマーカー表示エリア -->
           <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+          
+          <!-- マーカー表示切り替えボタン -->
+          <div class="mt-2 flex items-center gap-2">
+            <button type="button" 
+                    data-action="click->image-comments#toggleMarkers" 
+                    data-image-comments-target="toggleButton"
+                    class="flex items-center gap-2 px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+              <span data-image-comments-target="toggleIcon">👁️</span>
+              <span data-image-comments-target="toggleText">コメントピンを表示</span>
+            </button>
+            <span data-image-comments-target="markerCount" class="text-sm text-gray-500"></span>
+          </div>
         </div>
       <% end %>
     </div>

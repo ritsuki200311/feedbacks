@@ -147,23 +147,47 @@
       
       // Image Comments Controller  
       class ImageCommentsController extends Controller {
-        static targets = ["image", "form", "commentForm", "markersContainer"]
-        static values = { postId: Number }
+        static targets = ["image", "form", "commentForm", "markersContainer", "toggleButton", "toggleIcon", "toggleText", "markerCount"]
+        static values = { postId: Number, readOnly: Boolean }
 
         connect() {
           console.log("Image Comments Controller connected!")
           console.log("Post ID:", this.postIdValue)
-          this.setupImageClickListener()
+          console.log("Read Only:", this.readOnlyValue)
+          console.log("Available targets:", this.targets)
+          console.log("Has toggleButton target:", this.hasToggleButtonTarget)
+          
+          // グローバル設定があれば初期状態はそれに従う、読み取り専用の場合
+          if (this.readOnlyValue) {
+            this.markersVisible = localStorage.getItem('globalCommentPinsVisible') === 'true'
+          } else {
+            this.markersVisible = false // 詳細ページでは従来通り
+          }
+          
+          // 読み取り専用でない場合のみクリックリスナーを設定
+          if (!this.readOnlyValue) {
+            this.setupImageClickListener()
+          }
+          
           this.loadExistingComments()
           this.setupResizeListener()
+          this.updateToggleButton()
+          
+          // グローバルピン切り替えイベントを監視（すべてのモードで）
+          window.addEventListener('globalCommentPinsToggled', this.handleGlobalToggle.bind(this))
         }
 
         setupResizeListener() {
           // ウィンドウリサイズ時にマーカーの位置を再計算
+          let resizeTimeout
           window.addEventListener('resize', () => {
-            if (this.existingComments) {
-              this.renderComments(this.existingComments)
-            }
+            clearTimeout(resizeTimeout)
+            resizeTimeout = setTimeout(() => {
+              if (this.existingComments) {
+                console.log("Recalculating marker positions after resize")
+                this.renderComments(this.existingComments)
+              }
+            }, 150) // デバウンス処理
           })
         }
 
@@ -235,7 +259,28 @@
               )
               console.log("Loaded image comments:", imageComments)
               this.existingComments = imageComments
-              this.renderComments(imageComments)
+              
+              // 画像が読み込み完了してからコメントを描画
+              if (this.hasImageTarget) {
+                if (this.imageTarget.complete && this.imageTarget.naturalWidth > 0) {
+                  this.renderComments(imageComments)
+                } else {
+                  this.imageTarget.addEventListener('load', () => {
+                    this.renderComments(imageComments)
+                  }, { once: true })
+                  // フォールバック
+                  setTimeout(() => {
+                    this.renderComments(imageComments)
+                  }, 200)
+                }
+              }
+              
+              // 読み取り専用モードで既存のコメントがある場合は初期状態でマーカーを表示
+              if (this.readOnlyValue && imageComments.length > 0) {
+                this.markersVisible = localStorage.getItem('globalCommentPinsVisible') === 'true'
+              } else if (imageComments.length > 0) {
+                this.markersVisible = true
+              }
             } else {
               console.log("Could not load comments via API, using fallback")
               this.loadCommentsFromDOM()
@@ -268,6 +313,11 @@
           
           this.existingComments = comments
           this.renderComments(comments)
+          
+          // 既存のコメントがある場合は初期状態でマーカーを表示
+          if (comments.length > 0) {
+            this.markersVisible = true
+          }
         }
 
         renderComments(comments) {
@@ -282,6 +332,12 @@
           comments.forEach((comment, index) => {
             this.createMarker(comment, index + 1)
           })
+          
+          // マーカー表示状態を更新
+          if (this.hasMarkersContainerTarget) {
+            this.markersContainerTarget.style.display = this.markersVisible ? 'block' : 'none'
+          }
+          this.updateToggleButton()
         }
 
         createMarker(comment, number) {
@@ -292,27 +348,49 @@
           
           const marker = document.createElement("div")
           marker.className = "absolute w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold cursor-pointer z-10 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110"
-          
-          // パーセンテージから実際のピクセル位置を計算
-          const imageRect = this.imageTarget.getBoundingClientRect()
-          const imageContainer = this.imageTarget.parentElement.getBoundingClientRect()
-          
-          const xPixel = (comment.x_position / 100) * imageRect.width
-          const yPixel = (comment.y_position / 100) * imageRect.height
-          
-          marker.style.left = `${xPixel}px`
-          marker.style.top = `${yPixel}px`
           marker.textContent = number
           marker.dataset.commentId = comment.id
           marker.style.pointerEvents = "auto"
           
+          // 画像が読み込み完了してからマーカーの位置を設定
+          const positionMarker = () => {
+            const imageRect = this.imageTarget.getBoundingClientRect()
+            console.log(`Image rect for marker ${number}:`, imageRect.width, 'x', imageRect.height)
+            
+            // 画像サイズが0の場合は少し待ってから再試行
+            if (imageRect.width === 0 || imageRect.height === 0) {
+              console.log(`Image not ready for marker ${number}, retrying...`)
+              setTimeout(positionMarker, 100)
+              return
+            }
+            
+            const xPixel = (comment.x_position / 100) * imageRect.width
+            const yPixel = (comment.y_position / 100) * imageRect.height
+            
+            marker.style.left = `${xPixel}px`
+            marker.style.top = `${yPixel}px`
+            
+            console.log(`Marker #${number} positioned at (${xPixel}, ${yPixel}) from (${comment.x_position}%, ${comment.y_position}%)`)
+          }
+          
+          // 画像が既に読み込まれているかチェック
+          if (this.imageTarget.complete && this.imageTarget.naturalWidth > 0) {
+            positionMarker()
+          } else {
+            // 画像の読み込み完了を待つ
+            this.imageTarget.addEventListener('load', positionMarker, { once: true })
+            // 既に読み込み済みの場合のフォールバック
+            setTimeout(positionMarker, 100)
+          }
+          
           // ツールチップ作成
           const tooltip = document.createElement("div")
-          tooltip.className = "absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-sm rounded py-2 px-3 whitespace-nowrap z-20 opacity-0 transition-opacity duration-200 pointer-events-none"
+          tooltip.className = "absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-20 opacity-0 transition-opacity duration-200 pointer-events-none"
           tooltip.textContent = comment.body
-          tooltip.style.maxWidth = "200px"
-          tooltip.style.whiteSpace = "normal"
-          tooltip.style.wordWrap = "break-word"
+          tooltip.style.maxWidth = "300px"
+          tooltip.style.whiteSpace = "nowrap"
+          tooltip.style.overflow = "hidden"
+          tooltip.style.textOverflow = "ellipsis"
           
           // マーカーにツールチップを追加
           marker.appendChild(tooltip)
@@ -357,6 +435,13 @@
               const currentMarkersCount = this.markersContainerTarget.children.length
               this.createMarker(comment, currentMarkersCount + 1)
               
+              // マーカーを表示状態に切り替え
+              this.markersVisible = true
+              if (this.hasMarkersContainerTarget) {
+                this.markersContainerTarget.style.display = 'block'
+              }
+              this.updateToggleButton()
+              
               // フォームを非表示にする
               this.hideForm()
               
@@ -388,11 +473,164 @@
             message.remove()
           }, 3000)
         }
+
+        toggleMarkers() {
+          console.log("Toggling markers visibility")
+          console.log("Current state:", this.markersVisible)
+          console.log("Has markers container:", this.hasMarkersContainerTarget)
+          
+          this.markersVisible = !this.markersVisible
+          console.log("New state:", this.markersVisible)
+          
+          if (this.hasMarkersContainerTarget) {
+            const container = this.markersContainerTarget
+            console.log("Container children count:", container.children.length)
+            container.style.display = this.markersVisible ? 'block' : 'none'
+            console.log("Container display set to:", container.style.display)
+          }
+          
+          this.updateToggleButton()
+          
+          // 詳細ページで個別トグルを操作した場合、グローバル状態も更新
+          if (!this.readOnlyValue) {
+            localStorage.setItem('globalCommentPinsVisible', this.markersVisible)
+            // グローバルコントローラーにも通知
+            const globalController = document.querySelector('[data-controller*="global-comment-pins"]')
+            if (globalController) {
+              const controller = this.application.getControllerForElementAndIdentifier(globalController, 'global-comment-pins')
+              if (controller) {
+                controller.syncFromIndividual(this.markersVisible)
+              }
+            }
+          }
+        }
+
+        updateToggleButton() {
+          if (!this.hasToggleButtonTarget) return
+          
+          const button = this.toggleButtonTarget
+          const icon = this.hasToggleIconTarget ? this.toggleIconTarget : null
+          const text = this.hasToggleTextTarget ? this.toggleTextTarget : null
+          const count = this.hasMarkerCountTarget ? this.markerCountTarget : null
+          
+          if (this.markersVisible) {
+            // マーカー表示中の状態
+            button.classList.remove('border-gray-300', 'hover:bg-gray-50')
+            button.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700')
+            if (icon) icon.textContent = '🙈'
+            if (text) text.textContent = 'コメントピンを非表示'
+          } else {
+            // マーカー非表示中の状態
+            button.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700')
+            button.classList.add('border-gray-300', 'hover:bg-gray-50')
+            if (icon) icon.textContent = '👁️'
+            if (text) text.textContent = 'コメントピンを表示'
+          }
+          
+          // マーカー数を表示
+          if (count && this.hasMarkersContainerTarget) {
+            const markerCount = this.markersContainerTarget.children.length
+            if (markerCount > 0) {
+              count.textContent = `(${markerCount}件のコメント)`
+            } else {
+              count.textContent = ''
+            }
+          }
+        }
+
+        // グローバルピン切り替えイベントのハンドラー
+        handleGlobalToggle(event) {
+          console.log("Global toggle received:", event.detail.visible, "ReadOnly:", this.readOnlyValue)
+          this.markersVisible = event.detail.visible
+          if (this.hasMarkersContainerTarget) {
+            this.markersContainerTarget.style.display = this.markersVisible ? 'block' : 'none'
+          }
+          this.updateToggleButton()
+        }
+
+        // グローバルコントローラーから呼び出される関数
+        setGlobalMarkersVisibility(visible) {
+          console.log("Setting global visibility:", visible, "ReadOnly:", this.readOnlyValue)
+          this.markersVisible = visible
+          if (this.hasMarkersContainerTarget) {
+            this.markersContainerTarget.style.display = this.markersVisible ? 'block' : 'none'
+          }
+          this.updateToggleButton()
+        }
+
+        disconnect() {
+          // イベントリスナーを削除（すべてのモードで）
+          window.removeEventListener('globalCommentPinsToggled', this.handleGlobalToggle.bind(this))
+        }
+      }
+
+      // Global Comment Pins Controller
+      class GlobalCommentPinsController extends Controller {
+        static targets = ["toggleButton", "toggleIcon", "toggleText"]
+
+        connect() {
+          console.log("Global Comment Pins Controller connected!")
+          this.globalPinsVisible = localStorage.getItem('globalCommentPinsVisible') === 'true'
+          this.updateButtonState()
+          this.updateAllPins()
+        }
+
+        toggleGlobalPins() {
+          console.log("Toggling global comment pins")
+          this.globalPinsVisible = !this.globalPinsVisible
+          localStorage.setItem('globalCommentPinsVisible', this.globalPinsVisible)
+          
+          this.updateButtonState()
+          this.updateAllPins()
+          
+          // カスタムイベントを発火して他のコントローラーに通知
+          window.dispatchEvent(new CustomEvent('globalCommentPinsToggled', {
+            detail: { visible: this.globalPinsVisible }
+          }))
+        }
+
+        updateButtonState() {
+          if (!this.hasToggleButtonTarget) return
+          
+          const button = this.toggleButtonTarget
+          const icon = this.hasToggleIconTarget ? this.toggleIconTarget : null
+          const text = this.hasToggleTextTarget ? this.toggleTextTarget : null
+          
+          if (this.globalPinsVisible) {
+            button.classList.remove('border-gray-300', 'hover:bg-gray-50')
+            button.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700')
+            if (icon) icon.textContent = '🙈'
+            if (text) text.textContent = 'コメントピン一括非表示'
+          } else {
+            button.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700')
+            button.classList.add('border-gray-300', 'hover:bg-gray-50')
+            if (icon) icon.textContent = '👁️'
+            if (text) text.textContent = 'コメントピン一括表示'
+          }
+        }
+
+        updateAllPins() {
+          // すべてのimage-commentsコントローラーのマーカーの表示状態を更新
+          const imageCommentsElements = document.querySelectorAll('[data-controller*="image-comments"]')
+          imageCommentsElements.forEach(element => {
+            const controller = this.application.getControllerForElementAndIdentifier(element, 'image-comments')
+            if (controller) {
+              controller.setGlobalMarkersVisibility(this.globalPinsVisible)
+            }
+          })
+        }
+
+        // 個別コントローラーからの同期
+        syncFromIndividual(visible) {
+          this.globalPinsVisible = visible
+          this.updateButtonState()
+        }
       }
       
       // Register controllers
       application.register("image-test", ImageTestController)
       application.register("image-comments", ImageCommentsController)
+      application.register("global-comment-pins", GlobalCommentPinsController)
       
       // グローバルアクセス用
       window.application = application

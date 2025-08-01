@@ -62,8 +62,18 @@
 
       <% if post.images.attached? %>
         <div>
-          <% post.images.each do |image| %>
-            <%= image_tag image, class: "w-full max-w-sm mx-auto rounded shadow" %>
+          <% post.images.each_with_index do |image, index| %>
+            <div class="relative inline-block mb-4" data-controller="image-comments" data-image-comments-post-id-value="<%= post.id %>" data-image-comments-read-only-value="true">
+              <%= image_tag image, class: "w-full max-w-sm mx-auto rounded shadow", data: { "image-comments-target": "image" } %>
+              
+              <!-- 画像上のコメントマーカー表示エリア -->
+              <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+              
+              <!-- マーカー数表示のみ（グローバルコントロールを使用） -->
+              <div class="mt-1 flex items-center justify-center">
+                <span data-image-comments-target="markerCount" class="text-xs text-gray-500"></span>
+              </div>
+            </div>
           <% end %>
         </div>
       <% end %>

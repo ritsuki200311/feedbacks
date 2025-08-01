@@ -19,10 +19,10 @@ class PostsTest < ApplicationSystemTestCase
     fill_in "本文", with: "これはテスト投稿の本文です。"
 
     # 創作の種類を選択
-    find('label', text: 'イラスト・マンガ').click
+    find("label", text: "イラスト・マンガ").click
 
     # リクエストを選択
-    find('label', text: '見て！感想ください！').click
+    find("label", text: "見て！感想ください！").click
 
     click_on "投稿する"
 
@@ -36,8 +36,8 @@ class PostsTest < ApplicationSystemTestCase
     fill_in "タイトル", with: "全てのフィールドを含むテスト投稿"
     fill_in "本文", with: "これは全てのフィールドを含むテスト投稿の本文です。"
 
-    find('label', text: '詩・小説').click
-    find('label', text: '困ってます！アドバイスください！').click
+    find("label", text: "詩・小説").click
+    find("label", text: "困ってます！アドバイスください！").click
 
     # タグを選択 (複数選択可能)
     check "批評ください"
@@ -54,8 +54,13 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "画像付きテスト投稿"
     fill_in "本文", with: "これは画像付きテスト投稿の本文です。"
-    find('label', text: '音楽').click
-    find('label', text: '見て！感想ください！').click
+
+    # 「創作の種類」セクション内の「音楽」を選択
+    within find("span", text: "創作の種類").find(:xpath, "..") do
+      find("label", text: "音楽").click
+    end
+
+    find("label", text: "見て！感想ください！").click
 
     attach_file "画像", Rails.root.join("tmp/test_files/valid_image.png")
 
@@ -71,8 +76,8 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "動画付きテスト投稿"
     fill_in "本文", with: "これは動画付きテスト投稿の本文です。"
-    find('label', text: 'イラスト・マンガ').click
-    find('label', text: '困ってます！アドバイスください！').click
+    find("label", text: "イラスト・マンガ").click
+    find("label", text: "困ってます！アドバイスください！").click
 
     attach_file "動画", Rails.root.join("tmp/test_files/valid_video.mp4")
 
@@ -88,8 +93,8 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "画像と動画付きテスト投稿"
     fill_in "本文", with: "これは画像と動画付きテスト投稿の本文です。"
-    find('label', text: '詩・小説').click
-    find('label', text: '見て！感想ください！').click
+    find("label", text: "詩・小説").click
+    find("label", text: "見て！感想ください！").click
 
     attach_file "画像", Rails.root.join("tmp/test_files/valid_image.png")
     attach_file "動画", Rails.root.join("tmp/test_files/valid_video.mp4")
@@ -107,10 +112,10 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "不正な画像形式テスト"
     fill_in "本文", with: "これは不正な画像形式テストの本文です。"
-    find("input[type='radio'][value='イラスト・マンガ']").click
+    find("label", text: "イラスト・マンガ").click
 
     # リクエストを選択
-    find("input[type='radio'][value='見て！感想ください！']").click
+    find("label", text: "見て！感想ください！").click
 
     attach_file "画像", Rails.root.join("tmp/test_files/invalid_image.txt")
 
@@ -125,10 +130,10 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "大きすぎる画像テスト"
     fill_in "本文", with: "これは大きすぎる画像テストの本文です。"
-    find("input[type='radio'][value='イラスト・マンガ']").click
+    find("label", text: "イラスト・マンガ").click
 
     # リクエストを選択
-    find("input[type='radio'][value='見て！感想ください！']").click
+    find("label", text: "見て！感想ください！").click
 
     attach_file "画像", Rails.root.join("tmp/test_files/large_image.png")
 
@@ -143,10 +148,10 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "不正な動画形式テスト"
     fill_in "本文", with: "これは不正な動画形式テストの本文です。"
-    find("input[type='radio'][value='イラスト・マンガ']").click
+    find("label", text: "イラスト・マンガ").click
 
     # リクエストを選択
-    find("input[type='radio'][value='見て！感想ください！']").click
+    find("label", text: "見て！感想ください！").click
 
     attach_file "動画", Rails.root.join("tmp/test_files/invalid_video.txt")
 
@@ -161,16 +166,16 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "大きすぎる動画テスト"
     fill_in "本文", with: "これは大きすぎる動画テストの本文です。"
-    find("input[type='radio'][value='イラスト・マンガ']").click
+    find("label", text: "イラスト・マンガ").click
 
     # リクエストを選択
-    find("input[type='radio'][value='見て！感想ください！']").click
+    find("label", text: "見て！感想ください！").click
 
     attach_file "動画", Rails.root.join("tmp/test_files/large_video_501mb.mp4")
 
     click_on "投稿する"
 
-    assert page.has_text?("は500MB以下のサイズにしてください", visible: :all)
+    assert_text "は500MB以下のサイズにしてください"
     assert_no_text "投稿が作成されました。"
   end
 
@@ -179,10 +184,10 @@ class PostsTest < ApplicationSystemTestCase
 
     fill_in "タイトル", with: "連打テスト投稿"
     fill_in "本文", with: "これは連打テスト投稿の本文です。"
-    find("input[type='radio'][value='イラスト・マンガ']").click
+    find("label", text: "イラスト・マンガ").click
 
     # リクエストを選択
-    find("input[type='radio'][value='見て！感想ください！']").click
+    find("label", text: "見て！感想ください！").click
 
     attach_file "画像", Rails.root.join("tmp/test_files/valid_image.png")
 

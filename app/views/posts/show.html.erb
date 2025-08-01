@@ -18,9 +18,38 @@
 
   <% if @post.images.attached? %>
     <div class="mb-4">
-
-      <% @post.images.each do |image| %>
-        <%= image_tag image, class: "rounded-lg max-w-xs" %>
+      <% @post.images.each_with_index do |image, index| %>
+        <div class="relative inline-block mb-4 mr-4" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
+          <%= image_tag image, class: "rounded-lg max-w-md cursor-pointer", data: { "image-comments-target": "image" } %>
+          
+          <!-- 画像上コメント用のフォーム（初期は非表示） -->
+          <div class="hidden absolute z-50 bg-white border border-gray-300 rounded-lg p-3 shadow-lg" data-image-comments-target="form">
+            <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
+              <%= f.hidden_field :x_position %>
+              <%= f.hidden_field :y_position %>
+              <%= f.text_area :body, rows: 2, placeholder: "コメントを入力...", class: "w-48 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500", required: true %>
+              <div class="mt-2 flex gap-2">
+                <%= f.submit "コメントする", class: "bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm" %>
+                <button type="button" data-action="click->image-comments#hideForm" class="bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400 text-sm">キャンセル</button>
+              </div>
+            <% end %>
+          </div>
+          
+          <!-- 画像上のコメントマーカー表示エリア -->
+          <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+          
+          <!-- マーカー表示切り替えボタン -->
+          <div class="mt-2 flex items-center gap-2">
+            <button type="button" 
+                    data-action="click->image-comments#toggleMarkers" 
+                    data-image-comments-target="toggleButton"
+                    class="flex items-center gap-2 px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+              <span data-image-comments-target="toggleIcon">👁️</span>
+              <span data-image-comments-target="toggleText">コメントピンを表示</span>
+            </button>
+            <span data-image-comments-target="markerCount" class="text-sm text-gray-500"></span>
+          </div>
+        </div>
       <% end %>
     </div>
   <% else %>
@@ -65,6 +94,26 @@
 
 <div class="max-w-2xl mx-auto mt-8">
   <h3 class="text-xl font-bold mb-4 text-gray-900">コメント</h3>
+  
+  <!-- 画像上コメント一覧 -->
+  <% image_comments = @post.comments.where.not(x_position: nil, y_position: nil).order(:created_at) %>
+  <% if image_comments.any? %>
+    <div class="mb-6 bg-blue-50 rounded-lg p-4">
+      <h4 class="font-semibold text-blue-900 mb-3">📍 画像上のコメント</h4>
+      <% image_comments.each_with_index do |comment, index| %>
+        <div class="mb-3 p-3 bg-white rounded border cursor-pointer hover:bg-gray-50" 
+             data-action="click->image-comments#highlightMarker" 
+             data-comment-id="<%= comment.id %>">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">#<%= index + 1 %></span>
+            <span class="font-semibold text-gray-700"><%= comment.user&.name || "匿名" %></span>
+            <span class="text-xs text-gray-400"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+          </div>
+          <p class="text-gray-800 ml-8"><%= comment.body %></p>
+        </div>
+      <% end %>
+    </div>  
+  <% end %>
   <%= form_with model: [@post, @comment], local: true, class: "space-y-4" do |f| %>
     <div>
       

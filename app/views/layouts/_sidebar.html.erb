@@ -16,6 +16,18 @@
       <% else %>
         <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
       <% end %>
+      
+      <!-- グローバルコメントピン表示切り替え -->
+      <div class="px-4 py-2" data-controller="global-comment-pins">
+        <button type="button" 
+                data-action="click->global-comment-pins#toggleGlobalPins"
+                data-global-comment-pins-target="toggleButton"
+                class="flex items-center gap-2 w-full text-left text-sm border border-gray-300 rounded px-3 py-2 hover:bg-gray-50 transition-colors">
+          <span data-global-comment-pins-target="toggleIcon">👁️</span>
+          <span data-global-comment-pins-target="toggleText">コメントピン一括表示</span>
+        </button>
+      </div>
+      
       <%= button_to "ログアウト", destroy_user_session_path, method: :delete, class: "text-left w-full text-red-500 hover:bg-red-50 px-4 py-2 rounded" %>
     <% else %>
       <%= link_to "ログイン", new_user_session_path, class: sidebar_link_class(new_user_session_path) %>

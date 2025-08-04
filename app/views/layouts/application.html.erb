@@ -17,6 +17,34 @@
           display: block;
         }
 
+      /* コンパクトコメントハイライト用スタイル */
+      .compact-comment-highlight {
+        background-color: #fef3c7 !important;
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.3) !important;
+        transform: scale(1.02);
+        transition: all 0.3s ease-in-out;
+      }
+
+      /* line-clamp-2 utility for text truncation */
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      /* レスポンシブ調整 */
+      @media (max-width: 1279px) {
+        .xl\\:col-span-6 {
+          grid-column: span 12 / span 12;
+        }
+        .xl\\:col-span-3 {
+          grid-column: span 12 / span 12;
+        }
+      }
+
+
       /* LINE風チャットルームのスタイル */
 
       .chat-container {
@@ -844,11 +872,300 @@
         }
       }
       
+      // Compact Comments Controller
+      class CompactCommentsController extends Controller {
+        static targets = ["toggleButton", "toggleIcon", "commentsList"]
+
+        connect() {
+          console.log("Compact Comments Controller connected!")
+          this.isExpanded = false
+        }
+
+        toggleComments() {
+          this.isExpanded = !this.isExpanded
+          
+          if (this.isExpanded) {
+            // コメント一覧を表示
+            this.commentsListTarget.classList.remove('hidden')
+            this.toggleIconTarget.textContent = '▲'
+          } else {
+            // コメント一覧を非表示
+            this.commentsListTarget.classList.add('hidden')
+            this.toggleIconTarget.textContent = '▼'
+          }
+        }
+
+        // コンパクトコメントがクリックされた時の処理
+        highlightComment(event) {
+          const commentElement = event.currentTarget
+          const commentId = commentElement.dataset.commentId
+          
+          // 既存のハイライトをリセット
+          document.querySelectorAll('.compact-comment-highlight').forEach(el => {
+            el.classList.remove('compact-comment-highlight')
+          })
+          
+          // クリックされたコメントをハイライト
+          commentElement.classList.add('compact-comment-highlight')
+          
+          // 対応するピンがあればハイライト（既存の機能を活用）
+          if (commentId) {
+            const imageController = document.querySelector('[data-controller*="image-comments"]')
+            if (imageController) {
+              const event = new CustomEvent('highlightMarker', {
+                detail: { commentId: commentId }
+              })
+              imageController.dispatchEvent(event)
+            }
+          }
+          
+          // 2秒後にハイライトを削除
+          setTimeout(() => {
+            commentElement.classList.remove('compact-comment-highlight')
+          }, 2000)
+        }
+      }
+
+      // AI Sidebar Controller
+      class AiSidebarController extends Controller {
+        static targets = [
+          "toggleButton", "toggleIcon", "toggleText", 
+          "initialMessage", "loading", "aiContent",
+          "commentSuggestions", "summary"
+        ]
+        static values = { postId: Number }
+
+        connect() {
+          console.log("AI Sidebar Controller connected!")
+          this.aiLoaded = false
+        }
+
+        toggleAI() {
+          const isAIVisible = !this.aiContentTarget.classList.contains('hidden')
+          
+          if (isAIVisible) {
+            // AI機能を閉じる
+            this.closeAI()
+          } else {
+            // AI機能を開始
+            this.startAI()
+          }
+        }
+
+        async startAI() {
+          // 初期メッセージを隠す
+          this.initialMessageTarget.classList.add('hidden')
+          
+          // ローディング表示
+          this.loadingTarget.classList.remove('hidden')
+          
+          // ボタンの状態を更新
+          this.toggleIconTarget.textContent = '⏳'
+          this.toggleTextTarget.textContent = 'AI分析中...'
+          this.toggleButtonTarget.disabled = true
+
+          try {
+            if (!this.aiLoaded) {
+              // AI機能を初回のみ読み込み
+              await this.loadAIContent()
+              this.aiLoaded = true
+            }
+            
+            // ローディングを隠してコンテンツを表示
+            this.loadingTarget.classList.add('hidden')
+            this.aiContentTarget.classList.remove('hidden')
+            
+            // ボタンの状態を更新
+            this.toggleIconTarget.textContent = '✖️'
+            this.toggleTextTarget.textContent = 'AI補助を閉じる'
+            this.toggleButtonTarget.classList.remove('bg-purple-600', 'hover:bg-purple-700')
+            this.toggleButtonTarget.classList.add('bg-gray-600', 'hover:bg-gray-700')
+            
+          } catch (error) {
+            console.error('AI loading error:', error)
+            this.showError()
+          } finally {
+            this.toggleButtonTarget.disabled = false
+          }
+        }
+
+        closeAI() {
+          // すべてのAI関連要素を隠す
+          this.loadingTarget.classList.add('hidden')
+          this.aiContentTarget.classList.add('hidden')
+          
+          // 初期メッセージを表示
+          this.initialMessageTarget.classList.remove('hidden')
+          
+          // ボタンの状態をリセット
+          this.toggleIconTarget.textContent = '🤖'
+          this.toggleTextTarget.textContent = 'AI補助を開始'
+          this.toggleButtonTarget.classList.remove('bg-gray-600', 'hover:bg-gray-700')
+          this.toggleButtonTarget.classList.add('bg-purple-600', 'hover:bg-purple-700')
+        }
+
+        async loadAIContent() {
+          try {
+            // 実際のAI分析APIを呼び出し
+            const response = await fetch(`/posts/${this.postIdValue}/ai_comment_assistant/analyze`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+              }
+            })
+            
+            const data = await response.json()
+            
+            if (data.success) {
+              // AI分析結果を表示
+              this.renderSuggestions(data.comment_examples)
+              
+              // 観察ポイントを要約として表示
+              if (this.hasSummaryTarget && data.observation_points) {
+                const summary = data.observation_points.join(' / ')
+                this.summaryTarget.textContent = `観察ポイント: ${summary}`
+              }
+            } else {
+              // エラー時はフォールバック
+              this.renderFallbackContent()
+            }
+          } catch (error) {
+            console.error('AI analysis error:', error)
+            this.renderFallbackContent()
+          }
+        }
+
+        renderFallbackContent() {
+          // フォールバック用のコンテンツ
+          const fallbackSuggestions = [
+            "この投稿の表現力が素晴らしいですね。特に印象的な部分があります。",
+            "とても興味深い内容です。どのような思いで制作されたのでしょうか？",
+            "技術的な工夫が感じられる投稿ですね。今後の作品も楽しみです。"
+          ]
+          
+          this.renderSuggestions(fallbackSuggestions)
+          
+          if (this.hasSummaryTarget) {
+            this.summaryTarget.textContent = "投稿の内容や技法に注目して、建設的なコメントを心がけましょう。"
+          }
+        }
+
+        renderSuggestions(suggestions) {
+          this.commentSuggestionsTarget.innerHTML = ''
+          
+          suggestions.forEach((suggestion, index) => {
+            const suggestionElement = document.createElement('div')
+            suggestionElement.className = 'p-2 bg-purple-50 rounded border cursor-pointer hover:bg-purple-100 transition-colors text-sm mb-2'
+            suggestionElement.innerHTML = `
+              <p class="text-gray-700 mb-2">${suggestion}</p>
+              <button class="text-xs text-purple-600 hover:text-purple-800 font-medium" 
+                      data-action="click->ai-sidebar#applySuggestion" 
+                      data-suggestion="${suggestion}">
+                このコメントを使用
+              </button>
+            `
+            this.commentSuggestionsTarget.appendChild(suggestionElement)
+          })
+        }
+
+        simulateAIProcessing() {
+          // AI処理のシミュレーション
+          return new Promise(resolve => {
+            setTimeout(resolve, 1500)
+          })
+        }
+
+        showError() {
+          this.loadingTarget.classList.add('hidden')
+          this.initialMessageTarget.classList.remove('hidden')
+          
+          const errorMessage = document.createElement('div')
+          errorMessage.className = 'text-center py-4 text-red-600 text-sm'
+          errorMessage.textContent = 'AI機能の読み込みに失敗しました。再試行してください。'
+          
+          this.initialMessageTarget.appendChild(errorMessage)
+          
+          setTimeout(() => {
+            errorMessage.remove()
+          }, 5000)
+        }
+
+        applySuggestion(event) {
+          const suggestion = event.currentTarget.dataset.suggestion
+          this.insertIntoCommentField(suggestion)
+        }
+
+        applyTone(event) {
+          const tone = event.currentTarget.dataset.tone
+          const currentText = this.getCurrentCommentText()
+          
+          let tonePrefix = ""
+          switch(tone) {
+            case "褒める":
+              tonePrefix = "素晴らしい！"
+              break
+            case "質問":
+              tonePrefix = "興味深いですね。"
+              break
+            case "建設的":
+              tonePrefix = "改善案として、"
+              break
+            case "励まし":
+              tonePrefix = "頑張っていますね！"
+              break
+          }
+          
+          const newText = currentText ? `${tonePrefix} ${currentText}` : tonePrefix
+          this.insertIntoCommentField(newText)
+        }
+
+        insertIntoCommentField(text) {
+          // メインのコメント入力フィールドを探す
+          const commentField = document.querySelector('textarea[name="comment[body]"]')
+          if (commentField) {
+            commentField.value = text
+            commentField.focus()
+            // 入力イベントを発火してバリデーション等をトリガー
+            commentField.dispatchEvent(new Event('input', { bubbles: true }))
+            
+            // 成功のフィードバック
+            this.showAppliedFeedback()
+          }
+        }
+
+        getCurrentCommentText() {
+          const commentField = document.querySelector('textarea[name="comment[body]"]')
+          return commentField ? commentField.value : ""
+        }
+
+        showAppliedFeedback() {
+          // 一時的なフィードバック表示
+          const feedback = document.createElement('div')
+          feedback.className = 'fixed top-4 right-4 bg-purple-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300'
+          feedback.textContent = '提案を適用しました！'
+          document.body.appendChild(feedback)
+          
+          // アニメーション
+          setTimeout(() => {
+            feedback.style.transform = 'translateY(-10px)'
+            feedback.style.opacity = '0'
+          }, 2000)
+          
+          setTimeout(() => {
+            feedback.remove()
+          }, 2500)
+        }
+      }
+
       // Register controllers
       application.register("image-test", ImageTestController)
       application.register("image-comments", ImageCommentsController)
       application.register("global-comment-pins", GlobalCommentPinsController)
       application.register("ai-comment-assistant", AiCommentAssistantController)
+      application.register("compact-comments", CompactCommentsController)
+      application.register("ai-sidebar", AiSidebarController)
       
       // グローバルアクセス用
       window.application = application

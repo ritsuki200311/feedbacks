@@ -28,6 +28,7 @@ class AiCommentAssistantController < ApplicationController
     require 'net/http'
     require 'json'
     require 'uri'
+    require 'base64'
 
     # Gemini API endpoint
     api_key = ENV['GOOGLE_GEMINI_API_KEY']
@@ -40,8 +41,9 @@ class AiCommentAssistantController < ApplicationController
     # プロンプトを構築
     prompt = build_prompt(post)
     
-    # Gemini API URL (Generative AI API) - Updated to use latest model
-    url = URI("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=#{api_key}")
+    # 画像がある場合はVision対応モデルを使用
+    model = post.images.attached? ? 'gemini-1.5-flash' : 'gemini-1.5-flash'
+    url = URI("https://generativelanguage.googleapis.com/v1beta/models/#{model}:generateContent?key=#{api_key}")
     
     http = Net::HTTP.new(url.host, url.port)
     http.use_ssl = true
@@ -49,14 +51,55 @@ class AiCommentAssistantController < ApplicationController
     request = Net::HTTP::Post.new(url)
     request['Content-Type'] = 'application/json'
     
+    # リクエストボディにプロンプト＋画像を含める
+    parts = [{ text: prompt }]
+    
+    # 画像がある場合は画像データを追加
+    if post.images.attached?
+      Rails.logger.info "Processing #{post.images.count} images for AI analysis"
+      
+      post.images.each_with_index do |image, index|
+        begin
+          # 画像サイズをチェック（5MB制限）
+          if image.byte_size > 5.megabytes
+            Rails.logger.warn "Image #{index + 1} too large (#{image.byte_size} bytes), skipping"
+            next
+          end
+          
+          # 対応フォーマットをチェック
+          unless %w[image/jpeg image/png image/gif image/webp].include?(image.content_type)
+            Rails.logger.warn "Image #{index + 1} format not supported (#{image.content_type}), skipping"
+            next
+          end
+          
+          # 画像データを取得してBase64エンコード
+          image_data = image.download
+          mime_type = image.content_type
+          base64_data = Base64.strict_encode64(image_data)
+          
+          parts << {
+            inline_data: {
+              mime_type: mime_type,
+              data: base64_data
+            }
+          }
+          
+          Rails.logger.info "Successfully processed image #{index + 1} (#{mime_type}, #{image.byte_size} bytes)"
+          
+        rescue => e
+          Rails.logger.error "Error processing image #{index + 1}: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          # 画像処理エラーは無視して続行
+        end
+      end
+      
+      Rails.logger.info "Total #{parts.count - 1} images added to AI request"
+    end
+    
     request.body = {
       contents: [
         {
-          parts: [
-            {
-              text: prompt
-            }
-          ]
+          parts: parts
         }
       ],
       generationConfig: {
@@ -86,7 +129,7 @@ class AiCommentAssistantController < ApplicationController
   def build_prompt(post)
     content_type = determine_content_type(post)
     
-    prompt = <<~PROMPT
+    base_prompt = <<~PROMPT
       あなたは投稿に対するコメントを支援するAIです。
 
       投稿内容:
@@ -95,38 +138,88 @@ class AiCommentAssistantController < ApplicationController
       - コンテンツタイプ: #{content_type}
       #{"- タグ: #{post.tag}" if post.tag.present?}
       #{"- リクエストタグ: #{post.request_tag}" if post.request_tag.present?}
-
-      以下の2つを提供してください：
-
-      **1. コメント例（3つ）:**
-      この投稿に対する適切なコメント例を3つ生成してください。
-      - 建設的で前向きなトーン
-      - 投稿者への敬意を示す
-      - 具体的な観点を含む
-      - 各コメントは2-3文程度
-
-      **2. 観察ポイント:**
-      この投稿を分析する際の観察ポイントを提示してください。
-      - コンテンツの種類に応じた見方
-      - 注目すべき要素
-      - 深い理解のためのヒント
-
-      **回答形式:**
-      以下の形式で回答してください：
-
-      【コメント例】
-      1. [コメント例1]
-      2. [コメント例2]
-      3. [コメント例3]
-
-      【観察ポイント】
-      - [ポイント1]
-      - [ポイント2]
-      - [ポイント3]
-      - [ポイント4]
     PROMPT
 
-    prompt
+    # 画像がある場合は画像分析を含むプロンプト
+    if post.images.attached?
+      image_prompt = <<~IMAGE_PROMPT
+        
+        添付された画像を詳細に分析して、以下の点について具体的に言及してください：
+        - 色彩、構図、技法などの視覚的要素
+        - 表現されている内容やテーマ
+        - 印象的な部分や特徴的な要素
+        - 技術的な評価点
+
+        以下の2つを提供してください：
+
+        **1. コメント例（3つ）:**
+        画像の内容を踏まえた具体的なコメント例を3つ生成してください。
+        - 画像の具体的な要素に言及する
+        - 建設的で前向きなトーン
+        - 投稿者への敬意を示す
+        - 技術的な観点も含める
+        - 各コメントは2-3文程度
+
+        **2. 観察ポイント:**
+        この画像投稿を分析する際の観察ポイントを提示してください。
+        - 画像の構成要素（色彩、線、形、空間など）
+        - 技法や表現手法
+        - 感情や印象
+        - 改善提案の観点
+
+        **回答形式:**
+        以下の形式で回答してください：
+
+        【コメント例】
+        1. [具体的な画像要素に言及したコメント例1]
+        2. [具体的な画像要素に言及したコメント例2]
+        3. [具体的な画像要素に言及したコメント例3]
+
+        【観察ポイント】
+        - [ポイント1]
+        - [ポイント2]
+        - [ポイント3]
+        - [ポイント4]
+        - [ポイント5]
+      IMAGE_PROMPT
+      
+      base_prompt + image_prompt
+    else
+      # 画像がない場合は従来のプロンプト
+      text_prompt = <<~TEXT_PROMPT
+
+        以下の2つを提供してください：
+
+        **1. コメント例（3つ）:**
+        この投稿に対する適切なコメント例を3つ生成してください。
+        - 建設的で前向きなトーン
+        - 投稿者への敬意を示す
+        - 具体的な観点を含む
+        - 各コメントは2-3文程度
+
+        **2. 観察ポイント:**
+        この投稿を分析する際の観察ポイントを提示してください。
+        - コンテンツの種類に応じた見方
+        - 注目すべき要素
+        - 深い理解のためのヒント
+
+        **回答形式:**
+        以下の形式で回答してください：
+
+        【コメント例】
+        1. [コメント例1]
+        2. [コメント例2]
+        3. [コメント例3]
+
+        【観察ポイント】
+        - [ポイント1]
+        - [ポイント2]
+        - [ポイント3]
+        - [ポイント4]
+      TEXT_PROMPT
+      
+      base_prompt + text_prompt
+    end
   end
 
   def determine_content_type(post)

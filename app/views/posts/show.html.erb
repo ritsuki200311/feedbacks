@@ -1,5 +1,10 @@
-<div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-4">
-  <h1 class="text-3xl font-bold mb-4 text-gray-900">投稿</h1>
+<!-- 3カラムレイアウト -->
+<div class="max-w-7xl mx-auto mt-4 px-4">
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+    
+    <!-- メイン投稿エリア（左側） -->
+    <div class="xl:col-span-6 bg-white rounded-2xl shadow-lg p-6">
+      <h1 class="text-3xl font-bold mb-4 text-gray-900">投稿</h1>
 
   <div class="flex items-center gap-2 mb-2">
     <span class="font-semibold text-gray-700">投稿者:</span>
@@ -89,99 +94,132 @@
     <%= button_to vote_path(votable_type: 'Post', votable_id: @post.id, value: -1), method: :post, class: "text-gray-500 hover:text-red-500" do %>
       👎
     <% end %>
+    </div>
+    </div>
+    
+    <!-- AIサイドバー（右側） -->
+    <div class="xl:col-span-3">
+      <div class="bg-gradient-to-b from-purple-50 to-indigo-50 rounded-2xl shadow-lg p-4 sticky top-4" data-controller="ai-sidebar" data-ai-sidebar-post-id-value="<%= @post.id %>">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-sm font-bold">AI</span>
+            </div>
+            <h2 class="text-lg font-bold text-gray-900">コメント補助</h2>
+          </div>
+          
+          <!-- AI起動ボタン -->
+          <button type="button" 
+                  data-action="click->ai-sidebar#toggleAI"
+                  data-ai-sidebar-target="toggleButton"
+                  class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
+            <span data-ai-sidebar-target="toggleIcon">🤖</span>
+            <span data-ai-sidebar-target="toggleText">AI補助を開始</span>
+          </button>
+        </div>
+        
+        <!-- 初期状態の説明 -->
+        <div data-ai-sidebar-target="initialMessage" class="text-center py-8">
+          <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="text-2xl">🤖</span>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">AIコメント補助</h3>
+          <p class="text-sm text-gray-600 mb-4">
+            AIがあなたのコメント作成をサポートします。<br>
+            おすすめコメント、トーン調整、投稿要約を提供します。
+          </p>
+          <p class="text-xs text-gray-500">
+            上の「AI補助を開始」ボタンをクリックして始めましょう
+          </p>
+        </div>
+        
+        <!-- ローディング表示 -->
+        <div data-ai-sidebar-target="loading" class="hidden text-center py-8">
+          <div class="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-sm text-gray-600">AIが分析中です...</p>
+        </div>
+        
+        <!-- AI補助コンテンツ（初期は非表示） -->
+        <div data-ai-sidebar-target="aiContent" class="hidden space-y-4">
+          <!-- コメント例 -->
+          <div class="bg-white rounded-lg p-3 border border-purple-200">
+            <h3 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1">
+              <span>💬</span>
+              おすすめコメント
+            </h3>
+            <div class="space-y-2" data-ai-sidebar-target="commentSuggestions">
+              <!-- コメント提案がここに動的に表示される -->
+            </div>
+          </div>
+          
+          <!-- トーン提案 -->
+          <div class="bg-white rounded-lg p-3 border border-purple-200">
+            <h3 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1">
+              <span>🎨</span>
+              トーン調整
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              <button class="px-2 py-1 text-xs bg-pink-100 text-pink-700 rounded-full hover:bg-pink-200 transition-colors"
+                      data-action="click->ai-sidebar#applyTone"
+                      data-tone="褒める">褒める</button>
+              <button class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
+                      data-action="click->ai-sidebar#applyTone"
+                      data-tone="質問">質問</button>
+              <button class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
+                      data-action="click->ai-sidebar#applyTone"
+                      data-tone="建設的">建設的</button>
+              <button class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full hover:bg-yellow-200 transition-colors"
+                      data-action="click->ai-sidebar#applyTone"
+                      data-tone="励まし">励まし</button>
+            </div>
+          </div>
+          
+          <!-- 観察ポイント・分析結果 -->
+          <div class="bg-white rounded-lg p-3 border border-purple-200">
+            <h3 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1">
+              <span>🔍</span>
+              AI分析結果
+            </h3>
+            <div data-ai-sidebar-target="summary" class="text-xs text-gray-600 leading-relaxed">
+              <!-- AI画像認識・分析結果がここに表示される -->
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100">
+              <p class="text-xs text-gray-500 italic">
+                <% if @post.images.attached? %>
+                  画像を詳細に分析してコメント提案を生成しています
+                <% else %>
+                  投稿内容を分析してコメント提案を生成しています
+                <% end %>
+              </p>
+            </div>
+          </div>
+          
+          <!-- 閉じるボタン -->
+          <div class="text-center pt-2">
+            <button type="button" 
+                    data-action="click->ai-sidebar#closeAI"
+                    class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors">
+              AI補助を閉じる
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
   </div>
 </div>
 
-<div class="max-w-2xl mx-auto mt-8">
-  <h3 class="text-xl font-bold mb-4 text-gray-900">コメント</h3>
+<!-- 詳細コメントセクション -->
+<div class="max-w-7xl mx-auto mt-8 px-4">
+  <div class="bg-white rounded-2xl shadow-lg p-6">
+    <h3 class="text-xl font-bold mb-4 text-gray-900">コメント</h3>
   
-  <!-- AIコメント補助機能 -->
-  <div class="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200" data-controller="ai-comment-assistant" data-ai-comment-assistant-post-id-value="<%= @post.id %>">
-    <div class="flex items-center justify-between mb-3">
-      <h4 class="text-lg font-semibold text-blue-900 flex items-center gap-2">
-        <span class="text-2xl">🤖</span>
-        AIコメント補助
-      </h4>
-      <button type="button" 
-              data-action="click->ai-comment-assistant#toggleAssistant"
-              data-ai-comment-assistant-target="toggleButton"
-              class="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-        補助を開始
-      </button>
-    </div>
-    
-    <!-- 補助機能の内容（初期は非表示） -->
-    <div class="hidden" data-ai-comment-assistant-target="assistantContent">
-      <!-- ローディング表示 -->
-      <div class="hidden text-center py-4" data-ai-comment-assistant-target="loading">
-        <div class="inline-flex items-center gap-2 text-blue-600">
-          <div class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <span>AIが分析しています...</span>
-        </div>
-      </div>
-      
-      <!-- 結果表示 -->
-      <div class="hidden" data-ai-comment-assistant-target="results">
-        <!-- コメント例 -->
-        <div class="mb-4">
-          <h5 class="font-semibold text-gray-800 mb-2 flex items-center gap-1">
-            <span>💬</span>
-            コメント例
-          </h5>
-          <div class="space-y-2" data-ai-comment-assistant-target="commentExamples">
-            <!-- コメント例がここに表示される -->
-          </div>
-        </div>
-        
-        <!-- 観察ポイント -->
-        <div class="mb-4">
-          <button type="button" 
-                  data-action="click->ai-comment-assistant#toggleObservationPoints"
-                  data-ai-comment-assistant-target="observationToggle"
-                  class="flex items-center gap-2 font-semibold text-gray-800 hover:text-blue-600 transition-colors">
-            <span>🔍</span>
-            <span>観察ポイント</span>
-            <span data-ai-comment-assistant-target="observationIcon">▼</span>
-          </button>
-          <div class="hidden mt-2 pl-6" data-ai-comment-assistant-target="observationPoints">
-            <!-- 観察ポイントがここに表示される -->
-          </div>
-        </div>
-      </div>
-      
-      <!-- エラー表示 -->
-      <div class="hidden text-red-600 bg-red-50 p-3 rounded-lg" data-ai-comment-assistant-target="error">
-        <!-- エラーメッセージがここに表示される -->
-      </div>
-    </div>
-  </div>
-  
-  <!-- 画像上コメント一覧 -->
-  <% image_comments = @post.comments.where.not(x_position: nil, y_position: nil).order(:created_at) %>
-  <% if image_comments.any? %>
-    <div class="mb-6 bg-blue-50 rounded-lg p-4">
-      <h4 class="font-semibold text-blue-900 mb-3">📍 画像上のコメント</h4>
-      <% image_comments.each_with_index do |comment, index| %>
-        <div class="mb-3 p-3 bg-white rounded border cursor-pointer hover:bg-gray-50" 
-             data-action="click->image-comments#highlightMarker" 
-             data-comment-id="<%= comment.id %>">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">#<%= index + 1 %></span>
-            <span class="font-semibold text-gray-700"><%= comment.user&.name || "匿名" %></span>
-            <span class="text-xs text-gray-400"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></span>
-          </div>
-          <p class="text-gray-800 ml-8"><%= comment.body %></p>
-        </div>
-      <% end %>
-    </div>  
-  <% end %>
-  <%= form_with model: [@post, @comment], local: true, class: "space-y-4" do |f| %>
+  <!-- コメント投稿フォーム -->
+  <%= form_with model: [@post, @comment], local: true, class: "space-y-4 mb-6" do |f| %>
     <div>
-      
       <%= f.text_area :body, rows: 3, placeholder: "コメントを追加...", class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
     </div>
     <div>
-      
       <%= f.file_field :attachments, multiple: true, class: "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" %>
     </div>
     <div class="text-right">
@@ -189,6 +227,7 @@
     </div>
   <% end %>
   
+  <!-- 通常コメント一覧 -->
   <% @post.comments.where(parent_id: nil).each do |comment| %>
     <div class="bg-gray-50 rounded-xl shadow p-5 mb-6">
       <div class="flex items-center gap-2 mb-2">
@@ -245,4 +284,45 @@
       <% end %>
     </div>
   <% end %>
+  </div>
+</div>
+
+<!-- 画面上のコメント一覧（下部） -->
+<div class="max-w-7xl mx-auto mt-4 px-4">
+  <div class="bg-white rounded-lg shadow p-3" data-controller="compact-comments">
+    <!-- トグルボタン -->
+    <button type="button" 
+            data-action="click->compact-comments#toggleComments"
+            data-compact-comments-target="toggleButton"
+            class="flex items-center justify-between w-full py-2 px-3 text-left bg-gray-50 hover:bg-gray-100 rounded transition-colors">
+      <div class="flex items-center gap-2">
+        <span data-compact-comments-target="toggleIcon" class="text-sm">▼</span>
+        <h3 class="text-sm font-semibold text-gray-800">画面上のコメント一覧</h3>
+        <% image_comments = @post.comments.where.not(x_position: nil, y_position: nil).order(:created_at) %>
+        <span class="text-xs text-gray-500">(<%= image_comments.count %>件)</span>
+      </div>
+    </button>
+    
+    <!-- コンパクトコメント表示エリア（初期は非表示） -->
+    <div data-compact-comments-target="commentsList" class="hidden mt-3 space-y-2 max-h-64 overflow-y-auto">
+      <% if image_comments.any? %>
+        <% image_comments.each_with_index do |comment, index| %>
+          <div class="p-2 bg-blue-50 rounded border-l-2 border-blue-400 cursor-pointer hover:bg-blue-100 transition-colors text-sm" 
+               data-comment-id="<%= comment.id %>"
+               data-action="click->image-comments#highlightMarker click->compact-comments#highlightComment">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold">
+                <%= index + 1 %>
+              </span>
+              <span class="text-xs font-medium text-gray-600"><%= comment.user&.name || "匿名" %></span>
+              <span class="text-xs text-gray-400"><%= time_ago_in_words(comment.created_at) %>前</span>
+            </div>
+            <p class="text-xs text-gray-800 line-clamp-1 pl-6"><%= comment.body %></p>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-xs text-gray-500 text-center py-4">画面上のコメントはありません</p>
+      <% end %>
+    </div>
+  </div>
 </div>

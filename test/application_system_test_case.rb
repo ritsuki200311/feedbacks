@@ -2,8 +2,7 @@ require "test_helper"
 require "securerandom"
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
-  driven_by :selenium, using: :chrome, screen_size: [1400, 1400], options: {
-    browser: :chrome,
+  driven_by :selenium, using: :chrome, screen_size: [ 1400, 1400 ], options: {
     options: Selenium::WebDriver::Chrome::Options.new.tap do |opts|
       opts.add_argument("--headless")
       opts.add_argument("--disable-gpu")

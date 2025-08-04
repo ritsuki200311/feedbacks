@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_14_145216) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_24_134032) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -54,6 +54,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_145216) do
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
+  create_table "communities", force: :cascade do |t|
+    t.string "name"
+    t.text "description"
+    t.boolean "is_public"
+    t.string "tags"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_communities_on_user_id"
+  end
+
+  create_table "community_users", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "community_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["community_id"], name: "index_community_users_on_community_id"
+    t.index ["user_id"], name: "index_community_users_on_user_id"
+  end
+
   create_table "entries", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "room_id", null: false
@@ -86,6 +106,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_145216) do
     t.text "recipient_support_styles"
     t.integer "creation_type"
     t.string "request_tag"
+    t.bigint "community_id"
+    t.index ["community_id"], name: "index_posts_on_community_id"
     t.index ["received_user_id"], name: "index_posts_on_received_user_id"
   end
 
@@ -165,10 +187,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_14_145216) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
+  add_foreign_key "communities", "users"
+  add_foreign_key "community_users", "communities"
+  add_foreign_key "community_users", "users"
   add_foreign_key "entries", "rooms"
   add_foreign_key "entries", "users"
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users"
+  add_foreign_key "posts", "communities"
   add_foreign_key "preferences", "users"
   add_foreign_key "received_videos", "posts"
   add_foreign_key "received_videos", "users"

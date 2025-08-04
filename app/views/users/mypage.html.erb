@@ -1,91 +1,209 @@
 <div class="container mx-auto px-4 mt-6">
-  <div class="flex justify-between items-center mb-4">
-    
-
-    <%= link_to edit_user_password_path, class: "inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-600 hover:text-gray-700 transition font-semibold px-4 py-2 rounded-lg shadow text-lg" do %>
-      <svg class="inline-block w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 17a2 2 0 002-2 2 2 0 00-4 0 2 2 0 002 2zm6-6V9a6 6 0 00-12 0v2H5v10h14V11h-1z" />
-      </svg>
-      パスワード変更
-    <% end %>
+  <!-- Header -->
+  <div class="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 rounded-2xl p-6 mb-6 shadow-lg">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-4xl font-bold text-black bg-white bg-opacity-90 px-4 py-2 rounded-lg inline-block shadow-md"><%= current_user.name %>さんのマイページ</h1>
+      </div>
+      <%= link_to edit_user_password_path, class: "inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white transition font-semibold px-4 py-2 rounded" do %>
+        <svg class="inline-block w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 17a2 2 0 002-2 2 2 0 00-4 0 2 2 0 002 2zm6-6V9a6 6 0 00-12 0v2H5v10h14V11h-1z" />
+        </svg>
+        パスワード変更
+      <% end %>
+    </div>
   </div>
 
-  <div class="bg-white rounded p-6 shadow mb-6">
-    <h1 class="text-2xl font-bold mb-4">マイページ</h1>
-    <p>メール: <%= current_user.email %></p>
-    <p>保有コイン: <%= current_user.coins %></p>
-    <p>ランク: <%= current_user.rank %></p>
-    <p>ランクポイント: <%= current_user.rank_points %></p>
-    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-      <div class="bg-blue-600 h-2.5 rounded-full" style="width: <%= current_user.rank_points %>%"></div>
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <!-- Coins Card -->
+    <div class="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4 text-center">
+      <div class="text-3xl mb-2">💰</div>
+      <h3 class="text-lg font-bold text-yellow-800">保有コイン</h3>
+      <p class="text-2xl font-bold text-yellow-600"><%= current_user.coins %></p>
+    </div>
+    
+    <!-- Rank Card -->
+    <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 text-center">
+      <div class="text-3xl mb-2">🏆</div>
+      <h3 class="text-lg font-bold text-blue-800">現在のランク</h3>
+      <p class="text-2xl font-bold text-blue-600"><%= current_user.rank %>(<%= current_user.rank_points %>)</p>
+    </div>
+    
+    <!-- Account Edit Card -->
+    <div class="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center">
+      <div class="text-3xl mb-2">⚙️</div>
+      <h3 class="text-lg font-bold text-green-800">アカウント設定</h3>
+      <%= link_to "編集する", "http://localhost:3000/users/edit", class: "inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 mt-2" %>
+    </div>
+  </div>
+
+  <!-- User Info Section -->
+  <div class="bg-white rounded-2xl shadow-lg border border-gray-100 mb-6">
+    <div class="p-6 border-b border-gray-100">
+      <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+        📧 アカウント情報
+      </h2>
+      <div class="bg-gray-50 rounded-lg p-4">
+        <p class="text-gray-700"><strong>メールアドレス:</strong> <%= current_user.email %></p>
+      </div>
     </div>
 
-    <% if user_signed_in? %>
-      <%= render partial: "profile", locals: { user: current_user, posts: @posts } %>
-    <% else %>
-      <p>ログインしていません。</p>
-    <% end %>
+    <div class="p-6" style="position: static; z-index: auto;">
+      <% if user_signed_in? %>
+        <div style="position: static; display: block;">
+          <%= render partial: "profile", locals: { user: current_user, posts: @posts } %>
+        </div>
+      <% else %>
+        <p>ログインしていません。</p>
+      <% end %>
 
     <% if @supporter_profile %>
-      <h2 class="text-xl font-bold mt-6 mb-4">プロフィール内容</h2>
-      <p><strong>立場:</strong> <%= @supporter_profile.standing&.join(", ") %></p>
-      <p><strong>創作歴:</strong> <%= @supporter_profile.creation_experience %></p>
-      <p><strong>趣味ジャンル:</strong> <%= @supporter_profile.interests&.join(", ") %></p>
-      <p><strong>好きな作品:</strong> <%= @supporter_profile.favorite_artists %></p>
-      <p><strong>年齢層:</strong> <%= @supporter_profile.age_group %></p>
-      <p><strong>支援ジャンル:</strong> <%= @supporter_profile.support_genres&.join(", ") %></p>
-      <p><strong>応援スタイル:</strong> <%= @supporter_profile.support_styles&.join(", ") %></p>
-      <p><strong>性格傾向:</strong> <%= @supporter_profile.personality_traits&.join(", ") %></p>
-
-      <div class="mt-4">
-        <%= link_to "プロフィールを編集", edit_supporter_profile_path(@supporter_profile), class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold flex items-center gap-2">
+          👤 詳細プロフィール
+        </h2>
+        <%= link_to "✏️ プロフィールを編集", edit_supporter_profile_path(@supporter_profile), class: "inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-700 text-gray-800 px-4 py-2 rounded-lg hover:from-blue-700 hover:to-purple-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border border-blue-500 bg-white" %>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <% if @supporter_profile.standing.present? %>
+          <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+            <h3 class="font-semibold text-purple-800 mb-2">🎭 立場</h3>
+            <p class="text-purple-700"><%= @supporter_profile.standing.join(", ") %></p>
+          </div>
+        <% end %>
+        <% if @supporter_profile.creation_experience.present? %>
+          <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <h3 class="font-semibold text-blue-800 mb-2">📅 創作歴</h3>
+            <p class="text-blue-700"><%= @supporter_profile.creation_experience %></p>
+          </div>
+        <% end %>
+        <% if @supporter_profile.interests.present? %>
+          <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+            <h3 class="font-semibold text-green-800 mb-2">🎨 趣味ジャンル</h3>
+            <p class="text-green-700"><%= @supporter_profile.interests.join(", ") %></p>
+          </div>
+        <% end %>
+        <% if @supporter_profile.favorite_artists.present? %>
+          <div class="bg-pink-50 rounded-lg p-4 border border-pink-200">
+            <h3 class="font-semibold text-pink-800 mb-2">⭐ 好きな作品</h3>
+            <p class="text-pink-700"><%= @supporter_profile.favorite_artists %></p>
+          </div>
+        <% end %>
+        <% if @supporter_profile.age_group.present? %>
+          <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+            <h3 class="font-semibold text-indigo-800 mb-2">👥 年齢層</h3>
+            <p class="text-indigo-700"><%= @supporter_profile.age_group %></p>
+          </div>
+        <% end %>
+        <% if @supporter_profile.support_genres.present? %>
+          <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+            <h3 class="font-semibold text-orange-800 mb-2">🎯 支援ジャンル</h3>
+            <p class="text-orange-700"><%= @supporter_profile.support_genres.join(", ") %></p>
+          </div>
+        <% end %>
+        <% if @supporter_profile.support_styles.present? %>
+          <div class="bg-teal-50 rounded-lg p-4 border border-teal-200">
+            <h3 class="font-semibold text-teal-800 mb-2">💪 応援スタイル</h3>
+            <p class="text-teal-700"><%= @supporter_profile.support_styles.join(", ") %></p>
+          </div>
+        <% end %>
+        <% if @supporter_profile.personality_traits.present? %>
+          <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+            <h3 class="font-semibold text-red-800 mb-2">🌟 性格傾向</h3>
+            <p class="text-red-700"><%= @supporter_profile.personality_traits.join(", ") %></p>
+          </div>
+        <% end %>
       </div>
     <% else %>
-      <p class="text-gray-500">プロフィールが未登録です。</p>
-      <%= link_to "プロフィールを登録", new_supporter_profile_path, class: "bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mt-2 inline-block" %>
+      <div class="text-center py-8">
+        <div class="text-6xl mb-4">👤</div>
+        <p class="text-gray-500 mb-6 text-lg">プロフィールが未登録です</p>
+        <%= link_to "🚀 プロフィールを登録する", new_supporter_profile_path, class: "inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-600 text-gray-800 px-6 py-3 rounded-lg hover:from-green-600 hover:to-blue-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border border-green-400 bg-white" %>
+      </div>
     <% end %>
 
-    <h2 class="text-xl font-bold mt-6 mb-4">あなたのトーク一覧</h2>
+    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+      💬 トーク・メッセージ
+    </h2>
+    
+    <% if @unread_rooms.any? %>
+      <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg">
+        <div class="flex items-center">
+          <div class="text-red-400 text-xl mr-3">🔴</div>
+          <div>
+            <h3 class="text-lg font-semibold text-red-800">未読メッセージがあります！</h3>
+            <div class="mt-2 space-y-2">
+              <% @unread_rooms.each do |room| %>
+                <div class="bg-white rounded-lg p-3 shadow-sm">
+                  <%= link_to "📩 ルーム #{room.id}", room_path(room), class: "text-red-600 hover:text-red-800 font-medium hover:underline" %>
+                  <span class="ml-2 bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
+                    未読 <%= @unread_counts[room.id] || 0 %> 件
+                  </span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
     <% if current_user.entries.any? %>
-      <div class="grid grid-cols-1 gap-2">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <% current_user.entries.each do |entry| %>
           <% room = entry.room %>
           <% other_entry = room.entries.where.not(user_id: current_user.id).first %>
           <% if other_entry %>
             <% other_user = other_entry.user %>
-            <div class="bg-gray-100 p-3 rounded shadow-sm">
-              <%= link_to "#{other_user.name}さんとのチャット", room_path(room), class: "text-blue-600 hover:underline" %>
+            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 p-4 rounded-xl hover:shadow-md transition-all duration-300 hover:scale-102">
+              <div class="flex items-center gap-3">
+                <div class="text-2xl">👤</div>
+                <div>
+                  <%= link_to "💬 #{other_user.name}さんとのチャット", room_path(room), class: "text-blue-600 hover:text-blue-800 font-semibold hover:underline" %>
+                </div>
+              </div>
             </div>
           <% end %>
         <% end %>
       </div>
     <% else %>
-      <p>トーク履歴がありません。</p>
+      <div class="text-center py-8 bg-gray-50 rounded-xl">
+        <div class="text-4xl mb-3">💬</div>
+        <p class="text-gray-500">トーク履歴がありません</p>
+        <p class="text-sm text-gray-400 mt-1">他のユーザーとメッセージを始めてみましょう！</p>
+      </div>
     <% end %>
-
-    <% if @unread_rooms.any? %>
-      <h3 class="text-xl font-bold mt-6 mb-4">未読メッセージのあるチャットルーム</h3>
-      <ul class="list-disc list-inside ml-4">
-        <% @unread_rooms.each do |room| %>
-          <li>
-            <%= link_to "ルーム #{room.id}", room_path(room), class: "text-blue-600 hover:underline" %>
-            （未読 <%= @unread_counts[room.id] || 0 %> 件）
-          </li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p>未読メッセージはありません。</p>
-    <% end %>
+    </div>
   </div>
 
-  <h2 class="text-2xl font-bold mt-8 mb-4">あなたの投稿一覧</h2>
-  <% if @posts.any? %>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <% @posts.each do |post| %>
-        <%= render "posts/post_card", post: post %>
-      <% end %>
-    </div>
-  <% else %>
-    <p>まだ投稿がありません。</p>
-  <% end %>
+  <!-- Posts Section -->
+  <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+    <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+      🎨 あなたの作品コレクション
+    </h2>
+    <% if @posts.any? %>
+      <div class="mb-4 flex justify-between items-center">
+        <p class="text-gray-600">
+          <span class="font-semibold text-lg text-purple-600"><%= @posts.count %></span>件の作品を投稿中
+        </p>
+        <div class="flex gap-2">
+          <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">📊 総投稿数: <%= @posts.count %></span>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% @posts.each do |post| %>
+          <div class="transform hover:scale-105 transition-all duration-300">
+            <%= render "posts/post_card", post: post %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-12">
+        <div class="text-6xl mb-6">🚀</div>
+        <h3 class="text-xl font-semibold text-gray-700 mb-3">まだ投稿がありません</h3>
+        <p class="text-gray-500 mb-6">あなたの創作活動を始めてみませんか？</p>
+        <%= link_to "✨ 初投稿をする", new_post_path, class: "inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-gray-800 px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border border-purple-500 bg-white" if defined?(new_post_path) %>
+      </div>
+    <% end %>
+  </div>
 </div>

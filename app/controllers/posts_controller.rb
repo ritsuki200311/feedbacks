@@ -14,15 +14,15 @@ class PostsController < ApplicationController
     respond_to do |format|
       if @post.valid? && CoinService.deduct_for_post(@post)
         @post.save
-        format.html { redirect_to root_path, notice: "投稿が作成されました。" }
+        
+        redirect_path = @post.community.present? ? community_path(@post.community) : root_path
+        format.html { redirect_to redirect_path, notice: "投稿が作成されました。" }
         format.turbo_stream { flash.now[:notice] = "投稿が作成されました。" }
       else
         Rails.logger.debug "Post save failed: #{@post.errors.full_messages.join(', ')}"
-        if @post.errors.empty?
-          flash.now[:alert] = "コインが不足しているか、投稿に問題があります。"
-        end
-        format.html { render :new, status: :unprocessable_entity }
-        format.turbo_stream { render turbo_stream: turbo_stream.replace("post_form", partial: "posts/form", locals: { post: @post }), status: :unprocessable_entity }
+        flash[:alert] = @post.errors.empty? ? "コインが不足しているか、投稿に問題があります。" : @post.errors.full_messages.join(", ")
+        format.html { redirect_to new_post_path, alert: flash[:alert] }
+        format.turbo_stream { redirect_to new_post_path, alert: flash[:alert] }
       end
     end
   end
@@ -54,7 +54,7 @@ class PostsController < ApplicationController
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :creation_type, :request_tag, :tag_list, images: [], videos: [], audios: [])
+    params.require(:post).permit(:title, :body, :creation_type, :request_tag, :tag_list, :community_id, images: [], videos: [], audios: [])
   end
 
 

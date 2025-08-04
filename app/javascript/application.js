@@ -2,5 +2,5 @@
 import "@hotwired/turbo-rails"
 import "controllers"
 import "@rails/ujs"
-import "preferences_matter"
+// import "preferences_matter"  // 一時的にコメントアウト
 

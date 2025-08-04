@@ -19,7 +19,7 @@ Rails.application.routes.draw do
 
   # 投稿とコメント
   resources :posts, only: [ :new, :create, :show, :destroy ] do
-    resources :comments, only: [ :create ]
+    resources :comments, only: [ :index, :create ]
   end
 
   # 投票機能

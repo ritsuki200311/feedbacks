@@ -146,7 +146,53 @@ export default class extends Controller {
 
   applyTone(event) {
     const tone = event.currentTarget.dataset.tone
-    const currentText = this.getCurrentCommentText()
+    // コメントフォームコントローラーと連携
+    const commentFormController = this.getCommentFormController()
+    if (commentFormController) {
+      commentFormController.applyTone(tone)
+    }
+  }
+
+  // コメントフォームコントローラーを取得
+  getCommentFormController() {
+    const commentFormElement = document.querySelector('[data-controller*="comment-form"]')
+    if (commentFormElement) {
+      return this.application.getControllerForElementAndIdentifier(commentFormElement, 'comment-form')
+    }
+    return null
+  }
+
+  // コメントフィールドに提案を挿入
+  insertIntoCommentField(suggestion) {
+    const commentFormController = this.getCommentFormController()
+    if (commentFormController) {
+      // 提案をそのまま適用するか、追加するかを選択
+      const confirmReplace = confirm('現在のテキストを置き換えますか？\n「キャンセル」を選ぶと末尾に追加されます。')
+      
+      if (confirmReplace) {
+        commentFormController.applySuggestion(suggestion)
+      } else {
+        commentFormController.insertSuggestion(' ' + suggestion)
+      }
+      
+      // 成功フィードバック
+      this.showFeedback('コメントに反映しました！')
+    }
+  }
+
+  // フィードバック表示
+  showFeedback(message) {
+    const feedback = document.createElement('div')
+    feedback.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm'
+    feedback.textContent = message
+    document.body.appendChild(feedback)
+    
+    setTimeout(() => {
+      feedback.remove()
+    }, 2000)
+  }
+
+  getCurrentCommentText() {
     
     let tonePrefix = ""
     switch(tone) {

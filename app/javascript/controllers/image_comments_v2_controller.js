@@ -5,48 +5,43 @@ export default class extends Controller {
   static values = { postId: Number }
 
   connect() {
-    console.log("Image Comments Controller connected! [UPDATED VERSION]")
-    console.log("Post ID:", this.postIdValue)
-    console.log("Image target:", this.hasImageTarget ? "found" : "not found")
+    console.log("🟢 NEW v2 Image Comments Controller connected!")
     this.tempPin = null
     this.setupImageClickListener()
     this.loadExistingComments()
   }
 
   setupImageClickListener() {
-    console.log("Setting up image click listener...")
+    console.log("🟢 Setting up v2 image click listener...")
     if (!this.hasImageTarget) {
       console.error("Image target not found!")
       return
     }
     
     this.imageTarget.addEventListener("click", (event) => {
-      console.log("Image clicked!")
+      console.log("🟢 v2: Image clicked!")
       const rect = this.imageTarget.getBoundingClientRect()
       const x = event.clientX - rect.left
       const y = event.clientY - rect.top
       
-      // 相対座標に変換（画像サイズに対する割合）
       const relativeX = (x / rect.width * 100).toFixed(2)
       const relativeY = (y / rect.height * 100).toFixed(2)
       
-      console.log(`Clicked at: ${relativeX}%, ${relativeY}%`)
+      console.log(`🟢 v2: Clicked at: ${relativeX}%, ${relativeY}%`)
       
-      // 既存のマーカーがクリック位置にある場合はスキップ
       if (this.isMarkerAtPosition(relativeX, relativeY)) {
         console.log("Marker already exists at this position")
         return
       }
       
-      console.log("Creating temp pin and focusing form...")
-      // 仮ピンを表示し、右側のフォームにフォーカス
+      console.log("🟢 v2: Creating temp pin and focusing form...")
       this.createTempPin(relativeX, relativeY)
       this.focusCommentForm(relativeX, relativeY)
     })
   }
 
   createTempPin(x, y) {
-    // 既存の仮ピンがあれば削除
+    console.log("🟢 v2: Creating temp pin at", x, y)
     this.removeTempPin()
     
     const tempPin = document.createElement("div")
@@ -57,7 +52,6 @@ export default class extends Controller {
     tempPin.style.pointerEvents = "auto"
     tempPin.dataset.tempPin = "true"
     
-    // 仮ピンにクリックで削除機能を追加
     tempPin.addEventListener("click", () => {
       this.removeTempPin()
       this.clearCommentForm()
@@ -65,6 +59,7 @@ export default class extends Controller {
     
     this.tempPin = tempPin
     this.markersContainerTarget.appendChild(tempPin)
+    console.log("🟢 v2: Temp pin created and added!")
   }
 
   removeTempPin() {
@@ -72,29 +67,29 @@ export default class extends Controller {
       this.tempPin.remove()
       this.tempPin = null
     }
-    // または既存の仮ピンを全て削除
     const existingTempPins = this.markersContainerTarget.querySelectorAll("[data-temp-pin]")
     existingTempPins.forEach(pin => pin.remove())
   }
 
   focusCommentForm(x, y) {
-    // 右側のコメントフォームを見つけてフォーカス
+    console.log("🟢 v2: Focusing comment form with coordinates", x, y)
     const commentForm = document.querySelector("[data-comment-form-target='form']")
-    if (!commentForm) return
+    if (!commentForm) {
+      console.error("🟢 v2: Comment form not found!")
+      return
+    }
     
-    // 隠しフィールドに座標を設定
     const xField = commentForm.querySelector("[data-comment-form-target='xPosition']")
     const yField = commentForm.querySelector("[data-comment-form-target='yPosition']")
     
     if (xField) xField.value = x
     if (yField) yField.value = y
     
-    // テキストエリアにフォーカス
     const textarea = commentForm.querySelector("[data-comment-form-target='textarea']")
     if (textarea) {
       textarea.focus()
-      // プレースホルダーを変更してピンの位置を示す
       textarea.placeholder = `画像の位置 (${x}%, ${y}%) にコメントを書いてください...`
+      console.log("🟢 v2: Focused textarea and set placeholder")
     }
   }
 
@@ -102,14 +97,12 @@ export default class extends Controller {
     const commentForm = document.querySelector("[data-comment-form-target='form']")
     if (!commentForm) return
     
-    // 隠しフィールドをクリア
     const xField = commentForm.querySelector("[data-comment-form-target='xPosition']")
     const yField = commentForm.querySelector("[data-comment-form-target='yPosition']")
     
     if (xField) xField.value = ""
     if (yField) yField.value = ""
     
-    // プレースホルダーを元に戻す
     const textarea = commentForm.querySelector("[data-comment-form-target='textarea']")
     if (textarea) {
       textarea.placeholder = "画像を見ながらコメントを書いてみましょう..."
@@ -142,13 +135,11 @@ export default class extends Controller {
       this.renderComments(comments)
     } catch (error) {
       console.error("Error loading comments:", error)
-      // エラーが出た場合はページのデータから読み込む
       this.loadCommentsFromDOM()
     }
   }
 
   loadCommentsFromDOM() {
-    // ページ内の画像上コメントデータから読み込む（フォールバック）
     const commentElements = document.querySelectorAll("[data-comment-id]")
     const comments = []
     
@@ -160,7 +151,7 @@ export default class extends Controller {
         comments.push({
           id: commentId,
           body: commentText,
-          x_position: Math.random() * 200 + 50, // デモ用のランダム位置
+          x_position: Math.random() * 200 + 50,
           y_position: Math.random() * 200 + 50,
           number: index + 1
         })
@@ -172,9 +163,8 @@ export default class extends Controller {
 
   renderComments(comments) {
     const container = this.markersContainerTarget
-    container.innerHTML = "" // 既存のマーカーをクリア
+    container.innerHTML = ""
     
-    // 画像上のコメントのみをフィルタリング
     const imageComments = comments.filter(comment => 
       comment.x_position !== null && comment.y_position !== null
     )
@@ -193,7 +183,6 @@ export default class extends Controller {
     marker.dataset.commentId = comment.id
     marker.style.pointerEvents = "auto"
     
-    // ツールチップ作成
     const tooltip = document.createElement("div")
     tooltip.className = "absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-sm rounded py-2 px-3 whitespace-nowrap z-20 opacity-0 transition-opacity duration-200 pointer-events-none"
     tooltip.textContent = comment.body
@@ -201,10 +190,8 @@ export default class extends Controller {
     tooltip.style.whiteSpace = "normal"
     tooltip.style.wordWrap = "break-word"
     
-    // マーカーにツールチップを追加
     marker.appendChild(tooltip)
     
-    // ホバーイベント
     marker.addEventListener("mouseenter", () => {
       tooltip.style.opacity = "1"
     })
@@ -213,69 +200,22 @@ export default class extends Controller {
       tooltip.style.opacity = "0"
     })
     
-    // クリックイベント（既存コメントの編集・表示用）
     marker.addEventListener("click", (event) => {
-      event.stopPropagation() // 画像クリックイベントを阻止
+      event.stopPropagation()
       this.showExistingComment(comment)
     })
     
-    // マーカーコンテナーに追加
     this.markersContainerTarget.appendChild(marker)
   }
 
-  highlightMarker(event) {
-    const commentId = event.currentTarget.dataset.commentId
-    if (!commentId) return
-    
-    // 対応するマーカーを見つけて強調表示
-    const marker = this.markersContainerTarget.querySelector(`[data-comment-id="${commentId}"]`)
-    if (!marker) return
-    
-    // 既存の強調表示をリセット
-    this.resetMarkerHighlights()
-    
-    // マーカーを強調表示
-    marker.style.backgroundColor = "#ef4444" // 赤色
-    marker.style.transform = "translate(-50%, -50%) scale(1.3)"
-    marker.style.zIndex = "30"
-    
-    // アニメーション効果
-    marker.classList.add("animate-ping")
-    
-    // 2秒後に元に戻す
-    setTimeout(() => {
-      marker.style.backgroundColor = "#3b82f6" // 元の青色
-      marker.style.transform = "translate(-50%, -50%) scale(1)"
-      marker.style.zIndex = "10"
-      marker.classList.remove("animate-ping")
-    }, 2000)
-    
-    // マーカーが見える位置にスクロール
-    marker.scrollIntoView({ behavior: "smooth", block: "center" })
-  }
-
-  resetMarkerHighlights() {
-    const markers = this.markersContainerTarget.querySelectorAll("[data-comment-id]")
-    markers.forEach(marker => {
-      marker.style.backgroundColor = "#3b82f6"
-      marker.style.transform = "translate(-50%, -50%) scale(1)"
-      marker.style.zIndex = "10"
-      marker.classList.remove("animate-ping")
-    })
-  }
-
-  // コメント送信成功時に呼び出される（comment-form controllerから）
-  onCommentSubmitted(comment) {
-    if (comment.x_position && comment.y_position) {
-      // 仮ピンを本物のピンに変換
-      this.removeTempPin()
-      
-      // 新しいマーカーを追加
-      const imageComments = this.markersContainerTarget.querySelectorAll('[data-comment-id]')
-      this.createMarker(comment, imageComments.length + 1)
-      
-      // コメントフォームをクリア
-      this.clearCommentForm()
+  showExistingComment(comment) {
+    const commentElement = document.querySelector(`[data-comment-id="${comment.id}"]`)
+    if (commentElement) {
+      commentElement.scrollIntoView({ behavior: "smooth", block: "center" })
+      commentElement.style.backgroundColor = "#fef3c7"
+      setTimeout(() => {
+        commentElement.style.backgroundColor = ""
+      }, 2000)
     }
   }
 
@@ -291,7 +231,6 @@ export default class extends Controller {
       }
     })
     
-    // ボタンのテキストとアイコンを更新
     if (this.hasToggleTextTarget) {
       this.toggleTextTarget.textContent = isVisible ? 'ピン表示' : 'ピン非表示'
     }
@@ -306,22 +245,6 @@ export default class extends Controller {
     if (this.hasMarkerCountTarget) {
       const count = this.markersContainerTarget.querySelectorAll('[data-comment-id]').length
       this.markerCountTarget.textContent = `${count}個のピン`
-    }
-  }
-
-  showExistingComment(comment) {
-    // 既存のコメントをクリックした時の処理
-    // コメント一覧にスクロールするか、詳細表示を行う
-    const commentElement = document.querySelector(`[data-comment-id="${comment.id}"]`)
-    if (commentElement) {
-      // コメント一覧までスクロール
-      commentElement.scrollIntoView({ behavior: "smooth", block: "center" })
-      
-      // ハイライト効果
-      commentElement.style.backgroundColor = "#fef3c7" // yellow-100
-      setTimeout(() => {
-        commentElement.style.backgroundColor = ""
-      }, 2000)
     }
   }
 }

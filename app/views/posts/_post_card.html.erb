@@ -10,15 +10,21 @@
   <% end %>
   <div class="flex items-center justify-between mt-4">
     <div class="flex items-center gap-4">
-      <%= button_to vote_path(votable_type: 'Post', votable_id: post.id, value: 1), method: :post, class: "text-gray-500 hover:text-green-500" do %>
-        👍
-      <% end %>
-      <span class="text-gray-600 font-semibold">
-        <%= post.votes.where(value: 1).count - post.votes.where(value: -1).count %>
-      </span>
-      <%= button_to vote_path(votable_type: 'Post', votable_id: post.id, value: -1), method: :post, class: "text-gray-500 hover:text-red-500" do %>
-        👎
-      <% end %>
+      <div class="flex items-center gap-1">
+        <%= button_to vote_path(votable_type: 'Post', votable_id: post.id, value: 1), method: :post, class: "text-gray-500 hover:text-green-500" do %>
+          👍
+        <% end %>
+        <span class="text-gray-600 font-semibold">
+          <%= post.votes.where(value: 1).count - post.votes.where(value: -1).count %>
+        </span>
+        <%= button_to vote_path(votable_type: 'Post', votable_id: post.id, value: -1), method: :post, class: "text-gray-500 hover:text-red-500" do %>
+          👎
+        <% end %>
+      </div>
+      <div class="flex items-center gap-1 text-gray-500">
+        💬
+        <span class="text-sm font-medium"><%= post.comments.count %></span>
+      </div>
     </div>
     <%= link_to "詳細を見る", post_path(post), class: "text-blue-500 hover:text-blue-700 font-semibold" %>
   </div>

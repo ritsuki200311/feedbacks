@@ -17,6 +17,9 @@ Rails.application.routes.draw do
   # プロフィール（シングルリソースでルーティング）
   resource :supporter_profile, only: [ :new, :create, :show, :edit, :update ]
 
+  # 投稿検索（postsリソースの前に配置）
+  get "posts/search", to: "posts#search", as: :search_posts
+
   # 投稿とコメント
   resources :posts, only: [ :new, :create, :show, :destroy ] do
     resources :comments, only: [ :index, :create ]
@@ -26,9 +29,6 @@ Rails.application.routes.draw do
 
   # 投票機能
   post "vote", to: "votes#vote"
-
-  # 投稿検索
-  get "posts/search", to: "posts#search", as: :search_posts
 
 
   # DM機能

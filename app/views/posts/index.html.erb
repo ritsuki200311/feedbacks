@@ -11,8 +11,8 @@
           <% if post.images.attached? %>
             <div class="mb-4">
               <% post.images.each_with_index do |image, index| %>
-                <div class="relative inline-block mb-2" data-controller="image-comments" data-image-comments-post-id-value="<%= post.id %>" data-image-comments-read-only-value="true">
-                  <%= image_tag image, class: "w-full max-w-xs rounded shadow", data: { "image-comments-target": "image" } %>
+                <div class="relative inline-block mb-2" data-controller="image-comments image-aspect-ratio" data-image-comments-post-id-value="<%= post.id %>" data-image-comments-read-only-value="true">
+                  <%= image_tag image, class: "w-full max-w-xs rounded shadow", data: { "image-comments-target": "image", "image-aspect-ratio-target": "image" } %>
                   
                   <!-- 画像上のコメントマーカー表示エリア -->
                   <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>

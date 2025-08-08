@@ -1,187 +1,280 @@
-<div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-4">
-  <h1 class="text-3xl font-bold mb-4 text-gray-900">投稿</h1>
+<!-- 2カラムレイアウト -->
+<div class="max-w-7xl mx-auto mt-4 px-4">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- 左側: 投稿表示エリア（約70%） -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-xl shadow p-4 mb-6">
+        <h1 class="text-lg font-bold mb-2 text-gray-900"><%= @post.title %></h1>
+        
+        <div class="flex items-center gap-2 mb-2 text-sm">
+          <span class="font-medium text-gray-600">投稿者:</span>
+          <%= link_to @post.user.name, user_path(@post.user), class: "text-blue-500 hover:underline" %>
+        </div>
 
-  <div class="flex items-center gap-2 mb-2">
-    <span class="font-semibold text-gray-700">投稿者:</span>
-    <%= link_to @post.user.name, user_path(@post.user), class: "text-blue-500 hover:underline" %>
-  </div>
+        <p class="mb-3 text-sm text-gray-600 leading-relaxed"><%= @post.body %></p>
 
-  <h2 class="text-xl font-semibold text-gray-800 mb-2"><%= @post.title %></h2>
-  <p class="mb-4 text-gray-700"><%= @post.body %></p>
+        <% if @post.request_tag.present? %>
+          <p class="mb-2">
+            <span class="font-medium text-gray-500 text-xs">リクエスト:</span>
+            <span class="bg-green-50 text-green-500 px-2 py-1 rounded-full text-xs"><%= @post.request_tag %></span>
+          </p>
+        <% end %>
 
-  <% if @post.request_tag.present? %>
-    <p class="mb-4">
-      <span class="font-semibold text-gray-600">リクエスト:</span>
-      <span class="bg-green-50 text-green-500 px-2 py-1 rounded-full text-sm"><%= @post.request_tag %></span>
-    </p>
-  <% end %>
-
-  <% if @post.images.attached? %>
-    <div class="mb-4">
-      <% @post.images.each_with_index do |image, index| %>
-        <div class="relative inline-block mb-4 mr-4" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
-          <%= image_tag image, class: "rounded-lg max-w-md cursor-pointer", data: { "image-comments-target": "image" } %>
-          
-          <!-- 画像上コメント用のフォーム（初期は非表示） -->
-          <div class="hidden absolute z-50 bg-white border border-gray-300 rounded-lg p-3 shadow-lg" data-image-comments-target="form">
-            <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
-              <%= f.hidden_field :x_position %>
-              <%= f.hidden_field :y_position %>
-              <%= f.text_area :body, rows: 2, placeholder: "コメントを入力...", class: "w-48 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500", required: true %>
-              <div class="mt-2 flex gap-2">
-                <%= f.submit "コメントする", class: "bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm" %>
-                <button type="button" data-action="click->image-comments#hideForm" class="bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400 text-sm">キャンセル</button>
+        <!-- 画像表示エリア -->
+        <% if @post.images.attached? %>
+          <div class="space-y-4">
+            <% @post.images.each_with_index do |image, index| %>
+              <div class="relative" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
+                <%= image_tag image, class: "w-full rounded-lg cursor-pointer shadow", data: { "image-comments-target": "image" } %>
+                
+                <!-- 画像上のコメントマーカー表示エリア -->
+                <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+                
+                <!-- 画像上コメント用のフォーム（初期は非表示） -->
+                <div class="hidden absolute z-50 bg-white border border-gray-300 rounded p-2 shadow-lg" data-image-comments-target="form">
+                  <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
+                    <%= f.hidden_field :x_position %>
+                    <%= f.hidden_field :y_position %>
+                    <%= f.text_area :body, rows: 2, placeholder: "コメントを入力...", class: "w-40 p-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500", required: true %>
+                    <div class="mt-1 flex gap-1">
+                      <%= f.submit "コメント", class: "bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs" %>
+                      <button type="button" data-action="click->image-comments#hideForm" class="bg-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-400 text-xs">×</button>
+                    </div>
+                  <% end %>
+                </div>
+                
+                <!-- マーカー表示切り替えボタン -->
+                <div class="mt-2 flex items-center gap-2">
+                  <button type="button" 
+                          data-action="click->image-comments#toggleMarkers" 
+                          data-image-comments-target="toggleButton"
+                          class="flex items-center gap-1 px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                    <span data-image-comments-target="toggleIcon">👁️</span>
+                    <span data-image-comments-target="toggleText">ピン表示</span>
+                  </button>
+                  <span data-image-comments-target="markerCount" class="text-xs text-gray-500"></span>
+                </div>
               </div>
             <% end %>
           </div>
-          
-          <!-- 画像上のコメントマーカー表示エリア -->
-          <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
-          
-          <!-- マーカー表示切り替えボタン -->
-          <div class="mt-2 flex items-center gap-2">
-            <button type="button" 
-                    data-action="click->image-comments#toggleMarkers" 
-                    data-image-comments-target="toggleButton"
-                    class="flex items-center gap-2 px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <span data-image-comments-target="toggleIcon">👁️</span>
-              <span data-image-comments-target="toggleText">コメントピンを表示</span>
-            </button>
-            <span data-image-comments-target="markerCount" class="text-sm text-gray-500"></span>
-          </div>
-        </div>
-      <% end %>
-    </div>
-  <% else %>
-    <p class="mb-4 text-sm text-gray-400">画像はありません</p>
-  <% end %>
-  <% if @post.videos.attached? %>
-    <div class="mb-4">
-      <% @post.videos.each do |video| %>
-        <% if video.variable? %>
-        <video class="rounded-lg w-full max-w-md" controls>
-          <source src="<%= url_for(video.variant(format: :mp4, resize_to_limit: [1920, 1080], quality: 75)) %>" type="video/mp4">
-          お使いのブラウザは video タグをサポートしていません。
-        </video>
         <% else %>
-          <p class="text-red-500">この動画は再生できません。</p>
-          <p class="text-xs text-gray-500 break-all">Generated URL: <%= url_for(video) %></p>
+          <p class="text-gray-400 text-center py-4 text-sm">画像はありません</p>
         <% end %>
-      <% end %>
-    </div>
-  <% else %>
-    <p class="mb-4 text-sm text-gray-400">動画はありません</p>
-  <% end %>
 
-  <p class="mb-4">
-    <span class="font-semibold text-gray-600">タグ:</span>
-    <span class="bg-blue-50 text-blue-500 px-2 py-1 rounded-full text-sm"><%= @post.tag %></span>
-  </p>
-
-  <!-- 投票ボタン -->
-  <div class="flex items-center justify-end gap-4 mt-6 border-t pt-4">
-    <%= button_to vote_path(votable_type: 'Post', votable_id: @post.id, value: 1), method: :post, class: "text-gray-500 hover:text-green-500" do %>
-      👍
-    <% end %>
-    <span class="text-gray-600 font-semibold">
-      <%= @post.votes.where(value: 1).count - @post.votes.where(value: -1).count %>
-    </span>
-    <%= button_to vote_path(votable_type: 'Post', votable_id: @post.id, value: -1), method: :post, class: "text-gray-500 hover:text-red-500" do %>
-      👎
-    <% end %>
-  </div>
-</div>
-
-<div class="max-w-2xl mx-auto mt-8">
-  <h3 class="text-xl font-bold mb-4 text-gray-900">コメント</h3>
-  
-  <!-- 画像上コメント一覧 -->
-  <% image_comments = @post.comments.where.not(x_position: nil, y_position: nil).order(:created_at) %>
-  <% if image_comments.any? %>
-    <div class="mb-6 bg-blue-50 rounded-lg p-4">
-      <h4 class="font-semibold text-blue-900 mb-3">📍 画像上のコメント</h4>
-      <% image_comments.each_with_index do |comment, index| %>
-        <div class="mb-3 p-3 bg-white rounded border cursor-pointer hover:bg-gray-50" 
-             data-action="click->image-comments#highlightMarker" 
-             data-comment-id="<%= comment.id %>">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">#<%= index + 1 %></span>
-            <span class="font-semibold text-gray-700"><%= comment.user&.name || "匿名" %></span>
-            <span class="text-xs text-gray-400"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+        <!-- 動画表示 -->
+        <% if @post.videos.attached? %>
+          <div class="mt-4 space-y-3">
+            <h3 class="text-sm font-medium text-gray-700">動画</h3>
+            <% @post.videos.each do |video| %>
+              <% if video.variable? %>
+                <video class="w-full rounded-lg shadow" controls>
+                  <source src="<%= url_for(video.variant(format: :mp4, resize_to_limit: [1920, 1080], quality: 75)) %>" type="video/mp4">
+                  お使いのブラウザは video タグをサポートしていません。
+                </video>
+              <% else %>
+                <p class="text-red-500 text-xs">この動画は再生できません。</p>
+              <% end %>
+            <% end %>
           </div>
-          <p class="text-gray-800 ml-8"><%= comment.body %></p>
+        <% end %>
+
+        <!-- タグ情報 -->
+        <div class="mt-4 pt-3 border-t border-gray-100">
+          <span class="font-medium text-gray-500 text-xs">タグ:</span>
+          <span class="bg-blue-50 text-blue-500 px-2 py-1 rounded-full text-xs ml-1"><%= @post.tag %></span>
         </div>
-      <% end %>
-    </div>  
-  <% end %>
-  <%= form_with model: [@post, @comment], local: true, class: "space-y-4" do |f| %>
-    <div>
-      
-      <%= f.text_area :body, rows: 3, placeholder: "コメントを追加...", class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
-    </div>
-    <div>
-      
-      <%= f.file_field :attachments, multiple: true, class: "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" %>
-    </div>
-    <div class="text-right">
-      <%= f.submit "コメントする", class: "inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
-    </div>
-  <% end %>
-  
-  <% @post.comments.where(parent_id: nil).each do |comment| %>
-    <div class="bg-gray-50 rounded-xl shadow p-5 mb-6">
-      <div class="flex items-center gap-2 mb-2">
-        <span class="font-bold text-gray-700"><%= comment.user&.name || "匿名" %></span>
-        <span class="text-xs text-gray-400"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></span>
-      </div>
-      <p class="mb-3 text-gray-800"><%= comment.body %></p>
 
-      <!-- 投票ボタン -->
-      <div class="flex items-center justify-end gap-3 text-sm">
-        <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500" do %>
-          👍
-        <% end %>
-        <span class="text-gray-600 font-semibold">
-          <%= comment.votes.where(value: 1).count - comment.votes.where(value: -1).count %>
-        </span>
-        <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500" do %>
-          👎
-        <% end %>
-      </div>
-      
-      <!-- 返信フォーム -->
-      <%= form_with model: [@post, Comment.new], local: true, class: "flex gap-2 mb-2" do |f| %>
-        <%= f.hidden_field :parent_id, value: comment.id %>
-        <%= f.text_area :body, rows: 1, placeholder: "返信を書く…", class: "flex-1 resize-none rounded-lg border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-300" %>
-        <%= f.submit "返信", class: "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg font-semibold" %>
-      <% end %>
-
-      <!-- 返信コメント一覧 -->
-      <% if comment.replies.any? %>
-        <div class="mt-3 space-y-3">
-          <% comment.replies.each do |reply| %>
-            <div class="bg-white border-l-4 border-blue-200 rounded-lg pl-4 py-2 shadow-sm">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="font-bold text-blue-600"><%= reply.user&.name || "匿名" %></span>
-                <span class="text-xs text-gray-400"><%= reply.created_at.strftime("%Y-%m-%d %H:%M") %></span>
-              </div>
-              <p class="text-gray-700"><%= reply.body %></p>
-              <!-- 投票ボタン -->
-              <div class="flex items-center justify-end gap-2 text-xs mt-1">
-                <%= button_to vote_path(votable_type: 'Comment', votable_id: reply.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500" do %>
-                  👍
-                <% end %>
-                <span class="text-gray-500 font-semibold">
-                  <%= reply.votes.where(value: 1).count - reply.votes.where(value: -1).count %>
-                </span>
-                <%= button_to vote_path(votable_type: 'Comment', votable_id: reply.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500" do %>
-                  👎
-                <% end %>
-              </div>
-            </div>
+        <!-- 投票ボタン -->
+        <div class="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-gray-100">
+          <%= button_to vote_path(votable_type: 'Post', votable_id: @post.id, value: 1), method: :post, class: "text-gray-500 hover:text-green-500" do %>
+            👍
+          <% end %>
+          <span class="text-gray-600 font-medium text-sm">
+            <%= @post.votes.where(value: 1).count - @post.votes.where(value: -1).count %>
+          </span>
+          <%= button_to vote_path(votable_type: 'Post', votable_id: @post.id, value: -1), method: :post, class: "text-gray-500 hover:text-red-500" do %>
+            👎
           <% end %>
         </div>
-      <% end %>
+      </div>
+
+      <!-- コメント一覧（投稿の下に表示） -->
+      <div class="bg-white rounded-xl shadow-lg p-4">
+        <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <span>💬</span>
+          すべてのコメント
+        </h3>
+        
+        <!-- 通常のコメント一覧 -->
+        <div class="mb-6">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <span>💬</span>
+              コメント
+            </h4>
+            <span class="text-xs text-gray-500"><%= @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).count %>件</span>
+          </div>
+          
+          <div class="space-y-3 max-h-80 overflow-y-auto">
+            <% @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).order(:created_at).each do |comment| %>
+              <div class="p-3 bg-gray-50 rounded-lg border-l-4 border-blue-200">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="font-medium text-xs text-gray-700"><%= comment.user&.name || "匿名" %></span>
+                  <span class="text-xs text-gray-400"><%= time_ago_in_words(comment.created_at) %>前</span>
+                </div>
+                <p class="text-sm text-gray-800 leading-relaxed mb-2"><%= comment.body %></p>
+                
+                <!-- 投票ボタン -->
+                <div class="flex items-center justify-end gap-2">
+                  <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500" do %>
+                    👍
+                  <% end %>
+                  <span class="text-gray-600 font-medium text-xs">
+                    <%= comment.votes.where(value: 1).count - comment.votes.where(value: -1).count %>
+                  </span>
+                  <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500" do %>
+                    👎
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            
+            <% if @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).empty? %>
+              <p class="text-center text-gray-500 py-6 text-sm">まだコメントがありません</p>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- 画像上のピンコメント一覧 -->
+        <div data-controller="compact-comments">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <span>📍</span>
+              画像上のピンコメント
+            </h4>
+            <% image_comments = @post.comments.where.not(x_position: nil, y_position: nil).order(:created_at) %>
+            <span class="text-xs text-gray-500"><%= image_comments.count %>件</span>
+          </div>
+          
+          <div class="space-y-3 max-h-80 overflow-y-auto">
+            <% if image_comments.any? %>
+              <% image_comments.each_with_index do |comment, index| %>
+                <div class="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400 cursor-pointer hover:bg-blue-100 transition-colors" 
+                     data-comment-id="<%= comment.id %>"
+                     data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                      <%= index + 1 %>
+                    </span>
+                    <span class="text-xs font-medium text-gray-700"><%= comment.user&.name || "匿名" %></span>
+                    <span class="text-xs text-gray-400"><%= time_ago_in_words(comment.created_at) %>前</span>
+                  </div>
+                  <p class="text-sm text-gray-800 leading-relaxed pl-6"><%= comment.body %></p>
+                </div>
+              <% end %>
+            <% else %>
+              <p class="text-center text-gray-500 py-6 text-sm">画像上のピンコメントはありません<br><span class="text-xs text-gray-400">画像をクリックしてコメントを追加できます</span></p>
+            <% end %>
+          </div>
+        </div>
+      </div>
     </div>
-  <% end %>
+
+    <!-- 右側: コメント入力フォーム + AI補助（約30%） -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-xl shadow-lg p-4 sticky top-4" data-controller="ai-sidebar" data-ai-sidebar-post-id-value="<%= @post.id %>">
+        <h2 class="text-base font-bold mb-3 text-gray-900 flex items-center gap-2">
+          <span>💬</span>
+          コメントを追加
+        </h2>
+        
+        <!-- メインコメント投稿フォーム -->
+        <%= form_with model: [@post, @comment], local: true, class: "space-y-3", data: { controller: "comment-form" } do |f| %>
+          <!-- コメント入力エリア -->
+          <div>
+            <%= f.text_area :body, 
+                rows: 8, 
+                placeholder: "画像を見ながらコメントを書いてみましょう...", 
+                class: "w-full p-4 text-base border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-y min-h-32",
+                data: { "comment-form-target": "textarea" } %>
+          </div>
+          
+          <!-- AI補助エリア -->
+          <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-3 border border-purple-100">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1">
+                <div class="w-4 h-4 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
+                  <span class="text-white text-xs font-bold">AI</span>
+                </div>
+                AI補助
+              </h3>
+              
+              <button type="button" 
+                      data-action="click->ai-sidebar#toggleAI"
+                      data-ai-sidebar-target="toggleButton"
+                      class="px-2 py-1 bg-purple-600 text-white text-xs font-medium rounded hover:bg-purple-700 transition-colors flex items-center gap-1">
+                <span data-ai-sidebar-target="toggleIcon">🤖</span>
+                <span data-ai-sidebar-target="toggleText">開始</span>
+              </button>
+            </div>
+            
+            <!-- 初期状態の説明 -->
+            <div data-ai-sidebar-target="initialMessage" class="text-center py-2">
+              <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                <span class="text-xs">🤖</span>
+              </div>
+              <p class="text-xs text-gray-600">
+                AIがコメント作成をサポート
+              </p>
+            </div>
+            
+            <!-- ローディング表示 -->
+            <div data-ai-sidebar-target="loading" class="hidden text-center py-2">
+              <div class="w-5 h-5 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-1"></div>
+              <p class="text-xs text-gray-600">AI分析中...</p>
+            </div>
+            
+            <!-- AI補助コンテンツ -->
+            <div data-ai-sidebar-target="aiContent" class="hidden space-y-2">
+              <!-- トーン調整 -->
+              <div class="bg-white rounded p-2 border border-purple-200">
+                <h4 class="text-xs font-semibold text-gray-800 mb-2 flex items-center gap-1">
+                  <span>🎨</span>
+                  トーン
+                </h4>
+                <div class="flex flex-wrap gap-1">
+                  <button class="px-2 py-1 text-xs bg-pink-100 text-pink-700 rounded-full hover:bg-pink-200 transition-colors"
+                          data-action="click->ai-sidebar#applyTone"
+                          data-tone="褒める">褒める</button>
+                  <button class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
+                          data-action="click->ai-sidebar#applyTone"
+                          data-tone="質問">質問</button>
+                  <button class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
+                          data-action="click->ai-sidebar#applyTone"
+                          data-tone="建設的">建設的</button>
+                  <button class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full hover:bg-yellow-200 transition-colors"
+                          data-action="click->ai-sidebar#applyTone"
+                          data-tone="励まし">励まし</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <%= f.file_field :attachments, 
+                multiple: true, 
+                class: "text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" %>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div class="text-xs text-gray-500">
+              <span data-comment-form-target="charCount">0</span>/500文字
+            </div>
+            <%= f.submit "投稿", 
+                class: "bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
 </div>

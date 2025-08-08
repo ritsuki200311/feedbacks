@@ -20,6 +20,8 @@ Rails.application.routes.draw do
   # 投稿とコメント
   resources :posts, only: [ :new, :create, :show, :destroy ] do
     resources :comments, only: [ :index, :create ]
+    # AI comment assistant
+    post 'ai_comment_assistant/analyze', to: 'ai_comment_assistant#analyze_post'
   end
 
   # 投票機能

@@ -9,20 +9,39 @@
     </div>
   <% end %>
   <div class="flex items-center justify-between mt-4">
-    <div class="flex items-center gap-4">
-      <div class="flex items-center gap-1">
-        <%= button_to vote_path(votable_type: 'Post', votable_id: post.id, value: 1), method: :post, class: "text-gray-500 hover:text-green-500" do %>
-          👍
-        <% end %>
-        <span class="text-gray-600 font-semibold">
-          <%= post.votes.where(value: 1).count - post.votes.where(value: -1).count %>
-        </span>
-        <%= button_to vote_path(votable_type: 'Post', votable_id: post.id, value: -1), method: :post, class: "text-gray-500 hover:text-red-500" do %>
-          👎
-        <% end %>
+    <div class="flex items-center gap-4"
+         data-controller="vote"
+         data-vote-votable-type-value="Post"
+         data-vote-votable-id-value="<%= post.id %>"
+         data-vote-up-count-value="<%= post.votes.where(value: 1).count %>"
+         data-vote-down-count-value="<%= post.votes.where(value: -1).count %>"
+         data-vote-user-vote-value="<%= current_user ? (post.votes.find_by(user: current_user)&.value || 0) : 0 %>">
+      <div class="flex items-center gap-2">
+        <button type="button" class="text-gray-500 hover:text-green-600" data-vote-target="up" data-action="click->vote#upvote" aria-label="賛成">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14"/>
+            <path d="M5 12h14"/>
+          </svg>
+        </button>
+        <div class="relative w-28 h-5 bg-gray-300 rounded overflow-hidden" data-vote-target="barWrapper" aria-hidden="true">
+          <div class="absolute inset-0 flex">
+            <div class="h-full bg-blue-500" style="width: 0%" data-vote-target="barPos"></div>
+            <div class="h-full bg-red-500" style="width: 0%" data-vote-target="barNeg"></div>
+          </div>
+          <div class="absolute inset-0 flex items-center justify-center text-[10px] text-gray-700 select-none" data-vote-target="barLabel"></div>
+        </div>
+        <button type="button" class="text-gray-500 hover:text-red-600" data-vote-target="down" data-action="click->vote#downvote" aria-label="反対">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/>
+          </svg>
+        </button>
       </div>
       <div class="flex items-center gap-1 text-gray-500">
-        💬
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          <line x1="9" y1="10" x2="15" y2="10"></line>
+          <line x1="9" y1="14" x2="13" y2="14"></line>
+        </svg>
         <span class="text-sm font-medium"><%= post.comments.count %></span>
       </div>
     </div>

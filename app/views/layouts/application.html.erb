@@ -44,6 +44,60 @@
         }
       }
 
+      /* カスタムメディアプレーヤーのスタイル */
+      .custom-video {
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .custom-video::-webkit-media-controls-panel {
+        background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.7));
+      }
+
+      .custom-audio {
+        border-radius: 8px;
+        height: 54px;
+        background: transparent;
+      }
+
+      .custom-audio::-webkit-media-controls-panel {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+      }
+
+      .custom-audio::-webkit-media-controls-play-button,
+      .custom-audio::-webkit-media-controls-pause-button {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 50%;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      }
+
+      .custom-audio::-webkit-media-controls-timeline {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+      }
+
+      /* ダウンロードボタンを完全に隠す */
+      video::-webkit-media-controls-download-button,
+      audio::-webkit-media-controls-download-button {
+        display: none !important;
+      }
+
+      video::-internal-media-controls-download-button,
+      audio::-internal-media-controls-download-button {
+        display: none !important;
+      }
+
+      /* 右クリック無効化のスタイル */
+      .no-context-menu {
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
 
       /* LINE風チャットルームのスタイル */
 
@@ -925,7 +979,7 @@
           }, 2000)
         }
       }
-
+      
       // AI Sidebar Controller
       class AiSidebarController extends Controller {
         static targets = [
@@ -1159,6 +1213,104 @@
         }
       }
 
+      // Vote Controller (AJAX)
+      class VoteController extends Controller {
+        static targets = ["barPos", "barNeg", "barLabel", "barWrapper", "up", "down"]
+        static values = { votableType: String, votableId: Number, upCount: Number, downCount: Number, userVote: Number }
+
+        connect() {
+          this.updateBar()
+          this.updateActive()
+        }
+
+        upvote() { this.submit(1) }
+        downvote() { this.submit(-1) }
+
+        async submit(value) {
+          try {
+            const params = new URLSearchParams({
+              votable_type: this.votableTypeValue,
+              votable_id: String(this.votableIdValue),
+              value: String(value)
+            })
+            const response = await fetch(`/vote?${params.toString()}`, {
+              method: 'POST',
+              headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+              }
+            })
+
+            if (!response.ok) {
+              console.error('Vote failed with status', response.status)
+              return
+            }
+            const data = await response.json()
+            if (response.status === 403 && data && data.user_vote) {
+              // 既に投票済み: サーバーの状態で反映
+              this.userVoteValue = data.user_vote
+            } else if (data && data.success) {
+              // 新規投票成功
+              this.userVoteValue = data.user_vote
+              this.upCountValue = data.up_count
+              this.downCountValue = data.down_count
+            }
+            this.updateBar()
+            this.updateActive()
+          } catch (e) {
+            console.error('Vote error', e)
+          }
+        }
+
+        
+        updateBar() {
+          const up = this.upCountValue || 0
+          const down = this.downCountValue || 0
+          const total = up + down
+          const hasVoted = (this.userVoteValue || 0) !== 0
+
+          if (hasVoted) {
+            // 色分け表示 + 絶対値の内訳ラベル
+            let upPct = 0, downPct = 0
+            if (total > 0) {
+              upPct = Math.round((up / total) * 100)
+              downPct = 100 - upPct
+            }
+            if (this.hasBarPosTarget) this.barPosTarget.style.width = upPct + '%'
+            if (this.hasBarNegTarget) this.barNegTarget.style.width = downPct + '%'
+            if (this.hasBarLabelTarget) this.barLabelTarget.textContent = `賛成 ${up} / 反対 ${down}`
+          } else {
+            // 未投票: グレーバーのみ + 合計ラベル、色の幅は0
+            if (this.hasBarPosTarget) this.barPosTarget.style.width = '0%'
+            if (this.hasBarNegTarget) this.barNegTarget.style.width = '0%'
+            if (this.hasBarLabelTarget) this.barLabelTarget.textContent = `|${total}|`
+          }
+        }
+
+        updateActive() {
+          const voted = (this.userVoteValue || 0)
+          const disableButtons = () => {
+            ;[this.upTarget, this.downTarget].forEach(btn => {
+              if (!btn) return
+              btn.disabled = true
+              btn.classList.add('opacity-50', 'cursor-not-allowed')
+            })
+          }
+          // Reset
+          if (this.hasUpTarget) this.upTarget.classList.remove('text-green-600')
+          if (this.hasDownTarget) this.downTarget.classList.remove('text-red-600')
+
+          if (voted === 1) {
+            if (this.hasUpTarget) this.upTarget.classList.add('text-green-600')
+            disableButtons()
+          } else if (voted === -1) {
+            if (this.hasDownTarget) this.downTarget.classList.add('text-red-600')
+            disableButtons()
+          }
+        }
+      }
+
       // Register controllers
       application.register("image-test", ImageTestController)
       application.register("image-comments", ImageCommentsController)
@@ -1166,6 +1318,7 @@
       application.register("ai-comment-assistant", AiCommentAssistantController)
       application.register("compact-comments", CompactCommentsController)
       application.register("ai-sidebar", AiSidebarController)
+      application.register("vote", VoteController)
       
       // グローバルアクセス用
       window.application = application

@@ -57,25 +57,43 @@
         </div>
       <% end %>
     </div>
-  <% else %>
-    <p class="mb-4 text-sm text-gray-400">画像はありません</p>
   <% end %>
   <% if @post.videos.attached? %>
     <div class="mb-4">
-      <% @post.videos.each do |video| %>
-        <% if video.variable? %>
-        <video class="rounded-lg w-full max-w-md" controls>
-          <source src="<%= url_for(video.variant(format: :mp4, resize_to_limit: [1920, 1080], quality: 75)) %>" type="video/mp4">
-          お使いのブラウザは video タグをサポートしていません。
-        </video>
-        <% else %>
-          <p class="text-red-500">この動画は再生できません。</p>
-          <p class="text-xs text-gray-500 break-all">Generated URL: <%= url_for(video) %></p>
-        <% end %>
+      <% @post.videos.each_with_index do |video, index| %>
+        <div class="bg-gray-900 rounded-xl overflow-hidden shadow-lg mb-4">
+          <video class="custom-video no-context-menu w-full max-w-md" 
+                 controls 
+                 controlsList="nodownload noremoteplayback"
+                 oncontextmenu="return false;"
+                 preload="metadata"
+                 style="outline: none;">
+            <source src="<%= url_for(video) %>" type="video/mp4">
+            お使いのブラウザは video タグをサポートしていません。
+          </video>
+        </div>
       <% end %>
     </div>
-  <% else %>
-    <p class="mb-4 text-sm text-gray-400">動画はありません</p>
+  <% end %>
+
+  <% if @post.audios.attached? %>
+    <div class="mb-4">
+      <% @post.audios.each_with_index do |audio, index| %>
+        <div class="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-3 mb-3 border border-purple-200">
+          <audio class="custom-audio no-context-menu w-full" 
+                 controls 
+                 controlsList="nodownload noremoteplayback"
+                 oncontextmenu="return false;"
+                 preload="metadata"
+                 style="outline: none;">
+            <source src="<%= url_for(audio) %>" type="audio/mpeg">
+            <source src="<%= url_for(audio) %>" type="audio/wav">
+            <source src="<%= url_for(audio) %>" type="audio/ogg">
+            お使いのブラウザは audio タグをサポートしていません。
+          </audio>
+        </div>
+      <% end %>
+    </div>
   <% end %>
 
   <p class="mb-4">
@@ -83,18 +101,33 @@
     <span class="bg-blue-50 text-blue-500 px-2 py-1 rounded-full text-sm"><%= @post.tag %></span>
   </p>
 
-  <!-- 投票ボタン -->
-  <div class="flex items-center justify-end gap-4 mt-6 border-t pt-4">
-    <%= button_to vote_path(votable_type: 'Post', votable_id: @post.id, value: 1), method: :post, class: "text-gray-500 hover:text-green-500" do %>
-      👍
-    <% end %>
-    <span class="text-gray-600 font-semibold">
-      <%= @post.votes.where(value: 1).count - @post.votes.where(value: -1).count %>
-    </span>
-    <%= button_to vote_path(votable_type: 'Post', votable_id: @post.id, value: -1), method: :post, class: "text-gray-500 hover:text-red-500" do %>
-      👎
-    <% end %>
+  <!-- 投票ボタン（AJAX＋割合バー） -->
+  <div class="flex items-center justify-end gap-4 mt-6 border-t pt-4"
+       data-controller="vote"
+       data-vote-votable-type-value="Post"
+       data-vote-votable-id-value="<%= @post.id %>"
+       data-vote-up-count-value="<%= @post.votes.where(value: 1).count %>"
+       data-vote-down-count-value="<%= @post.votes.where(value: -1).count %>"
+       data-vote-user-vote-value="<%= current_user ? (@post.votes.find_by(user: current_user)&.value || 0) : 0 %>">
+    <button type="button" class="text-gray-500 hover:text-green-600" data-vote-target="up" data-action="click->vote#upvote" aria-label="賛成">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14"/>
+        <path d="M5 12h14"/>
+      </svg>
+    </button>
+    <div class="relative w-36 h-6 bg-gray-300 rounded overflow-hidden" data-vote-target="barWrapper" aria-hidden="true">
+      <div class="absolute inset-0 flex">
+        <div class="h-full bg-blue-500" style="width: 0%" data-vote-target="barPos"></div>
+        <div class="h-full bg-red-500" style="width: 0%" data-vote-target="barNeg"></div>
+      </div>
+      <div class="absolute inset-0 flex items-center justify-center text-xs text-gray-700 select-none" data-vote-target="barLabel"></div>
     </div>
+    <button type="button" class="text-gray-500 hover:text-red-600" data-vote-target="down" data-action="click->vote#downvote" aria-label="反対">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14"/>
+      </svg>
+    </button>
+  </div>
     </div>
     
     <!-- AIサイドバー（右側） -->

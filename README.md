@@ -158,6 +158,9 @@ heroku run bin/rails db:migrate
   - 画像: JPEG, PNG, GIF (最大5MB)
   - 動画: MP4, MOV, AVI (最大500MB)
   - 音声: MP3, WAV, OGG (最大100MB)
+ 
+### 現在のデプロイリンク(更新が少し前で最新の仕様とと乖離があります)
+https://abesora-feedbacks-2025-83f668d5f30b.herokuapp.com/
 
 ## 📄 ライセンス・利用について
 

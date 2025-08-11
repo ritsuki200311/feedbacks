@@ -689,22 +689,52 @@
         }
 
         updateButtonState() {
-          if (!this.hasToggleButtonTarget) return
-          
-          const button = this.toggleButtonTarget
-          const icon = this.hasToggleIconTarget ? this.toggleIconTarget : null
-          const text = this.hasToggleTextTarget ? this.toggleTextTarget : null
-          
+          this.updateAllButtons()
+        }
+        
+        updateAllButtons() {
+          // すべてのglobal-comment-pinsコントローラーのボタンを更新
+          const allElements = document.querySelectorAll('[data-controller*="global-comment-pins"]')
+          allElements.forEach(element => {
+            this.updateButton(element)
+          })
+        }
+        
+        updateButton(element) {
+          const button = element.querySelector('[data-global-comment-pins-target="toggleButton"]')
+          const icon = element.querySelector('[data-global-comment-pins-target="toggleIcon"]')
+          const text = element.querySelector('[data-global-comment-pins-target="toggleText"]')
+
+          if (!button) return
+
           if (this.globalPinsVisible) {
-            button.classList.remove('border-gray-300', 'hover:bg-gray-50')
-            button.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700')
-            if (icon) icon.textContent = '🙈'
-            if (text) text.textContent = 'コメントピン一括非表示'
+            // ON状態: モバイルボタンは薄い緑、サイドバーボタンは青
+            if (element.id === 'mobile-comment-pin-toggle') {
+              // モバイルボタン（丸いボタン）
+              button.classList.remove('bg-slate-400', 'hover:bg-slate-500')
+              button.classList.add('bg-emerald-400', 'hover:bg-emerald-500')
+              if (icon) icon.textContent = '📍'
+            } else {
+              // サイドバーボタン
+              button.classList.remove('border-gray-300', 'hover:bg-gray-50')
+              button.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700')
+              if (icon) icon.textContent = '🙈'
+              if (text) text.textContent = 'コメントピン一括非表示'
+            }
           } else {
-            button.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700')
-            button.classList.add('border-gray-300', 'hover:bg-gray-50')
-            if (icon) icon.textContent = '👁️'
-            if (text) text.textContent = 'コメントピン一括表示'
+            // OFF状態
+            if (element.id === 'mobile-comment-pin-toggle') {
+              // モバイルボタン（丸いボタン）
+              button.classList.remove('bg-emerald-400', 'hover:bg-emerald-500')
+              button.classList.add('bg-slate-400', 'hover:bg-slate-500')
+              if (icon) icon.textContent = '📌'
+            } else {
+              // サイドバーボタン
+              button.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700')
+              button.classList.add('border-gray-300', 'hover:bg-gray-50')
+              if (icon) icon.textContent = '👁️'
+              if (text) text.textContent = 'コメントピン一括表示'
+            }
           }
         }
 
@@ -722,7 +752,7 @@
         // 個別コントローラーからの同期
         syncFromIndividual(visible) {
           this.globalPinsVisible = visible
-          this.updateButtonState()
+          this.updateAllButtons()
         }
       }
       
@@ -1449,6 +1479,16 @@
         </div>
       </div>
     </nav>
+
+    <!-- コメントピン表示・非表示ボタン（モバイルのみ） -->
+    <div id="mobile-comment-pin-toggle" class="md:hidden fixed bottom-20 right-4 z-40" data-controller="global-comment-pins">
+      <button type="button" 
+              data-action="click->global-comment-pins#toggleGlobalPins"
+              data-global-comment-pins-target="toggleButton"
+              class="w-16 h-16 bg-slate-400 text-white rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:bg-slate-500 active:scale-90">
+        <span data-global-comment-pins-target="toggleIcon" class="text-xl">📌</span>
+      </button>
+    </div>
 
     <!-- オーバーレイ（スマホのみ） -->
     <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>

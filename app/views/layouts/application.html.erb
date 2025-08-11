@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>アプリ名</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -150,6 +151,66 @@
 
       .send-button:hover {
         background-color: #45a049;
+      }
+
+
+      /* レスポンシブサイドバー強制スタイル */
+      #sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 50 !important;
+        width: 16rem !important;
+        height: 100vh !important;
+        background-color: white !important;
+        border-right: 1px solid #e5e7eb !important;
+        padding: 1rem !important;
+        display: flex !important;
+        flex-direction: column !important;
+        transition: all 0.3s ease-in-out !important;
+        transform: translateX(0) !important;
+      }
+
+      @media (max-width: 767px) {
+        #sidebar {
+          transform: translateX(-100%) !important;
+        }
+        #sidebar.show-mobile {
+          transform: translateX(0) !important;
+        }
+        #hamburger-btn {
+          display: block !important;
+        }
+        #main-content {
+          margin-left: 0 !important;
+          padding-left: 1rem !important;
+        }
+      }
+
+      @media (min-width: 768px) {
+        #sidebar {
+          transform: translateX(0) !important;
+        }
+        #hamburger-btn {
+          display: none !important;
+        }
+        #main-content {
+          margin-left: 16rem !important;
+        }
+      }
+
+      #main-content {
+        flex: 1;
+        padding: 1rem;
+        padding-top: 4rem;
+        width: 100%;
+      }
+
+      @media (min-width: 768px) {
+        #main-content {
+          padding: 2rem;
+          padding-top: 2rem;
+        }
       }
     </style>
     
@@ -1293,16 +1354,14 @@
         if (hamburgerBtn && sidebar && overlay) {
           // ハンバーガーメニューボタンクリック
           hamburgerBtn.addEventListener('click', function() {
-            sidebar.classList.toggle('translate-x-0');
-            sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('show-mobile');
             overlay.classList.toggle('hidden');
-            hamburgerBtn.style.display = sidebar.classList.contains('translate-x-0') ? 'none' : 'block';
+            hamburgerBtn.style.display = sidebar.classList.contains('show-mobile') ? 'none' : 'block';
           });
           
           // オーバーレイクリックでメニューを閉じる
           overlay.addEventListener('click', function() {
-            sidebar.classList.add('-translate-x-full');
-            sidebar.classList.remove('translate-x-0');
+            sidebar.classList.remove('show-mobile');
             overlay.classList.add('hidden');
             hamburgerBtn.style.display = 'block';
           });
@@ -1310,8 +1369,7 @@
           // ESCキーでメニューを閉じる
           document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
-              sidebar.classList.add('-translate-x-full');
-              sidebar.classList.remove('translate-x-0');
+              sidebar.classList.remove('show-mobile');
               overlay.classList.add('hidden');
               hamburgerBtn.style.display = 'block';
             }
@@ -1339,7 +1397,7 @@
       <%= render 'layouts/sidebar' %>
 
       <!-- メインコンテンツ -->
-      <main class="flex-1 p-4 pt-16 md:pt-8 md:p-8 md:ml-64 w-full">
+      <main id="main-content">
         <div class="max-w-6xl mx-auto">
         <% if notice %>
           <div class="bg-green-100 text-green-800 p-4 rounded mb-4"><%= notice %></div>

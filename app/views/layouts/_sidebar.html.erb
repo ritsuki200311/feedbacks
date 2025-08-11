@@ -1,37 +1,70 @@
-<!-- サイドバー (Desktop only) -->
-<div class="hidden md:flex bg-white w-64 h-screen flex-col p-4 border-r fixed top-0 left-0">
+<!-- サイドバー -->
+<div id="sidebar">
   <h2 class="text-2xl font-bold mb-6">Feedbacks</h2>
-  <nav class="flex flex-col space-y-2 flex-1 overflow-y-auto">
-    <%= link_to "ホーム", root_path, class: sidebar_link_class(root_path) %>
-    <%= link_to "投稿検索", search_posts_path, class: sidebar_link_class(search_posts_path) %>
-    <%= link_to "新規投稿", new_post_path, class: sidebar_link_class(new_post_path) %>
-    <hr class="my-2">
-    <% if user_signed_in? %>
-      <%= link_to "マイページ", mypage_path, class: sidebar_link_class(mypage_path) %>
-      <%= link_to "コミュニティ", communities_path, class: sidebar_link_class(communities_path) %>
-      <%= link_to "アカウント編集", edit_user_registration_path, class: sidebar_link_class(edit_user_registration_path) %>
-      <%= link_to "好みを登録", new_preference_path, class: sidebar_link_class(new_preference_path) %>
-      <% if current_user.supporter_profile.present? %>
-        <%= link_to "プロフィールを見る", supporter_profile_path, class: sidebar_link_class(supporter_profile_path) %>
+  <nav class="flex flex-col space-y-2">
+    <!-- デスクトップ表示用の全メニュー（md以上で表示） -->
+    <div class="hidden md:flex md:flex-col md:space-y-2">
+      <%= link_to "ホーム", root_path, class: sidebar_link_class(root_path) %>
+      <%= link_to "投稿検索", search_posts_path, class: sidebar_link_class(search_posts_path) %>
+      <%= link_to "新規投稿", new_post_path, class: sidebar_link_class(new_post_path) %>
+      <hr class="my-2">
+      <% if user_signed_in? %>
+        <%= link_to "マイページ", mypage_path, class: sidebar_link_class(mypage_path) %>
+        <%= link_to "コミュニティ", communities_path, class: sidebar_link_class(communities_path) %>
+        <%= link_to "アカウント編集", edit_user_registration_path, class: sidebar_link_class(edit_user_registration_path) %>
+        <%= link_to "好みを登録", new_preference_path, class: sidebar_link_class(new_preference_path) %>
+        <% if current_user.supporter_profile.present? %>
+          <%= link_to "プロフィールを見る", supporter_profile_path, class: sidebar_link_class(supporter_profile_path) %>
+        <% else %>
+          <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
+        <% end %>
+        
+        <!-- グローバルコメントピン表示切り替え -->
+        <div class="px-4 py-2" data-controller="global-comment-pins">
+          <button type="button" 
+                  data-action="click->global-comment-pins#toggleGlobalPins"
+                  data-global-comment-pins-target="toggleButton"
+                  class="flex items-center gap-2 w-full text-left text-sm border border-gray-300 rounded px-3 py-2 hover:bg-gray-50 transition-colors">
+            <span data-global-comment-pins-target="toggleIcon">👁️</span>
+            <span data-global-comment-pins-target="toggleText">コメントピン一括表示</span>
+          </button>
+        </div>
+        
+        <%= button_to "ログアウト", destroy_user_session_path, method: :delete, class: "text-left w-full text-red-500 hover:bg-red-50 px-4 py-2 rounded" %>
       <% else %>
-        <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
+        <%= link_to "ログイン", new_user_session_path, class: sidebar_link_class(new_user_session_path) %>
+        <%= link_to "新規登録", new_user_registration_path, class: sidebar_link_class(new_user_registration_path) %>
       <% end %>
-      
-      <!-- グローバルコメントピン表示切り替え -->
-      <div class="px-4 py-2" data-controller="global-comment-pins">
-        <button type="button" 
-                data-action="click->global-comment-pins#toggleGlobalPins"
-                data-global-comment-pins-target="toggleButton"
-                class="flex items-center gap-2 w-full text-left text-sm border border-gray-300 rounded px-3 py-2 hover:bg-gray-50 transition-colors">
-          <span data-global-comment-pins-target="toggleIcon">👁️</span>
-          <span data-global-comment-pins-target="toggleText">コメントピン一括表示</span>
-        </button>
-      </div>
-      
-      <%= button_to "ログアウト", destroy_user_session_path, method: :delete, class: "text-left w-full text-red-500 hover:bg-red-50 px-4 py-2 rounded mt-auto" %>
-    <% else %>
-      <%= link_to "ログイン", new_user_session_path, class: sidebar_link_class(new_user_session_path) %>
-      <%= link_to "新規登録", new_user_registration_path, class: sidebar_link_class(new_user_registration_path) %>
-    <% end %>
+
+    </div>
+
+    <!-- モバイル表示用の二次メニュー（mdより小さい画面で表示） -->
+    <div class="md:hidden flex flex-col space-y-2">
+      <% if user_signed_in? %>
+        <%= link_to "アカウント編集", edit_user_registration_path, class: sidebar_link_class(edit_user_registration_path) %>
+        <%= link_to "好みを登録", new_preference_path, class: sidebar_link_class(new_preference_path) %>
+        <% if current_user.supporter_profile.present? %>
+          <%= link_to "プロフィールを見る", supporter_profile_path, class: sidebar_link_class(supporter_profile_path) %>
+        <% else %>
+          <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
+        <% end %>
+        
+        <!-- グローバルコメントピン表示切り替え -->
+        <div class="px-4 py-2" data-controller="global-comment-pins">
+          <button type="button" 
+                  data-action="click->global-comment-pins#toggleGlobalPins"
+                  data-global-comment-pins-target="toggleButton"
+                  class="flex items-center gap-2 w-full text-left text-sm border border-gray-300 rounded px-3 py-2 hover:bg-gray-50 transition-colors">
+            <span data-global-comment-pins-target="toggleIcon">👁️</span>
+            <span data-global-comment-pins-target="toggleText">コメントピン一括表示</span>
+          </button>
+        </div>
+        
+        <%= button_to "ログアウト", destroy_user_session_path, method: :delete, class: "text-left w-full text-red-500 hover:bg-red-50 px-4 py-2 rounded" %>
+      <% else %>
+        <%= link_to "ログイン", new_user_session_path, class: sidebar_link_class(new_user_session_path) %>
+        <%= link_to "新規登録", new_user_registration_path, class: sidebar_link_class(new_user_registration_path) %>
+      <% end %>
+    </div>
   </nav>
 </div>

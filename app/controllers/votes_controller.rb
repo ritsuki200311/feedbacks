@@ -13,21 +13,21 @@ class VotesController < ApplicationController
       net = up_count - down_count
 
       respond_to do |format|
-        format.json { render json: { success: false, error: 'already_voted', user_vote: vote.value, up_count: up_count, down_count: down_count, net: net }, status: :forbidden }
-        format.html { redirect_back(fallback_location: root_path, alert: 'すでに投票済みです。') }
+        format.json { render json: { success: false, error: "already_voted", user_vote: vote.value, up_count: up_count, down_count: down_count, net: net }, status: :forbidden }
+        format.html { redirect_back(fallback_location: root_path, alert: "すでに投票済みです。") }
       end
       return
     end
 
-    unless [-1, 1].include?(new_value)
+    unless [ -1, 1 ].include?(new_value)
       respond_to do |format|
-        format.json { render json: { success: false, error: 'invalid_value' }, status: :unprocessable_entity }
-        format.html { redirect_back(fallback_location: root_path, alert: '不正な投票値です。') }
+        format.json { render json: { success: false, error: "invalid_value" }, status: :unprocessable_entity }
+        format.html { redirect_back(fallback_location: root_path, alert: "不正な投票値です。") }
       end
       return
     end
 
-    @votable.votes.create!(user: current_user, value: new_value)
+    @votable.votes.create!(user: current_user, value: new_value, comment: params[:comment])
 
     up_count = @votable.votes.where(value: 1).count
     down_count = @votable.votes.where(value: -1).count
@@ -35,7 +35,7 @@ class VotesController < ApplicationController
 
     respond_to do |format|
       format.json { render json: { success: true, user_vote: new_value, up_count: up_count, down_count: down_count, net: net } }
-      format.html { redirect_back(fallback_location: root_path, notice: '投票しました。') }
+      format.html { redirect_back(fallback_location: root_path, notice: "投票しました。") }
     end
   end
 

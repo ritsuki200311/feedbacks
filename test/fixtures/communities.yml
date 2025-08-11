@@ -5,9 +5,11 @@ one:
   description: MyText
   is_public: false
   tags: MyString
+  user: one
 
 two:
   name: MyString
   description: MyText
   is_public: false
   tags: MyString
+  user: two

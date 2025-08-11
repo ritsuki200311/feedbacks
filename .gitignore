@@ -35,3 +35,18 @@
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Ignore test artifacts and temporary files
+capybara-*.html
+screenshot*.png
+
+# Ignore database dumps and backups
+*.dump
+*.sql.gz
+*.tar.gz
+*_backup.dump
+*_backup.sql
+
+# Ignore large temporary development files
+/artifacts/
+/reports/

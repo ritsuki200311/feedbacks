@@ -134,7 +134,7 @@
   <!-- Posts Section -->
   <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
     <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-      🎨 <%= @user == current_user ? "あなたの作品コレクション" : "#{@user.name}さんの作品コレクション" %>
+      🎨 <%= @user == current_user ? "あなたの作品一覧" : "#{@user.name}さんの作品一覧" %>
     </h2>
     <% if @posts.any? %>
       <div class="mb-4 flex justify-between items-center">

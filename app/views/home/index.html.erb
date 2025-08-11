@@ -79,23 +79,39 @@
       <% end %>
 
       <% if post.videos.attached? %>
-        <div>
-          <% post.videos.each do |video| %>
-            <video class="w-full max-w-md mx-auto" controls>
-              <source src="<%= url_for(video) %>" type="<%= video.content_type %>">
-              お使いのブラウザは video タグをサポートしていません。
-            </video>
+        <div class="mt-4">
+          <% post.videos.each_with_index do |video, index| %>
+            <div class="bg-gray-900 rounded-xl overflow-hidden shadow-lg mb-4 max-w-md mx-auto">
+              <video class="custom-video no-context-menu w-full" 
+                     controls 
+                     controlsList="nodownload noremoteplayback"
+                     oncontextmenu="return false;"
+                     preload="metadata"
+                     style="outline: none;">
+                <source src="<%= url_for(video) %>" type="video/mp4">
+                お使いのブラウザは video タグをサポートしていません。
+              </video>
+            </div>
           <% end %>
         </div>
       <% end %>
 
       <% if post.audios.attached? %>
-        <div class="mt-4">
-          <% post.audios.each do |audio| %>
-            <audio controls class="w-full">
-              <source src="<%= url_for(audio) %>" type="<%= audio.content_type %>">
-              お使いのブラウザは audio タグをサポートしていません。
-            </audio>
+        <div class="mt-4 max-w-md mx-auto">
+          <% post.audios.each_with_index do |audio, index| %>
+            <div class="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-3 mb-3 border border-purple-200">
+              <audio class="custom-audio no-context-menu w-full" 
+                     controls 
+                     controlsList="nodownload noremoteplayback"
+                     oncontextmenu="return false;"
+                     preload="metadata"
+                     style="outline: none;">
+                <source src="<%= url_for(audio) %>" type="audio/mpeg">
+                <source src="<%= url_for(audio) %>" type="audio/wav">
+                <source src="<%= url_for(audio) %>" type="audio/ogg">
+                お使いのブラウザは audio タグをサポートしていません。
+              </audio>
+            </div>
           <% end %>
         </div>
       <% end %>

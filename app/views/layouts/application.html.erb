@@ -45,6 +45,60 @@
         }
       }
 
+      /* カスタムメディアプレーヤーのスタイル */
+      .custom-video {
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .custom-video::-webkit-media-controls-panel {
+        background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.7));
+      }
+
+      .custom-audio {
+        border-radius: 8px;
+        height: 54px;
+        background: transparent;
+      }
+
+      .custom-audio::-webkit-media-controls-panel {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+      }
+
+      .custom-audio::-webkit-media-controls-play-button,
+      .custom-audio::-webkit-media-controls-pause-button {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 50%;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      }
+
+      .custom-audio::-webkit-media-controls-timeline {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+      }
+
+      /* ダウンロードボタンを完全に隠す */
+      video::-webkit-media-controls-download-button,
+      audio::-webkit-media-controls-download-button {
+        display: none !important;
+      }
+
+      video::-internal-media-controls-download-button,
+      audio::-internal-media-controls-download-button {
+        display: none !important;
+      }
+
+      /* 右クリック無効化のスタイル */
+      .no-context-menu {
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
 
       /* LINE風チャットルームのスタイル */
 
@@ -1026,7 +1080,7 @@
           }, 2000)
         }
       }
-
+      
       // AI Sidebar Controller
       class AiSidebarController extends Controller {
         static targets = [
@@ -1260,113 +1314,100 @@
         }
       }
 
-      // Comment Form Controller
-      class CommentFormController extends Controller {
-        static targets = ["textarea", "charCount"]
+      // Vote Controller (AJAX)
+      class VoteController extends Controller {
+        static targets = ["barPos", "barNeg", "barLabel", "barWrapper", "up", "down"]
+        static values = { votableType: String, votableId: Number, upCount: Number, downCount: Number, userVote: Number }
 
         connect() {
-          console.log("Comment Form Controller connected!")
-          this.updateCharCount()
+          this.updateBar()
+          this.updateActive()
         }
 
-        textareaTargetConnected() {
-          this.textareaTarget.addEventListener("input", () => {
-            this.updateCharCount()
-          })
-        }
+        upvote() { this.submit(1) }
+        downvote() { this.submit(-1) }
 
-        updateCharCount() {
-          if (this.hasTextareaTarget && this.hasCharCountTarget) {
-            const currentLength = this.textareaTarget.value.length
-            this.charCountTarget.textContent = currentLength
-            
-            // 文字数による色の変更
-            if (currentLength > 450) {
-              this.charCountTarget.classList.remove("text-gray-500", "text-yellow-500")
-              this.charCountTarget.classList.add("text-red-500")
-            } else if (currentLength > 400) {
-              this.charCountTarget.classList.remove("text-gray-500", "text-red-500")
-              this.charCountTarget.classList.add("text-yellow-500")
-            } else {
-              this.charCountTarget.classList.remove("text-yellow-500", "text-red-500")
-              this.charCountTarget.classList.add("text-gray-500")
-            }
-          }
-        }
-
-        // AI提案をテキストエリアに挿入する機能
-        insertSuggestion(suggestion) {
-          if (this.hasTextareaTarget) {
-            const currentText = this.textareaTarget.value
-            const cursorPos = this.textareaTarget.selectionStart
-            
-            // カーソル位置に提案を挿入
-            const newText = currentText.slice(0, cursorPos) + suggestion + currentText.slice(cursorPos)
-            this.textareaTarget.value = newText
-            
-            // カーソル位置を調整
-            const newCursorPos = cursorPos + suggestion.length
-            this.textareaTarget.setSelectionRange(newCursorPos, newCursorPos)
-            
-            // フォーカスを戻す
-            this.textareaTarget.focus()
-            
-            // 文字数カウントを更新
-            this.updateCharCount()
-          }
-        }
-
-        // AI提案を全体に適用する機能
-        applySuggestion(suggestion) {
-          if (this.hasTextareaTarget) {
-            this.textareaTarget.value = suggestion
-            this.textareaTarget.focus()
-            this.updateCharCount()
-          }
-        }
-
-        // テキストを選択されたトーンに変換する機能
-        applyTone(tone) {
-          if (this.hasTextareaTarget) {
-            const currentText = this.textareaTarget.value
-            if (!currentText.trim()) {
-              // テキストが空の場合、トーンに応じたプレースホルダーを設定
-              const placeholders = {
-                '褒める': 'とても素晴らしい作品ですね！',
-                '質問': 'これはどのような技法で描かれたのですか？',
-                '建設的': 'ここの部分をもう少し詳しく教えていただけますか？',
-                '励まし': '次回作も楽しみにしています！'
+        async submit(value) {
+          try {
+            const params = new URLSearchParams({
+              votable_type: this.votableTypeValue,
+              votable_id: String(this.votableIdValue),
+              value: String(value)
+            })
+            const response = await fetch(`/vote?${params.toString()}`, {
+              method: 'POST',
+              headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
               }
-              this.textareaTarget.value = placeholders[tone] || currentText
-            } else {
-              // 既存テキストにトーンを適用（簡単な例）
-              let tonedText = currentText
-              switch(tone) {
-                case '褒める':
-                  if (!tonedText.includes('素晴らしい') && !tonedText.includes('良い')) {
-                    tonedText = `素晴らしい作品ですね！${tonedText}`
-                  }
-                  break
-                case '質問':
-                  if (!tonedText.includes('？') && !tonedText.includes('?')) {
-                    tonedText = `${tonedText}について詳しく教えていただけますか？`
-                  }
-                  break
-                case '建設的':
-                  if (!tonedText.includes('提案') && !tonedText.includes('もし')) {
-                    tonedText = `${tonedText} もしよろしければ、参考までに。`
-                  }
-                  break
-                case '励まし':
-                  if (!tonedText.includes('頑張って') && !tonedText.includes('応援')) {
-                    tonedText = `${tonedText} 応援しています！`
-                  }
-                  break
-              }
-              this.textareaTarget.value = tonedText
+            })
+
+            if (!response.ok) {
+              console.error('Vote failed with status', response.status)
+              return
             }
-            this.textareaTarget.focus()
-            this.updateCharCount()
+            const data = await response.json()
+            if (response.status === 403 && data && data.user_vote) {
+              // 既に投票済み: サーバーの状態で反映
+              this.userVoteValue = data.user_vote
+            } else if (data && data.success) {
+              // 新規投票成功
+              this.userVoteValue = data.user_vote
+              this.upCountValue = data.up_count
+              this.downCountValue = data.down_count
+            }
+            this.updateBar()
+            this.updateActive()
+          } catch (e) {
+            console.error('Vote error', e)
+          }
+        }
+
+        
+        updateBar() {
+          const up = this.upCountValue || 0
+          const down = this.downCountValue || 0
+          const total = up + down
+          const hasVoted = (this.userVoteValue || 0) !== 0
+
+          if (hasVoted) {
+            // 色分け表示 + 絶対値の内訳ラベル
+            let upPct = 0, downPct = 0
+            if (total > 0) {
+              upPct = Math.round((up / total) * 100)
+              downPct = 100 - upPct
+            }
+            if (this.hasBarPosTarget) this.barPosTarget.style.width = upPct + '%'
+            if (this.hasBarNegTarget) this.barNegTarget.style.width = downPct + '%'
+            if (this.hasBarLabelTarget) this.barLabelTarget.textContent = `賛成 ${up} / 反対 ${down}`
+          } else {
+            // 未投票: グレーバーのみ + 合計ラベル、色の幅は0
+            if (this.hasBarPosTarget) this.barPosTarget.style.width = '0%'
+            if (this.hasBarNegTarget) this.barNegTarget.style.width = '0%'
+            if (this.hasBarLabelTarget) this.barLabelTarget.textContent = `|${total}|`
+          }
+        }
+
+        updateActive() {
+          const voted = (this.userVoteValue || 0)
+          const disableButtons = () => {
+            ;[this.upTarget, this.downTarget].forEach(btn => {
+              if (!btn) return
+              btn.disabled = true
+              btn.classList.add('opacity-50', 'cursor-not-allowed')
+            })
+          }
+          // Reset
+          if (this.hasUpTarget) this.upTarget.classList.remove('text-green-600')
+          if (this.hasDownTarget) this.downTarget.classList.remove('text-red-600')
+
+          if (voted === 1) {
+            if (this.hasUpTarget) this.upTarget.classList.add('text-green-600')
+            disableButtons()
+          } else if (voted === -1) {
+            if (this.hasDownTarget) this.downTarget.classList.add('text-red-600')
+            disableButtons()
           }
         }
       }
@@ -1378,7 +1419,7 @@
       application.register("ai-comment-assistant", AiCommentAssistantController)
       application.register("compact-comments", CompactCommentsController)
       application.register("ai-sidebar", AiSidebarController)
-      application.register("comment-form", CommentFormController)
+      application.register("vote", VoteController)
       
       // グローバルアクセス用
       window.application = application

@@ -57,25 +57,482 @@
               </div>
             <% end %>
           </div>
-        <% else %>
-          <p class="text-gray-400 text-center py-4 text-sm">画像はありません</p>
-        <% end %>
+          
+          <!-- 画像上のコメントマーカー表示エリア -->
+          <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+          
+          <!-- マーカー表示切り替えボタン -->
+          <div class="mt-2 flex items-center gap-2">
+            <button type="button" 
+                    data-action="click->image-comments#toggleMarkers" 
+                    data-image-comments-target="toggleButton"
+                    class="flex items-center gap-2 px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+              <span data-image-comments-target="toggleIcon">👁️</span>
+              <span data-image-comments-target="toggleText">コメントピンを表示</span>
+            </button>
+            <span data-image-comments-target="markerCount" class="text-sm text-gray-500"></span>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+  <% if @post.videos.attached? %>
+    <div class="mb-4">
+      <% @post.videos.each_with_index do |video, index| %>
+        <div class="bg-gray-900 rounded-xl overflow-hidden shadow-lg mb-4">
+          <video class="custom-video no-context-menu w-full max-w-md" 
+                 controls 
+                 controlsList="nodownload noremoteplayback"
+                 oncontextmenu="return false;"
+                 preload="metadata"
+                 style="outline: none;">
+            <source src="<%= url_for(video) %>" type="video/mp4">
+            お使いのブラウザは video タグをサポートしていません。
+          </video>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 
-        <!-- 動画表示 -->
-        <% if @post.videos.attached? %>
-          <div class="mt-4 space-y-3">
-            <h3 class="text-sm font-medium text-gray-700">動画</h3>
-            <% @post.videos.each do |video| %>
-              <% if video.variable? %>
-                <video class="w-full rounded-lg shadow" controls>
-                  <source src="<%= url_for(video.variant(format: :mp4, resize_to_limit: [1920, 1080], quality: 75)) %>" type="video/mp4">
-                  お使いのブラウザは video タグをサポートしていません。
-                </video>
-              <% else %>
-                <p class="text-red-500 text-xs">この動画は再生できません。</p>
+  <% if @post.audios.attached? %>
+    <div class="mb-4">
+      <% @post.audios.each_with_index do |audio, index| %>
+        <div class="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-3 mb-3 border border-purple-200">
+          <audio class="custom-audio no-context-menu w-full" 
+                 controls 
+                 controlsList="nodownload noremoteplayback"
+                 oncontextmenu="return false;"
+                 preload="metadata"
+                 style="outline: none;">
+            <source src="<%= url_for(audio) %>" type="audio/mpeg">
+            <source src="<%= url_for(audio) %>" type="audio/wav">
+            <source src="<%= url_for(audio) %>" type="audio/ogg">
+            お使いのブラウザは audio タグをサポートしていません。
+          </audio>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <p class="mb-4">
+    <span class="font-semibold text-gray-600">タグ:</span>
+    <span class="bg-blue-50 text-blue-500 px-2 py-1 rounded-full text-sm"><%= @post.tag %></span>
+  </p>
+
+  <!-- 投票ボタン（AJAX＋割合バー） -->
+  <div class="flex items-center justify-end gap-4 mt-6 border-t pt-4">
+    
+    <!-- 一時的に静的な表示にして、基本的な投票機能を動かす -->
+    <% up_count = @post.votes.where(value: 1).count %>
+    <% down_count = @post.votes.where(value: -1).count %>
+    <% user_vote = current_user ? (@post.votes.find_by(user: current_user)&.value || 0) : 0 %>
+    <% total_votes = up_count + down_count %>
+    <% net_score = up_count - down_count %>
+    
+    <!-- プラス投票ボタン -->
+    <% if user_vote == 0 %>
+      <button type="button" 
+              class="text-gray-500 hover:text-green-600"
+              onclick="showVoteModal(1, <%= @post.id %>)">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14"/>
+          <path d="M5 12h14"/>
+        </svg>
+      </button>
+    <% else %>
+      <button type="button" 
+              class="<%= user_vote == 1 ? 'text-green-600 bg-green-100 rounded px-2 py-1 font-bold' : 'text-gray-400' %>"
+              disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14"/>
+          <path d="M5 12h14"/>
+        </svg>
+      </button>
+    <% end %>
+    
+    <div class="relative w-36 h-6 bg-gray-300 rounded overflow-hidden">
+      <% if user_vote == 0 %>
+        <!-- 未投票の場合：グレーのバー -->
+        <div class="absolute inset-0 flex items-center justify-center text-xs text-gray-700 font-semibold select-none">
+          <%= total_votes %>
+        </div>
+      <% else %>
+        <!-- 投票済みの場合：カラフルなバーと内訳表示 -->
+        <div class="absolute inset-0 flex">
+          <% if total_votes > 0 %>
+            <% up_percentage = (up_count.to_f / total_votes * 100).round(1) %>
+            <% down_percentage = (down_count.to_f / total_votes * 100).round(1) %>
+            
+            <!-- プラス票のバー -->
+            <div class="h-full bg-green-500 relative flex items-center justify-center" style="width: <%= up_percentage %>%">
+              <% if up_count > 0 %>
+                <span class="text-xs text-white font-bold"><%= up_count %></span>
               <% end %>
+            </div>
+            
+            <!-- マイナス票のバー -->
+            <div class="h-full bg-red-500 relative flex items-center justify-center" style="width: <%= down_percentage %>%">
+              <% if down_count > 0 %>
+                <span class="text-xs text-white font-bold"><%= down_count %></span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    
+    <!-- マイナス投票ボタン -->
+    <% if user_vote == 0 %>
+      <button type="button" 
+              class="text-gray-500 hover:text-red-600"
+              onclick="showVoteModal(-1, <%= @post.id %>)">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/>
+        </svg>
+      </button>
+    <% else %>
+      <button type="button" 
+              class="<%= user_vote == -1 ? 'text-red-600 bg-red-100 rounded px-2 py-1 font-bold' : 'text-gray-400' %>"
+              disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/>
+        </svg>
+      </button>
+    <% end %>
+  </div>
+    
+    <!-- 投票コメントモーダル -->
+    <div id="voteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800">評価理由を教えてください</h3>
+        <p id="modalMessage" class="text-sm text-gray-600 mb-4">
+          なぜそう思ったのかを書いてみてください。
+        </p>
+        <%= form_with url: vote_path, method: :post, local: true, id: "voteForm", class: "space-y-4" do |f| %>
+          <%= f.hidden_field :votable_type, value: "Post" %>
+          <%= f.hidden_field :votable_id, value: @post.id %>
+          <%= f.hidden_field :value, id: "voteValue" %>
+          <%= f.text_area :comment, id: "voteComment", rows: 4, 
+              placeholder: "コメントを入力してください（任意）",
+              class: "w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+          <div class="flex gap-3">
+            <button type="submit" class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+              送信
+            </button>
+            <button type="button" onclick="submitVoteWithoutComment()" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
+              コメントしないで評価する
+            </button>
+          </div>
+        <% end %>
+        <button type="button" onclick="hideVoteModal()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl leading-none">
+          ×
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 投票機能のJavaScript（直接埋め込み） -->
+  <script>
+    console.log('Inline vote script loaded!')
+    
+    let currentVoteValue = 0
+    let currentPostId = 0
+
+    // グローバル関数として定義
+    window.showVoteModal = function(value, postId) {
+      console.log('Showing vote modal:', value, postId)
+      currentVoteValue = value
+      currentPostId = postId
+      
+      const modal = document.getElementById('voteModal')
+      const messageElement = document.getElementById('modalMessage')
+      const voteValueInput = document.getElementById('voteValue')
+      const commentTextarea = document.getElementById('voteComment')
+      
+      if (modal) {
+        // メッセージを更新
+        messageElement.textContent = value === 1 ? 
+          'なぜプラス評価だと思いますか？コメントを書いてみてください。' : 
+          'なぜマイナス評価だと思いますか？コメントを書いてみてください。'
+        
+        // 隠しフィールドに値を設定
+        voteValueInput.value = value
+        
+        // モーダルを表示
+        modal.classList.remove('hidden')
+        
+        // テキストエリアにフォーカス
+        if (commentTextarea) {
+          setTimeout(() => commentTextarea.focus(), 100)
+        }
+        
+        console.log('Modal shown successfully')
+      } else {
+        console.error('Modal element not found')
+      }
+    }
+
+    window.hideVoteModal = function() {
+      const modal = document.getElementById('voteModal')
+      const commentTextarea = document.getElementById('voteComment')
+      
+      if (modal) {
+        modal.classList.add('hidden')
+        // コメント入力欄をクリア
+        if (commentTextarea) {
+          commentTextarea.value = ''
+        }
+      }
+    }
+
+    window.submitVoteWithoutComment = function() {
+      const commentTextarea = document.getElementById('voteComment')
+      if (commentTextarea) {
+        commentTextarea.value = '' // コメントを空にする
+      }
+      
+      // フォームを送信
+      const form = document.getElementById('voteForm')
+      if (form) {
+        form.submit()
+      }
+    }
+  </script>
+    
+    <!-- AIサイドバー（右側） -->
+    <div class="xl:col-span-3">
+      <div class="bg-gradient-to-b from-purple-50 to-indigo-50 rounded-2xl shadow-lg p-4 sticky top-4" data-controller="ai-sidebar" data-ai-sidebar-post-id-value="<%= @post.id %>">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-sm font-bold">AI</span>
+            </div>
+            <h2 class="text-lg font-bold text-gray-900">コメント補助</h2>
+          </div>
+          
+          <!-- AI起動ボタン -->
+          <button type="button" 
+                  data-action="click->ai-sidebar#toggleAI"
+                  data-ai-sidebar-target="toggleButton"
+                  class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
+            <span data-ai-sidebar-target="toggleIcon">🤖</span>
+            <span data-ai-sidebar-target="toggleText">AI補助を開始</span>
+          </button>
+        </div>
+        
+        <!-- 初期状態の説明 -->
+        <div data-ai-sidebar-target="initialMessage" class="text-center py-8">
+          <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="text-2xl">🤖</span>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">AIコメント補助</h3>
+          <p class="text-sm text-gray-600 mb-4">
+            AIがあなたのコメント作成をサポートします。<br>
+            おすすめコメント、トーン調整、投稿要約を提供します。
+          </p>
+          <p class="text-xs text-gray-500">
+            上の「AI補助を開始」ボタンをクリックして始めましょう
+          </p>
+        </div>
+        
+        <!-- ローディング表示 -->
+        <div data-ai-sidebar-target="loading" class="hidden text-center py-8">
+          <div class="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-sm text-gray-600">AIが分析中です...</p>
+        </div>
+        
+        <!-- AI補助コンテンツ（初期は非表示） -->
+        <div data-ai-sidebar-target="aiContent" class="hidden space-y-4">
+          <!-- コメント例 -->
+          <div class="bg-white rounded-lg p-3 border border-purple-200">
+            <h3 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1">
+              <span>💬</span>
+              おすすめコメント
+            </h3>
+            <div class="space-y-2" data-ai-sidebar-target="commentSuggestions">
+              <!-- コメント提案がここに動的に表示される -->
+            </div>
+          </div>
+          
+          <!-- トーン提案 -->
+          <div class="bg-white rounded-lg p-3 border border-purple-200">
+            <h3 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1">
+              <span>🎨</span>
+              トーン調整
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              <button class="px-2 py-1 text-xs bg-pink-100 text-pink-700 rounded-full hover:bg-pink-200 transition-colors"
+                      data-action="click->ai-sidebar#applyTone"
+                      data-tone="褒める">褒める</button>
+              <button class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
+                      data-action="click->ai-sidebar#applyTone"
+                      data-tone="質問">質問</button>
+              <button class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
+                      data-action="click->ai-sidebar#applyTone"
+                      data-tone="建設的">建設的</button>
+              <button class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full hover:bg-yellow-200 transition-colors"
+                      data-action="click->ai-sidebar#applyTone"
+                      data-tone="励まし">励まし</button>
+            </div>
+          </div>
+          
+          <!-- 観察ポイント・分析結果 -->
+          <div class="bg-white rounded-lg p-3 border border-purple-200">
+            <h3 class="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-1">
+              <span>🔍</span>
+              AI分析結果
+            </h3>
+            <div data-ai-sidebar-target="summary" class="text-xs text-gray-600 leading-relaxed">
+              <!-- AI画像認識・分析結果がここに表示される -->
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-100">
+              <p class="text-xs text-gray-500 italic">
+                <% if @post.images.attached? %>
+                  画像を詳細に分析してコメント提案を生成しています
+                <% else %>
+                  投稿内容を分析してコメント提案を生成しています
+                <% end %>
+              </p>
+            </div>
+          </div>
+          
+          <!-- 閉じるボタン -->
+          <div class="text-center pt-2">
+            <button type="button" 
+                    data-action="click->ai-sidebar#closeAI"
+                    class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors">
+              AI補助を閉じる
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+<!-- 評価コメントセクション（投票済みの場合のみ表示） -->
+<% if user_vote != 0 %>
+  <div class="max-w-7xl mx-auto mt-8 px-4">
+    <div class="bg-white rounded-2xl shadow-lg p-6">
+      <h3 class="text-xl font-bold mb-6 text-gray-900">評価とコメント</h3>
+      
+      <!-- プラス評価コメント -->
+      <% positive_votes = @post.votes.where(value: 1).where.not(comment: [nil, ""]) %>
+      <% if positive_votes.any? %>
+        <div class="mb-8">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 5v14"/>
+                <path d="M5 12h14"/>
+              </svg>
+            </div>
+            <h4 class="text-lg font-semibold text-green-700">プラス評価のコメント (<%= positive_votes.count %>件)</h4>
+          </div>
+          <div class="space-y-3">
+            <% positive_votes.order(created_at: :desc).each do |vote| %>
+              <div class="bg-green-50 border-l-4 border-green-400 rounded-lg p-4">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="font-semibold text-green-800"><%= vote.user.name %></span>
+                  <span class="text-xs text-green-600"><%= time_ago_in_words(vote.created_at) %>前</span>
+                </div>
+                <p class="text-green-900"><%= vote.comment %></p>
+              </div>
             <% end %>
           </div>
+        </div>
+      <% end %>
+
+      <!-- マイナス評価コメント -->
+      <% negative_votes = @post.votes.where(value: -1).where.not(comment: [nil, ""]) %>
+      <% if negative_votes.any? %>
+        <div class="mb-8">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5 12h14"/>
+              </svg>
+            </div>
+            <h4 class="text-lg font-semibold text-red-700">マイナス評価のコメント (<%= negative_votes.count %>件)</h4>
+          </div>
+          <div class="space-y-3">
+            <% negative_votes.order(created_at: :desc).each do |vote| %>
+              <div class="bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="font-semibold text-red-800"><%= vote.user.name %></span>
+                  <span class="text-xs text-red-600"><%= time_ago_in_words(vote.created_at) %>前</span>
+                </div>
+                <p class="text-red-900"><%= vote.comment %></p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- 評価コメントがない場合の表示 -->
+      <% if positive_votes.empty? && negative_votes.empty? %>
+        <div class="text-center py-8 text-gray-500">
+          <p>コメント付きの評価はまだありません。</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% else %>
+  <!-- 未投票の場合の説明 -->
+  <div class="max-w-7xl mx-auto mt-8 px-4">
+    <div class="bg-white rounded-2xl shadow-lg p-6">
+      <h3 class="text-xl font-bold mb-6 text-gray-900">評価とコメント</h3>
+      <div class="text-center py-12 text-gray-500">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <h4 class="text-lg font-semibold text-gray-700 mb-2">評価後に表示されます</h4>
+        <p class="text-gray-500 mb-4">
+          他の人の評価に影響されないよう、<br>
+          あなたが評価した後にコメントが表示されます。
+        </p>
+        <p class="text-sm text-gray-400">
+          上の + または - ボタンから評価してください
+        </p>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<!-- 詳細コメントセクション -->
+<div class="max-w-7xl mx-auto mt-8 px-4">
+  <div class="bg-white rounded-2xl shadow-lg p-6">
+    <h3 class="text-xl font-bold mb-4 text-gray-900">フィードバック・コメント</h3>
+  
+  <!-- コメント投稿フォーム -->
+  <%= form_with model: [@post, @comment], local: true, class: "space-y-4 mb-6" do |f| %>
+    <div>
+      <%= f.text_area :body, rows: 3, placeholder: "コメントを追加...", class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
+    </div>
+    <div>
+      <%= f.file_field :attachments, multiple: true, class: "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" %>
+    </div>
+    <div class="text-right">
+      <%= f.submit "コメントする", class: "inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
+    </div>
+  <% end %>
+  
+  <!-- 通常コメント一覧 -->
+  <% @post.comments.where(parent_id: nil).each do |comment| %>
+    <div class="bg-gray-50 rounded-xl shadow p-5 mb-6">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="font-bold text-gray-700"><%= comment.user&.name || "匿名" %></span>
+        <span class="text-xs text-gray-400"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+      </div>
+      <p class="mb-3 text-gray-800"><%= comment.body %></p>
+
+      <!-- 投票ボタン -->
+      <div class="flex items-center justify-end gap-3 text-sm">
+        <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500" do %>
+          👍
         <% end %>
 
         <!-- タグ情報 -->

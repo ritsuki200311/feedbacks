@@ -45,7 +45,7 @@ export default class extends Controller {
     this.removeTempPin()
     
     const tempPin = document.createElement("div")
-    tempPin.className = "absolute w-8 h-8 bg-yellow-400 text-black rounded-full flex items-center justify-center text-sm font-bold cursor-pointer z-20 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 animate-pulse"
+    tempPin.className = "absolute w-2 h-2 bg-yellow-400 text-black rounded-full flex items-center justify-center cursor-pointer z-20 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 animate-pulse"
     tempPin.style.left = `${x}%`
     tempPin.style.top = `${y}%`
     tempPin.textContent = "?"
@@ -176,7 +176,7 @@ export default class extends Controller {
 
   createMarker(comment, number) {
     const marker = document.createElement("div")
-    marker.className = "absolute w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold cursor-pointer z-10 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-110"
+    marker.className = "absolute w-2 h-2 bg-blue-500 text-white rounded-full flex items-center justify-center cursor-pointer z-10 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-150"
     marker.style.left = `${comment.x_position}%`
     marker.style.top = `${comment.y_position}%`
     marker.textContent = number

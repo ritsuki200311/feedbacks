@@ -162,6 +162,24 @@ heroku run bin/rails db:migrate
 ### 現在のデプロイリンク(更新が少し前で最新の仕様とと乖離があります)
 https://abesora-feedbacks-2025-83f668d5f30b.herokuapp.com/
 
+
+## 補足資料
+
+- **事業スライド（PDF）**  
+  プロジェクトの背景や狙い・成果をまとめた資料です。  
+  ※要約：創作者の孤独を解決するための企画、主要ユーザーや背景・現状分析など  
+  [スライドはこちら（PDFを表示／ダウンロード）](https://github.com/user-attachments/files/21727597/Web.pdf)
+
+<details>
+  <summary>画面イメージ・スクリーンショットを見る</summary>
+
+  <img src="https://github.com/user-attachments/assets/b7a900e5-7b85-44fa-b176-a6dd4a42034f" alt="トップ画面" width="700" />
+
+  <img src="https://github.com/user-attachments/assets/61a663b4-d078-452c-aa12-fb226fd05009" alt="投稿閲覧画面（縦画面のレスポンシブデザイン／AIコメント補助）" width="400" />
+
+</details>
+
+
 ## 📄 ライセンス・利用について
 
 このプロジェクトは、孤独な創作者を減らし創作活動を支援するためのプラットフォームとして開発されています。

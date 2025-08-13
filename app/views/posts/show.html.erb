@@ -75,8 +75,7 @@
         </div>
       <% end %>
     </div>
-  <% end %>
-  <% if @post.videos.attached? %>
+  <% if @post.present? && @post.videos.attached? %>
     <div class="mb-4">
       <% @post.videos.each_with_index do |video, index| %>
         <div class="bg-gray-900 rounded-xl overflow-hidden shadow-lg mb-4">
@@ -94,7 +93,7 @@
     </div>
   <% end %>
 
-  <% if @post.audios.attached? %>
+  <% if @post.present? && @post.audios.attached? %>
     <div class="mb-4">
       <% @post.audios.each_with_index do |audio, index| %>
         <div class="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-3 mb-3 border border-purple-200">
@@ -553,9 +552,10 @@
             👎
           <% end %>
         </div>
-      </div>
-
-      <!-- コメント一覧（投稿の下に表示） -->
+          </div>
+        <% end %>
+    
+          <!-- コメント一覧（投稿の下に表示） -->
       <div class="bg-white rounded-xl shadow-lg p-4">
         <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
           <span>💬</span>

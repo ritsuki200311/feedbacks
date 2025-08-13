@@ -50,8 +50,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_131405) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
-    t.decimal "x_position"
-    t.decimal "y_position"
+    t.integer "x_position"
+    t.integer "y_position"
+    t.text "range_data"
     t.index ["post_id"], name: "index_comments_on_post_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
   end

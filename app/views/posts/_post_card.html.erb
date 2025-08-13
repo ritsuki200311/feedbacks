@@ -44,7 +44,6 @@
       </div>
       <%= link_to "詳細", post_path(post), class: "text-blue-500 hover:text-blue-700 text-sm font-semibold" %>
     </div>
-  <% end %>
   <div class="flex items-center justify-between mt-4">
     <% up_count = post.votes.where(value: 1).count %>
     <% down_count = post.votes.where(value: -1).count %>

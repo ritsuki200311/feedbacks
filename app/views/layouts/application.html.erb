@@ -221,13 +221,15 @@
         padding: 1rem !important;
         display: flex !important;
         flex-direction: column !important;
-        transition: all 0.3s ease-in-out !important;
+        transition: transform 0.3s ease-in-out !important;
         transform: translateX(0) !important;
+        overflow-y: auto !important;
       }
 
       @media (max-width: 767px) {
         #sidebar {
           transform: translateX(-100%) !important;
+          box-shadow: 2px 0 5px rgba(0,0,0,0.1);
         }
         #sidebar.show-mobile {
           transform: translateX(0) !important;
@@ -238,6 +240,11 @@
         #main-content {
           margin-left: 0 !important;
           padding-left: 1rem !important;
+        }
+        
+        /* オーバーレイ表示時のサイドバー */
+        #overlay:not(.hidden) + .flex #sidebar {
+          transform: translateX(0) !important;
         }
       }
 
@@ -257,7 +264,7 @@
         flex: 1;
         padding: 1rem;
         padding-top: 4rem;
-        padding-bottom: 5rem; /* 下部メニューバー分のマージン */
+        padding-bottom: 6rem; /* 下部メニューバー分のマージン */
         width: 100%;
       }
 
@@ -762,11 +769,11 @@
           if (!button) return
 
           if (this.globalPinsVisible) {
-            // ON状態: モバイルボタンは薄い緑、サイドバーボタンは青
-            if (element.id === 'mobile-comment-pin-toggle') {
+            // ON状態: モバイルボタンはほぼ白、サイドバーボタンは青
+            if (element.closest('.md\\:hidden')) {
               // モバイルボタン（丸いボタン）
-              button.classList.remove('bg-slate-400', 'hover:bg-slate-500')
-              button.classList.add('bg-emerald-400', 'hover:bg-emerald-500')
+              button.classList.remove('bg-emerald-300', 'hover:bg-emerald-400', 'text-white')
+              button.classList.add('bg-gray-100', 'hover:bg-gray-200', 'text-gray-600')
               if (icon) icon.textContent = '📍'
             } else {
               // サイドバーボタン
@@ -777,11 +784,11 @@
             }
           } else {
             // OFF状態
-            if (element.id === 'mobile-comment-pin-toggle') {
+            if (element.closest('.md\\:hidden')) {
               // モバイルボタン（丸いボタン）
-              button.classList.remove('bg-emerald-400', 'hover:bg-emerald-500')
-              button.classList.add('bg-slate-400', 'hover:bg-slate-500')
-              if (icon) icon.textContent = '📌'
+              button.classList.remove('bg-gray-100', 'hover:bg-gray-200', 'text-gray-600')
+              button.classList.add('bg-emerald-300', 'hover:bg-emerald-400', 'text-white')
+              if (icon) icon.textContent = '📍'
             } else {
               // サイドバーボタン
               button.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700')
@@ -1432,29 +1439,35 @@
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
         
+        console.log('Hamburger elements:', { hamburgerBtn, sidebar, overlay });
+        
         if (hamburgerBtn && sidebar && overlay) {
           // ハンバーガーメニューボタンクリック
           hamburgerBtn.addEventListener('click', function() {
+            console.log('Hamburger button clicked');
             sidebar.classList.toggle('show-mobile');
             overlay.classList.toggle('hidden');
-            hamburgerBtn.style.display = sidebar.classList.contains('show-mobile') ? 'none' : 'block';
+            console.log('Sidebar classes:', sidebar.className);
+            console.log('Overlay classes:', overlay.className);
           });
           
           // オーバーレイクリックでメニューを閉じる
           overlay.addEventListener('click', function() {
+            console.log('Overlay clicked');
             sidebar.classList.remove('show-mobile');
             overlay.classList.add('hidden');
-            hamburgerBtn.style.display = 'block';
           });
           
           // ESCキーでメニューを閉じる
           document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
+              console.log('Escape key pressed');
               sidebar.classList.remove('show-mobile');
               overlay.classList.add('hidden');
-              hamburgerBtn.style.display = 'block';
             }
           });
+        } else {
+          console.error('Missing elements for hamburger menu');
         }
       });
     </script>
@@ -1471,66 +1484,7 @@
       </button>
     </div>
 
-    <!-- 下部メニューバー（スマホのみ） -->
-    <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-      <div class="flex justify-center items-center py-2 px-2">
-        <div class="grid grid-cols-5 gap-1 w-full max-w-sm mx-auto">
-          <%= link_to root_path, class: "flex flex-col items-center py-1 px-2 text-gray-600 hover:text-blue-600 #{'text-blue-600' if current_page?(root_path)}" do %>
-            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-            </svg>
-            <span class="text-2xs">ホーム</span>
-          <% end %>
-          
-          <%= link_to search_posts_path, class: "flex flex-col items-center py-1 px-2 text-gray-600 hover:text-blue-600 #{'text-blue-600' if current_page?(search_posts_path)}" do %>
-            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <span class="text-2xs">検索</span>
-          <% end %>
-          
-          <%= link_to new_post_path, class: "flex flex-col items-center py-1 px-2 text-gray-600 hover:text-blue-600 #{'text-blue-600' if current_page?(new_post_path)}" do %>
-            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            <span class="text-2xs">投稿</span>
-          <% end %>
-          
-          <%= link_to communities_path, class: "flex flex-col items-center py-1 px-2 text-gray-600 hover:text-blue-600 #{'text-blue-600' if current_page?(communities_path)}" do %>
-            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-            </svg>
-            <span class="text-2xs">コミュニティ</span>
-          <% end %>
-          
-          <% if user_signed_in? %>
-            <%= link_to mypage_path, class: "flex flex-col items-center py-1 px-2 text-gray-600 hover:text-blue-600 #{'text-blue-600' if current_page?(mypage_path)}" do %>
-              <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-              </svg>
-              <span class="text-2xs">マイページ</span>
-            <% end %>
-          <% else %>
-            <%= link_to new_user_session_path, class: "flex flex-col items-center py-1 px-2 text-gray-600 hover:text-blue-600 #{'text-blue-600' if current_page?(new_user_session_path)}" do %>
-              <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-              </svg>
-              <span class="text-2xs">ログイン</span>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
-    </nav>
 
-    <!-- コメントピン表示・非表示ボタン（モバイルのみ） -->
-    <div id="mobile-comment-pin-toggle" class="md:hidden fixed bottom-20 right-4 z-40" data-controller="global-comment-pins">
-      <button type="button" 
-              data-action="click->global-comment-pins#toggleGlobalPins"
-              data-global-comment-pins-target="toggleButton"
-              class="w-16 h-16 bg-slate-400 text-white rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:bg-slate-500 active:scale-90">
-        <span data-global-comment-pins-target="toggleIcon" class="text-xl">📌</span>
-      </button>
-    </div>
 
     <!-- オーバーレイ（スマホのみ） -->
     <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
@@ -1560,9 +1514,9 @@
 
     <!-- Bottom navigation for mobile -->
     <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-      <div class="grid grid-cols-5 h-16">
+      <div class="grid grid-cols-5 h-20">
         <!-- Home -->
-        <%= link_to root_path, class: "flex flex-col items-center justify-center py-1 #{'text-blue-600' if request.path == root_path} #{'text-gray-600' if request.path != root_path} hover:text-blue-600 transition-colors" do %>
+        <%= link_to root_path, class: "flex flex-col items-center justify-center py-1 mt-1 #{'text-blue-600' if request.path == root_path} #{'text-gray-600' if request.path != root_path} hover:text-blue-600 transition-colors" do %>
           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
           </svg>
@@ -1570,7 +1524,7 @@
         <% end %>
         
         <!-- Search -->
-        <%= link_to search_posts_path, class: "flex flex-col items-center justify-center py-1 #{'text-blue-600' if request.path == search_posts_path} #{'text-gray-600' if request.path != search_posts_path} hover:text-blue-600 transition-colors" do %>
+        <%= link_to search_posts_path, class: "flex flex-col items-center justify-center py-1 mt-1 #{'text-blue-600' if request.path == search_posts_path} #{'text-gray-600' if request.path != search_posts_path} hover:text-blue-600 transition-colors" do %>
           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
@@ -1578,7 +1532,7 @@
         <% end %>
         
         <!-- New Post -->
-        <%= link_to new_post_path, class: "flex flex-col items-center justify-center py-1 #{'text-blue-600' if request.path == new_post_path} #{'text-gray-600' if request.path != new_post_path} hover:text-blue-600 transition-colors" do %>
+        <%= link_to new_post_path, class: "flex flex-col items-center justify-center py-1 mt-1 #{'text-blue-600' if request.path == new_post_path} #{'text-gray-600' if request.path != new_post_path} hover:text-blue-600 transition-colors" do %>
           <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
           </svg>
@@ -1587,14 +1541,14 @@
         
         <!-- Community -->
         <% if user_signed_in? %>
-          <%= link_to communities_path, class: "flex flex-col items-center justify-center py-1 #{'text-blue-600' if request.path == communities_path} #{'text-gray-600' if request.path != communities_path} hover:text-blue-600 transition-colors" do %>
+          <%= link_to communities_path, class: "flex flex-col items-center justify-center py-1 mt-1 #{'text-blue-600' if request.path == communities_path} #{'text-gray-600' if request.path != communities_path} hover:text-blue-600 transition-colors" do %>
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
             <span class="text-xs">コミュニティ</span>
           <% end %>
         <% else %>
-          <div class="flex flex-col items-center justify-center py-1 text-gray-400">
+          <div class="flex flex-col items-center justify-center py-1 mt-1 text-gray-400">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
@@ -1604,14 +1558,14 @@
         
         <!-- My Page -->
         <% if user_signed_in? %>
-          <%= link_to mypage_path, class: "flex flex-col items-center justify-center py-1 #{'text-blue-600' if request.path == mypage_path} #{'text-gray-600' if request.path != mypage_path} hover:text-blue-600 transition-colors" do %>
+          <%= link_to mypage_path, class: "flex flex-col items-center justify-center py-1 mt-1 #{'text-blue-600' if request.path == mypage_path} #{'text-gray-600' if request.path != mypage_path} hover:text-blue-600 transition-colors" do %>
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
             </svg>
             <span class="text-xs">マイページ</span>
           <% end %>
         <% else %>
-          <%= link_to new_user_session_path, class: "flex flex-col items-center justify-center py-1 text-gray-600 hover:text-blue-600 transition-colors" do %>
+          <%= link_to new_user_session_path, class: "flex flex-col items-center justify-center py-1 mt-1 text-gray-600 hover:text-blue-600 transition-colors" do %>
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
             </svg>
@@ -1622,98 +1576,15 @@
     </nav>
 
     <!-- Mobile comment pins toggle button (bottom-right) -->
-    <div class="md:hidden fixed bottom-20 right-4 z-40" data-controller="global-comment-pins">
+    <div class="md:hidden fixed bottom-24 right-4 z-40" data-controller="global-comment-pins">
       <button type="button" 
               data-action="click->global-comment-pins#toggleGlobalPins"
               data-global-comment-pins-target="toggleButton"
-              class="bg-purple-600 text-white p-3 rounded-full shadow-lg hover:bg-purple-700 transition-colors">
-        <span data-global-comment-pins-target="toggleIcon" class="text-sm">👁️</span>
+              class="w-16 h-16 bg-emerald-300 text-white rounded-full shadow-xl hover:bg-emerald-400 transition-all duration-300 active:scale-95 flex items-center justify-center">
+        <span data-global-comment-pins-target="toggleIcon" class="text-2xl">📍</span>
       </button>
     </div>
 
-    <!-- Mobile responsive CSS and JavaScript -->
-    <style>
-      /* Mobile responsive styles */
-      @media (max-width: 768px) {
-        #sidebar {
-          display: none !important;
-        }
-        
-        main {
-          margin-left: 0 !important;
-          padding: 16px !important;
-          padding-bottom: 80px !important;
-        }
-        
-        .container {
-          padding-left: 16px !important;
-          padding-right: 16px !important;
-        }
-      }
-      
-      /* Hamburger menu animation */
-      #hamburger-menu.show {
-        display: block !important;
-      }
-      
-      #hamburger-menu.show > div {
-        transform: translateX(0) !important;
-      }
-      
-      /* Hamburger button animation */
-      #hamburger-btn.active span:nth-child(1) {
-        transform: rotate(45deg) translate(5px, 5px);
-      }
-      
-      #hamburger-btn.active span:nth-child(2) {
-        opacity: 0;
-      }
-      
-      #hamburger-btn.active span:nth-child(3) {
-        transform: rotate(-45deg) translate(7px, -6px);
-      }
-    </style>
 
-    <script>
-      // Hamburger menu functionality
-      document.addEventListener('DOMContentLoaded', function() {
-        const hamburgerBtn = document.getElementById('hamburger-btn');
-        const hamburgerMenu = document.getElementById('hamburger-menu');
-        const closeBtn = document.getElementById('close-hamburger');
-        
-        function openMenu() {
-          hamburgerMenu.classList.remove('hidden');
-          hamburgerMenu.classList.add('show');
-          hamburgerBtn.classList.add('active');
-          document.body.style.overflow = 'hidden';
-        }
-        
-        function closeMenu() {
-          hamburgerMenu.classList.remove('show');
-          hamburgerBtn.classList.remove('active');
-          document.body.style.overflow = '';
-          setTimeout(() => {
-            hamburgerMenu.classList.add('hidden');
-          }, 300);
-        }
-        
-        hamburgerBtn?.addEventListener('click', openMenu);
-        closeBtn?.addEventListener('click', closeMenu);
-        
-        // Close menu when clicking overlay
-        hamburgerMenu?.addEventListener('click', function(e) {
-          if (e.target === hamburgerMenu) {
-            closeMenu();
-          }
-        });
-        
-        // Close menu on escape key
-        document.addEventListener('keydown', function(e) {
-          if (e.key === 'Escape' && hamburgerMenu.classList.contains('show')) {
-            closeMenu();
-          }
-        });
-      });
-    </script>
   </body>
 </html>

@@ -1,4 +1,12 @@
 ja:
+  errors:
+    format: "%{attribute}%{message}"
+    messages:
+      blank: "を入力してください"
+      too_short: "は%{count}文字以上で入力してください"
+      too_long: "は%{count}文字以内で入力してください"
+      taken: "はすでに使用されています"
+      invalid: "は不正な値です"
   activerecord:
     models:
       user: ユーザー
@@ -8,6 +16,14 @@ ja:
         email: メールアドレス
         password: パスワード
         password_confirmation: パスワード（確認）
+    errors:
+      models:
+        user:
+          attributes:
+            name:
+              blank: "を入力してください"
+            password:
+              too_short: "は%{count}文字以上で入力してください"
   errors:
     messages:
       not_saved: "%{resource}の保存に失敗しました（%{count}件のエラー）"

@@ -147,9 +147,7 @@
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <% @posts.each do |post| %>
-          <div class="transform hover:scale-105 transition-all duration-300">
-            <%= render "posts/post_card", post: post %>
-          </div>
+          <%= render "posts/mypage_post_card", post: post %>
         <% end %>
       </div>
     <% else %>

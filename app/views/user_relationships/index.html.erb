@@ -53,7 +53,7 @@
       </div>
     </div>
     <p class="text-xs text-gray-600">プロフィールの「興味・関心」「支援ジャンル」「性格傾向」などの回答内容から類似度を算出し、同心円状に配置しています。</p>
-    <p class="text-xs text-gray-600 mt-1">投稿者は大きな円で、視聴者は小さな円で表示されます。ホバーすると投稿やコメント情報が表示されます。</p>
+    <p class="text-xs text-gray-600 mt-1">投稿者は大きな円で、視聴者は小さな円で表示されます。ホバーすると投稿やコメント情報が表示され、クリックするとそのユーザーのページに移動します。</p>
   </div>
   
   <!-- 可視化エリア -->
@@ -262,7 +262,12 @@ document.addEventListener('DOMContentLoaded', function() {
       .attr('stroke-width', getUserStrokeWidth(user))
       .style('cursor', 'pointer')
       .on('click', function() {
-        showUserDetail(user);
+        // 現在のユーザーの場合はマイページへ、他のユーザーの場合はそのユーザーの詳細ページへ
+        if (user.id === currentUserData.id) {
+          window.location.href = '/users/mypage';
+        } else {
+          window.location.href = `/users/${user.id}`;
+        }
       })
       .on('mouseover', function(event) {
         showTooltip(event, user);
@@ -392,50 +397,6 @@ document.addEventListener('DOMContentLoaded', function() {
     tooltip.style.opacity = '0';
   }
   
-  // ユーザー詳細表示
-  function showUserDetail(userData) {
-    const modal = document.getElementById('user-detail-modal');
-    const nameElement = document.getElementById('modal-user-name');
-    const contentElement = document.getElementById('modal-user-content');
-    const similarityElement = document.getElementById('modal-similarity');
-    
-    nameElement.textContent = userData.name;
-    similarityElement.textContent = `類似度: ${Math.round(userData.similarity * 100)}%`;
-    
-    // プロフィール詳細を表示
-    let content = '';
-    
-    if (userData.profile.interests) {
-      content += `<div><strong>興味・関心:</strong> ${userData.profile.interests}</div>`;
-    }
-    if (userData.profile.creation_experience) {
-      content += `<div><strong>創作経験:</strong> ${userData.profile.creation_experience}</div>`;
-    }
-    if (userData.profile.favorite_artists) {
-      content += `<div><strong>好きなアーティスト:</strong> ${userData.profile.favorite_artists}</div>`;
-    }
-    if (userData.profile.personality_traits) {
-      content += `<div><strong>性格特性:</strong> ${userData.profile.personality_traits}</div>`;
-    }
-    if (userData.profile.support_genres) {
-      content += `<div><strong>サポートジャンル:</strong> ${userData.profile.support_genres}</div>`;
-    }
-    
-    contentElement.innerHTML = content || '<div class="text-gray-500">プロフィール情報がありません</div>';
-    modal.classList.remove('hidden');
-  }
-  
-  // モーダルを閉じる
-  document.getElementById('close-modal').addEventListener('click', function() {
-    document.getElementById('user-detail-modal').classList.add('hidden');
-  });
-  
-  // モーダル外をクリックしたら閉じる
-  document.getElementById('user-detail-modal').addEventListener('click', function(event) {
-    if (event.target === this) {
-      this.classList.add('hidden');
-    }
-  });
 });
 </script>
 <% end %>

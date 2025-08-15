@@ -1,0 +1,42 @@
+ja:
+  errors:
+    format: "%{attribute}%{message}"
+    messages:
+      blank: "を入力してください"
+      too_short: "は%{count}文字以上で入力してください"
+      too_long: "は%{count}文字以内で入力してください"
+      taken: "はすでに使用されています"
+      invalid: "は不正な値です"
+  activerecord:
+    models:
+      user: ユーザー
+    attributes:
+      user:
+        name: ユーザー名
+        email: メールアドレス
+        password: パスワード
+        password_confirmation: パスワード（確認）
+    errors:
+      models:
+        user:
+          attributes:
+            name:
+              blank: "を入力してください"
+            password:
+              too_short: "は%{count}文字以上で入力してください"
+  errors:
+    messages:
+      not_saved: "%{resource}の保存に失敗しました（%{count}件のエラー）"
+  devise:
+    sessions:
+      signed_in: ログインしました。
+      signed_out: ログアウトしました。
+    registrations:
+      signed_up: アカウント登録が完了しました。確認メールをご確認ください。
+      updated: アカウント情報を更新しました。
+    failure:
+      invalid: "メールアドレスまたはパスワードが正しくありません。"
+      unconfirmed: メールアドレスの確認が必要です。確認メールをご確認ください。
+    confirmations:
+      send_instructions: 数分以内にアカウント確認のメールが送信されます。
+      confirmed: アカウントの確認が完了しました。ログインできます。

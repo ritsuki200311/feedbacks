@@ -70,7 +70,9 @@
           <% if @supporter_profile.standing.present? %>
             <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
               <h3 class="font-semibold text-purple-800 mb-2">🎭 立場</h3>
-              <p class="text-purple-700"><%= @supporter_profile.standing.join(", ") %></p>
+              <p class="text-purple-700">
+                <%= @supporter_profile.standing.is_a?(Array) ? @supporter_profile.standing.join(", ") : @supporter_profile.standing %>
+              </p>
             </div>
           <% end %>
           <% if @supporter_profile.creation_experience.present? %>
@@ -82,7 +84,9 @@
           <% if @supporter_profile.interests.present? %>
             <div class="bg-green-50 rounded-lg p-4 border border-green-200">
               <h3 class="font-semibold text-green-800 mb-2">🎨 趣味ジャンル</h3>
-              <p class="text-green-700"><%= @supporter_profile.interests.join(", ") %></p>
+              <p class="text-green-700">
+                <%= @supporter_profile.interests.is_a?(Array) ? @supporter_profile.interests.join(", ") : @supporter_profile.interests %>
+              </p>
             </div>
           <% end %>
           <% if @supporter_profile.favorite_artists.present? %>
@@ -100,19 +104,25 @@
           <% if @supporter_profile.support_genres.present? %>
             <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
               <h3 class="font-semibold text-orange-800 mb-2">🎯 支援ジャンル</h3>
-              <p class="text-orange-700"><%= @supporter_profile.support_genres.join(", ") %></p>
+              <p class="text-orange-700">
+                <%= @supporter_profile.support_genres.is_a?(Array) ? @supporter_profile.support_genres.join(", ") : @supporter_profile.support_genres %>
+              </p>
             </div>
           <% end %>
           <% if @supporter_profile.support_styles.present? %>
             <div class="bg-teal-50 rounded-lg p-4 border border-teal-200">
               <h3 class="font-semibold text-teal-800 mb-2">💪 応援スタイル</h3>
-              <p class="text-teal-700"><%= @supporter_profile.support_styles.join(", ") %></p>
+              <p class="text-teal-700">
+                <%= @supporter_profile.support_styles.is_a?(Array) ? @supporter_profile.support_styles.join(", ") : @supporter_profile.support_styles %>
+              </p>
             </div>
           <% end %>
           <% if @supporter_profile.personality_traits.present? %>
             <div class="bg-red-50 rounded-lg p-4 border border-red-200">
               <h3 class="font-semibold text-red-800 mb-2">🌟 性格傾向</h3>
-              <p class="text-red-700"><%= @supporter_profile.personality_traits.join(", ") %></p>
+              <p class="text-red-700">
+                <%= @supporter_profile.personality_traits.is_a?(Array) ? @supporter_profile.personality_traits.join(", ") : @supporter_profile.personality_traits %>
+              </p>
             </div>
           <% end %>
         </div>

@@ -13,7 +13,7 @@ class UserRelationshipsController < ApplicationController
     # 他のユーザーのプロフィール情報を取得（プロフィールが存在するユーザーのみ）
     @users_with_profiles = User.joins(:supporter_profile)
                                .where.not(id: current_user.id)
-                               .includes(:supporter_profile)
+                               .includes(:supporter_profile, :posts, :comments)
     
     # デバッグ情報をログに出力
     Rails.logger.info "Current user: #{current_user.name} (ID: #{current_user.id})"
@@ -28,20 +28,45 @@ class UserRelationshipsController < ApplicationController
 
     # JSONデータとして渡す（ビューで使用）
     @users_data = @user_similarities.map do |user_data|
+      user = user_data[:user]
+      posts = user.posts.limit(3).order(created_at: :desc)
+      comments = user.comments.limit(3).order(created_at: :desc).includes(:post)
+      
       {
-        id: user_data[:user].id,
-        name: user_data[:user].name,
+        id: user.id,
+        name: user.name,
         similarity: user_data[:similarity],
-        profile: user_data[:user].supporter_profile.attributes.except('id', 'user_id', 'created_at', 'updated_at')
+        profile: user.supporter_profile.attributes.except('id', 'user_id', 'created_at', 'updated_at'),
+        posts_count: user.posts.count,
+        comments_count: user.comments.count,
+        recent_posts: posts.map { |post| { id: post.id, title: post.title, created_at: post.created_at } },
+        recent_comments: comments.map { |comment| { 
+          id: comment.id, 
+          body: comment.body.truncate(50), 
+          post_title: comment.post.title,
+          created_at: comment.created_at 
+        }}
       }
     end
 
     # 自分のデータも追加
+    current_user_posts = current_user.posts.limit(3).order(created_at: :desc)
+    current_user_comments = current_user.comments.limit(3).order(created_at: :desc).includes(:post)
+    
     @current_user_data = {
       id: current_user.id,
       name: current_user.name,
       similarity: 1.0,
-      profile: current_profile.attributes.except('id', 'user_id', 'created_at', 'updated_at')
+      profile: current_profile.attributes.except('id', 'user_id', 'created_at', 'updated_at'),
+      posts_count: current_user.posts.count,
+      comments_count: current_user.comments.count,
+      recent_posts: current_user_posts.map { |post| { id: post.id, title: post.title, created_at: post.created_at } },
+      recent_comments: current_user_comments.map { |comment| { 
+        id: comment.id, 
+        body: comment.body.truncate(50), 
+        post_title: comment.post.title,
+        created_at: comment.created_at 
+      }}
     }
   end
 

@@ -42,8 +42,18 @@
         <span>低い類似度（40%未満）</span>
       </div>
     </div>
+    <div class="flex flex-wrap gap-4 text-sm mb-2">
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-purple-600 border-2 border-yellow-400"></div>
+        <span>投稿者（作品投稿あり）</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-gray-500"></div>
+        <span>視聴者（コメントのみ）</span>
+      </div>
+    </div>
     <p class="text-xs text-gray-600">プロフィールの「興味・関心」「支援ジャンル」「性格傾向」などの回答内容から類似度を算出し、同心円状に配置しています。</p>
-    <p class="text-xs text-gray-600 mt-1">円の大きさも類似度を反映し、クリックすると詳細情報が表示されます。</p>
+    <p class="text-xs text-gray-600 mt-1">投稿者は大きな円で、視聴者は小さな円で表示されます。ホバーすると投稿やコメント情報が表示されます。</p>
   </div>
   
   <!-- 可視化エリア -->
@@ -62,6 +72,13 @@
         <p class="text-gray-500 text-sm mt-2">他のユーザーがプロフィールを作成すると、ここに関係性が表示されます。</p>
       </div>
     <% end %>
+  </div>
+  
+  <!-- ツールチップ -->
+  <div id="user-tooltip" class="fixed bg-gray-800 text-white text-sm rounded-lg p-3 shadow-lg z-50 pointer-events-none opacity-0 transition-opacity duration-200 max-w-sm">
+    <div id="tooltip-content">
+      <!-- ツールチップ内容がここに動的に挿入されます -->
+    </div>
   </div>
   
   <!-- ユーザー詳細モーダル -->
@@ -147,10 +164,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // ユーザーの半径設定
+  // ユーザーの半径設定（投稿者/視聴者で区別）
   function getUserRadius(user) {
     if (user.id === currentUserData.id) return 15;
-    return Math.max(8, user.similarity * 12 + 6);
+    
+    // 投稿者は大きく、視聴者は小さく
+    const isCreator = user.posts_count > 0;
+    const baseRadius = isCreator ? 12 : 8;
+    const similarityBonus = user.similarity * (isCreator ? 8 : 4);
+    
+    return Math.max(isCreator ? 8 : 6, baseRadius + similarityBonus);
+  }
+  
+  // ユーザーのストローク設定（投稿者は金色の枠）
+  function getUserStroke(user) {
+    if (user.id === currentUserData.id) return '#fff';
+    
+    const isCreator = user.posts_count > 0;
+    return isCreator ? '#fbbf24' : '#fff'; // 投稿者は金色、視聴者は白
+  }
+  
+  // ユーザーのストローク幅設定
+  function getUserStrokeWidth(user) {
+    if (user.id === currentUserData.id) return 2;
+    
+    const isCreator = user.posts_count > 0;
+    return isCreator ? 3 : 2; // 投稿者は太い枠
   }
   
   // 同心円の背景を描画（類似度レベルを表す）
@@ -208,17 +247,31 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log(`User ${user.name}: position (${x}, ${y}), similarity: ${user.similarity}`);
     
+    // ユーザーの位置情報を保存
+    user.x = x;
+    user.y = y;
+    user.radius = getUserRadius(user);
+    
     // 円を描画
-    svg.append('circle')
+    const circle = svg.append('circle')
       .attr('cx', x)
       .attr('cy', y)
       .attr('r', getUserRadius(user))
       .attr('fill', getUserColor(user))
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 2)
+      .attr('stroke', getUserStroke(user))
+      .attr('stroke-width', getUserStrokeWidth(user))
       .style('cursor', 'pointer')
       .on('click', function() {
         showUserDetail(user);
+      })
+      .on('mouseover', function(event) {
+        showTooltip(event, user);
+      })
+      .on('mousemove', function(event) {
+        moveTooltip(event, user);
+      })
+      .on('mouseout', function() {
+        hideTooltip();
       });
     
     // ラベルを描画
@@ -233,6 +286,111 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   console.log(`Drew ${allUsers.length} users`);
+  
+  // ツールチップ機能
+  function showTooltip(event, userData) {
+    const tooltip = document.getElementById('user-tooltip');
+    const content = document.getElementById('tooltip-content');
+    
+    // データの安全な取得（undefinedやnullをチェック）
+    const postsCount = userData.posts_count || 0;
+    const commentsCount = userData.comments_count || 0;
+    const isCreator = postsCount > 0;
+    const similarity = userData.similarity || 0;
+    
+    let tooltipContent = `
+      <div class="font-semibold text-blue-300 mb-2">${userData.name || 'ユーザー'}</div>
+      <div class="text-xs text-gray-300 mb-2">類似度: ${Math.round(similarity * 100)}%</div>
+    `;
+    
+    if (isCreator) {
+      tooltipContent += `
+        <div class="border-t border-gray-600 pt-2">
+          <div class="text-yellow-300 font-semibold mb-1">📝 投稿者（${postsCount}件の投稿）</div>
+      `;
+      
+      if (userData.recent_posts && userData.recent_posts.length > 0) {
+        tooltipContent += '<div class="text-xs"><strong>最近の投稿:</strong></div>';
+        userData.recent_posts.slice(0, 2).forEach(post => {
+          const date = new Date(post.created_at).toLocaleDateString('ja-JP');
+          tooltipContent += `<div class="text-xs text-gray-300">• ${post.title || '無題'} (${date})</div>`;
+        });
+      } else {
+        tooltipContent += '<div class="text-xs text-gray-400">投稿がありません</div>';
+      }
+      tooltipContent += '</div>';
+    } else {
+      tooltipContent += `
+        <div class="border-t border-gray-600 pt-2">
+          <div class="text-blue-300 font-semibold mb-1">👁️ 視聴者（${commentsCount}件のコメント）</div>
+      `;
+      
+      if (userData.recent_comments && userData.recent_comments.length > 0) {
+        tooltipContent += '<div class="text-xs"><strong>最近のコメント:</strong></div>';
+        userData.recent_comments.slice(0, 2).forEach(comment => {
+          const date = new Date(comment.created_at).toLocaleDateString('ja-JP');
+          tooltipContent += `<div class="text-xs text-gray-300">• ${comment.body || 'コメント'} (${date})</div>`;
+        });
+      } else if (commentsCount === 0) {
+        tooltipContent += '<div class="text-xs text-gray-400">まだ活動がありません</div>';
+      } else {
+        tooltipContent += '<div class="text-xs text-gray-400">コメント履歴を取得中...</div>';
+      }
+      tooltipContent += '</div>';
+    }
+    
+    content.innerHTML = tooltipContent;
+    tooltip.style.opacity = '1';
+    moveTooltip(event, userData);
+  }
+  
+  function moveTooltip(event, userData) {
+    const tooltip = document.getElementById('user-tooltip');
+    const svgElement = document.querySelector('#user-network svg');
+    const svgRect = svgElement.getBoundingClientRect();
+    
+    // ユーザーの円の位置を基準にツールチップを配置
+    const userScreenX = svgRect.left + userData.x;
+    const userScreenY = svgRect.top + userData.y;
+    const userRadius = userData.radius || 10;
+    
+    // ツールチップの配置位置を計算（円の右上に表示）
+    let left = userScreenX + userRadius + 10;
+    let top = userScreenY - userRadius - 10;
+    
+    // ブラウザウィンドウからはみ出ないように調整
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // 右端からはみ出る場合は左側に表示
+    if (left + tooltipRect.width > viewportWidth) {
+      left = userScreenX - userRadius - tooltipRect.width - 10;
+    }
+    
+    // 上端からはみ出る場合は下側に表示
+    if (top < 0) {
+      top = userScreenY + userRadius + 10;
+    }
+    
+    // 下端からはみ出る場合は上側に調整
+    if (top + tooltipRect.height > viewportHeight) {
+      top = viewportHeight - tooltipRect.height - 10;
+    }
+    
+    // 左端からはみ出る場合は右側に調整
+    if (left < 0) {
+      left = 10;
+    }
+    
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+  }
+  
+  function hideTooltip() {
+    const tooltip = document.getElementById('user-tooltip');
+    tooltip.style.opacity = '0';
+  }
   
   // ユーザー詳細表示
   function showUserDetail(userData) {

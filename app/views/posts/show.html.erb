@@ -891,12 +891,7 @@
         </div>
       <% end %>
 
-      <!-- 評価コメントがない場合の表示 -->
-      <% if positive_votes.empty? && negative_votes.empty? %>
-        <div class="text-center py-6 text-gray-500 mb-8">
-          <p>コメント付きの評価はまだありません。</p>
-        </div>
-      <% end %>
+      
     <% else %>
       <!-- 未投票の場合の説明 -->
       <div class="text-center py-8 text-gray-500 mb-8 border border-gray-200 rounded-lg bg-gray-50">

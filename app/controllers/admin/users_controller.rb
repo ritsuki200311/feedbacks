@@ -1,9 +1,12 @@
 module Admin
   class UsersController < ApplicationController
+    before_action :authenticate_user!
+    before_action :restrict_to_development!
     before_action :set_user, only: [ :add_coins, :remove_coins ]
 
     def index
       @users = User.includes(:preference).all
+      @show_sensitive_info = Rails.env.development?
     end
 
     def add_coins
@@ -30,6 +33,11 @@ module Admin
 
     def set_user
       @user = User.find(params[:id])
+    end
+
+    def restrict_to_development!
+      return if Rails.env.development?
+      redirect_to root_path, alert: "このページにはアクセスできません。"
     end
   end
 end

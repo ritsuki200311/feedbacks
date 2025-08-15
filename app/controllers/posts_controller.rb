@@ -1,13 +1,14 @@
 class PostsController < ApplicationController
   include PostsHelper
   before_action :set_post, only: [ :show, :edit, :update, :destroy ]
+  before_action :authenticate_user!, only: [ :new, :create, :destroy, :edit, :update ]
+  before_action :authorize_post_owner, only: [ :edit, :update, :destroy ]
 
   def new
     @post = Post.new
   end
 
   def create
-    puts "DEBUG: AWS Access Key ID from credentials: #{Rails.application.credentials.dig(:aws, :access_key_id)}"
     @post = Post.new(post_params.except(:tag_list))
     @post.user = current_user
     @post.tag_list = post_params[:tag_list]
@@ -127,5 +128,11 @@ class PostsController < ApplicationController
 
   def set_post
     @post = Post.find(params[:id])
+  end
+
+  def authorize_post_owner
+    return if @post&.user == current_user
+
+    redirect_to root_path, alert: "権限がありません。" and return
   end
 end

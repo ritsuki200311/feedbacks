@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   # Deviseの認証モジュール
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable
+         :recoverable, :rememberable, :validatable, :confirmable
 
   # 投稿・コメント関連
   has_many :comments, dependent: :destroy
@@ -42,4 +42,8 @@ class User < ApplicationRecord
     self.coins -= amount
     save
   end
+
+  # バリデーション
+  validates :name, presence: true, length: { maximum: 50 }
+  validates :email, presence: true, length: { maximum: 254 }
 end

@@ -53,12 +53,31 @@
       </div>
     </div>
     <p class="text-xs text-gray-600">プロフィールの「興味・関心」「支援ジャンル」「性格傾向」などの回答内容から類似度を算出し、同心円状に配置しています。</p>
-    <p class="text-xs text-gray-600 mt-1">投稿者は大きな円で、視聴者は小さな円で表示されます。ホバーすると投稿やコメント情報が表示され、クリックするとそのユーザーのページに移動します。</p>
+    <p class="text-xs text-gray-600 mt-1">投稿者は大きな円で、視聴者は小さな円で表示されます。投稿者の上には最新の作品画像が表示され、クリックで作品詳細に移動できます。</p>
+    <p class="text-xs text-gray-600 mt-1">ユーザー円にホバーすると活動情報が表示され、クリックするとそのユーザーのページに移動します。</p>
+    <p class="text-xs text-blue-600 font-semibold mt-2">💡 操作方法: マウスホイールまたはピンチで拡大縮小、ドラッグで移動できます。右上のコントロールからも操作可能です。</p>
   </div>
   
   <!-- 可視化エリア -->
-  <div class="bg-white rounded-lg shadow-lg p-6">
+  <div class="bg-white rounded-lg shadow-lg p-6 relative">
     <% if @users_data.present? %>
+      <!-- ズームコントロール -->
+      <div class="absolute top-4 right-4 z-10 bg-white rounded-lg shadow-md border border-gray-200 p-2">
+        <div class="flex flex-col items-center gap-2">
+          <button id="zoom-in" class="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center justify-center transition-colors">
+            <span class="text-lg font-bold">+</span>
+          </button>
+          <div class="text-xs font-semibold text-gray-600 px-2 py-1 bg-gray-50 rounded">
+            <span id="zoom-level">100%</span>
+          </div>
+          <button id="zoom-out" class="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center justify-center transition-colors">
+            <span class="text-lg font-bold">−</span>
+          </button>
+          <button id="zoom-reset" class="w-16 h-6 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors">
+            リセット
+          </button>
+        </div>
+      </div>
       <div id="user-network" class="w-full" style="height: 700px;"></div>
     <% else %>
       <div class="text-center py-12">
@@ -140,6 +159,20 @@ document.addEventListener('DOMContentLoaded', function() {
     .attr('width', width)
     .attr('height', height);
   
+  // ズーム機能の設定
+  const zoom = d3.zoom()
+    .scaleExtent([0.3, 3]) // 0.3倍から3倍まで拡大縮小可能
+    .on('zoom', function(event) {
+      zoomGroup.attr('transform', event.transform);
+      updateZoomLevel(event.transform.k);
+    });
+  
+  // SVGにズーム機能を適用
+  svg.call(zoom);
+  
+  // ズーム対象のグループを作成
+  const zoomGroup = svg.append('g');
+  
   // 基本設定
   const centerX = width / 2;
   const centerY = height / 2;
@@ -202,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
   ];
 
   similarityLevels.reverse().forEach(level => {
-    svg.append('circle')
+    zoomGroup.append('circle')
       .attr('cx', centerX)
       .attr('cy', centerY)
       .attr('r', level.radius)
@@ -253,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
     user.radius = getUserRadius(user);
     
     // 円を描画
-    const circle = svg.append('circle')
+    const circle = zoomGroup.append('circle')
       .attr('cx', x)
       .attr('cy', y)
       .attr('r', getUserRadius(user))
@@ -279,8 +312,86 @@ document.addEventListener('DOMContentLoaded', function() {
         hideTooltip();
       });
     
+    // 投稿者の場合、作品画像を表示
+    if (user.posts_count > 0 && user.recent_posts && user.recent_posts.length > 0) {
+      const latestPost = user.recent_posts[0];
+      if (latestPost.image_url) {
+        const imageSize = 60;
+        const imageY = y - getUserRadius(user) - imageSize - 10;
+        
+        // 画像用のclipPathを定義
+        const clipId = `clip-${user.id}`;
+        zoomGroup.append('defs')
+          .append('clipPath')
+          .attr('id', clipId)
+          .append('rect')
+          .attr('x', x - imageSize/2)
+          .attr('y', imageY)
+          .attr('width', imageSize)
+          .attr('height', imageSize)
+          .attr('rx', 4);
+        
+        // 背景（白色の枠）
+        zoomGroup.append('rect')
+          .attr('x', x - imageSize/2 - 2)
+          .attr('y', imageY - 2)
+          .attr('width', imageSize + 4)
+          .attr('height', imageSize + 4)
+          .attr('fill', '#fff')
+          .attr('stroke', '#e5e7eb')
+          .attr('stroke-width', 1)
+          .attr('rx', 6)
+          .style('cursor', 'pointer')
+          .on('click', function() {
+            window.location.href = `/posts/${latestPost.id}`;
+          });
+        
+        // 作品画像
+        zoomGroup.append('image')
+          .attr('x', x - imageSize/2)
+          .attr('y', imageY)
+          .attr('width', imageSize)
+          .attr('height', imageSize)
+          .attr('href', latestPost.image_url)
+          .attr('clip-path', `url(#${clipId})`)
+          .style('cursor', 'pointer')
+          .on('click', function() {
+            window.location.href = `/posts/${latestPost.id}`;
+          })
+          .on('error', function() {
+            // 画像読み込みエラー時のフォールバック
+            d3.select(this).remove();
+            zoomGroup.append('rect')
+              .attr('x', x - imageSize/2)
+              .attr('y', imageY)
+              .attr('width', imageSize)
+              .attr('height', imageSize)
+              .attr('fill', '#f3f4f6')
+              .attr('stroke', '#d1d5db')
+              .attr('stroke-width', 1)
+              .attr('rx', 4)
+              .style('cursor', 'pointer')
+              .on('click', function() {
+                window.location.href = `/posts/${latestPost.id}`;
+              });
+            
+            zoomGroup.append('text')
+              .attr('x', x)
+              .attr('y', imageY + imageSize/2 + 4)
+              .text('📄')
+              .attr('font-size', '16px')
+              .attr('text-anchor', 'middle')
+              .style('fill', '#9ca3af')
+              .style('cursor', 'pointer')
+              .on('click', function() {
+                window.location.href = `/posts/${latestPost.id}`;
+              });
+          });
+      }
+    }
+    
     // ラベルを描画
-    svg.append('text')
+    zoomGroup.append('text')
       .attr('x', x)
       .attr('y', y + getUserRadius(user) + 15)
       .text(user.name)
@@ -396,6 +507,34 @@ document.addEventListener('DOMContentLoaded', function() {
     const tooltip = document.getElementById('user-tooltip');
     tooltip.style.opacity = '0';
   }
+  
+  // ズームレベル表示の更新
+  function updateZoomLevel(scale) {
+    const zoomLevelElement = document.getElementById('zoom-level');
+    if (zoomLevelElement) {
+      zoomLevelElement.textContent = `${Math.round(scale * 100)}%`;
+    }
+  }
+  
+  // ズームコントロールボタンの設定
+  document.getElementById('zoom-in').addEventListener('click', function() {
+    svg.transition().duration(300).call(
+      zoom.scaleBy, 1.5
+    );
+  });
+  
+  document.getElementById('zoom-out').addEventListener('click', function() {
+    svg.transition().duration(300).call(
+      zoom.scaleBy, 1 / 1.5
+    );
+  });
+  
+  document.getElementById('zoom-reset').addEventListener('click', function() {
+    svg.transition().duration(500).call(
+      zoom.transform,
+      d3.zoomIdentity
+    );
+  });
   
 });
 </script>

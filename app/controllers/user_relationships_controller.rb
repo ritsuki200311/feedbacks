@@ -39,7 +39,12 @@ class UserRelationshipsController < ApplicationController
         profile: user.supporter_profile.attributes.except('id', 'user_id', 'created_at', 'updated_at'),
         posts_count: user.posts.count,
         comments_count: user.comments.count,
-        recent_posts: posts.map { |post| { id: post.id, title: post.title, created_at: post.created_at } },
+        recent_posts: posts.map { |post| { 
+          id: post.id, 
+          title: post.title, 
+          created_at: post.created_at,
+          image_url: post.images.attached? ? Rails.application.routes.url_helpers.rails_blob_path(post.images.first, only_path: true) : nil
+        } },
         recent_comments: comments.map { |comment| { 
           id: comment.id, 
           body: comment.body.truncate(50), 
@@ -60,7 +65,12 @@ class UserRelationshipsController < ApplicationController
       profile: current_profile.attributes.except('id', 'user_id', 'created_at', 'updated_at'),
       posts_count: current_user.posts.count,
       comments_count: current_user.comments.count,
-      recent_posts: current_user_posts.map { |post| { id: post.id, title: post.title, created_at: post.created_at } },
+      recent_posts: current_user_posts.map { |post| { 
+        id: post.id, 
+        title: post.title, 
+        created_at: post.created_at,
+        image_url: post.images.attached? ? Rails.application.routes.url_helpers.rails_blob_path(post.images.first, only_path: true) : nil
+      } },
       recent_comments: current_user_comments.map { |comment| { 
         id: comment.id, 
         body: comment.body.truncate(50), 

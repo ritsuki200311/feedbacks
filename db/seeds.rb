@@ -7,3 +7,8 @@
 #   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
+
+# Load specific seed files for development
+if Rails.env.development?
+  load Rails.root.join('db', 'seeds', 'user_relationships_corrected_data.rb')
+end

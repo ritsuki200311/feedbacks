@@ -9,6 +9,8 @@ Rails.application.routes.draw do
 
   # この順番が大事！
   get "users/mypage", to: "users#mypage", as: :mypage
+  # ユーザー関係性の可視化（usersリソースより前に配置）
+  get "users/relationships", to: "user_relationships#index", as: :user_relationships
   resources :users, only: [ :show ]
   get "users/index"
 

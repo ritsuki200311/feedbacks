@@ -1,0 +1,297 @@
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-2 text-gray-900">ユーザー関係性の可視化</h1>
+  <p class="text-gray-600 mb-6">プロフィールの内容を基に、あなたと近い関心を持つユーザーを視覚的に表示します。</p>
+  
+  <!-- デバッグ情報 -->
+  <% if Rails.env.development? %>
+    <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+      <h3 class="font-semibold mb-2">デバッグ情報:</h3>
+      <p>現在のユーザー: <%= current_user.name %> (ID: <%= current_user.id %>)</p>
+      <p>プロフィール作成済みユーザー数: <%= @users_with_profiles&.count || 0 %></p>
+      <p>類似度計算対象: <%= @users_data&.count || 0 %>人</p>
+      <% if @users_data.present? %>
+        <p>ユーザー名: <%= @users_data.map { |u| u[:name] }.join(', ') %></p>
+      <% else %>
+        <p class="text-red-600">@users_dataが空です</p>
+      <% end %>
+    </div>
+  <% end %>
+  
+  <!-- 凡例 -->
+  <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+    <h2 class="text-lg font-semibold mb-3 text-gray-800">アンケート回答の類似度による関係性表示</h2>
+    <div class="flex flex-wrap gap-4 text-sm mb-3">
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-red-500"></div>
+        <span>あなた（中心）</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-green-500"></div>
+        <span>高い類似度（80%以上）</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-blue-500"></div>
+        <span>中程度の類似度（60-80%）</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-orange-500"></div>
+        <span>低い類似度（40-60%）</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-gray-400"></div>
+        <span>低い類似度（40%未満）</span>
+      </div>
+    </div>
+    <p class="text-xs text-gray-600">プロフィールの「興味・関心」「支援ジャンル」「性格傾向」などの回答内容から類似度を算出し、同心円状に配置しています。</p>
+    <p class="text-xs text-gray-600 mt-1">円の大きさも類似度を反映し、クリックすると詳細情報が表示されます。</p>
+  </div>
+  
+  <!-- 可視化エリア -->
+  <div class="bg-white rounded-lg shadow-lg p-6">
+    <% if @users_data.present? %>
+      <div id="user-network" class="w-full" style="height: 700px;"></div>
+    <% else %>
+      <div class="text-center py-12">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">表示できるユーザーがいません</h3>
+        <p class="text-gray-600">プロフィールを作成している他のユーザーがまだいないようです。</p>
+        <p class="text-gray-500 text-sm mt-2">他のユーザーがプロフィールを作成すると、ここに関係性が表示されます。</p>
+      </div>
+    <% end %>
+  </div>
+  
+  <!-- ユーザー詳細モーダル -->
+  <div id="user-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900" id="modal-user-name"></h3>
+          <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div id="modal-user-content" class="space-y-3 text-sm">
+          <!-- ユーザー詳細がここに動的に挿入されます -->
+        </div>
+        <div class="mt-4 text-center">
+          <span class="text-lg font-semibold text-blue-600" id="modal-similarity"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D3.js -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<% if @users_data.present? %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // データの準備
+  const currentUserData = <%= raw @current_user_data.to_json %>;
+  const usersData = <%= raw @users_data.to_json %>;
+  
+  console.log('Raw currentUserData:', currentUserData);
+  console.log('Raw usersData:', usersData);
+  
+  // データの検証
+  if (!currentUserData) {
+    console.error('currentUserData is null or undefined');
+    return;
+  }
+  
+  if (!usersData || !Array.isArray(usersData)) {
+    console.error('usersData is not an array or is null');
+    return;
+  }
+  
+  // 全ユーザーデータ（現在のユーザーを含む）
+  const allUsers = [currentUserData, ...usersData];
+  
+  // SVGの設定
+  const width = document.getElementById('user-network').offsetWidth;
+  const height = 700;
+  
+  const svg = d3.select('#user-network')
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height);
+  
+  // 基本設定
+  const centerX = width / 2;
+  const centerY = height / 2;
+  
+  // デバッグ情報
+  console.log('All Users:', allUsers);
+  console.log('Number of users:', allUsers.length);
+  
+  // ユーザーの色設定（類似度に基づくグラデーション）
+  function getUserColor(user) {
+    if (user.id === currentUserData.id) return '#ef4444'; // 現在のユーザーは赤色
+    
+    // 類似度に基づいて色を決定
+    if (user.similarity >= 0.8) {
+      return '#22c55e'; // 緑色 - 高い類似度
+    } else if (user.similarity >= 0.6) {
+      return '#3b82f6'; // 青色 - 中程度の類似度
+    } else if (user.similarity >= 0.4) {
+      return '#f97316'; // オレンジ色 - 低い類似度
+    } else {
+      return '#9ca3af'; // グレー色 - 非常に低い類似度
+    }
+  }
+  
+  // ユーザーの半径設定
+  function getUserRadius(user) {
+    if (user.id === currentUserData.id) return 15;
+    return Math.max(8, user.similarity * 12 + 6);
+  }
+  
+  // 同心円の背景を描画（類似度レベルを表す）
+  const maxRadius = Math.min(width, height) * 0.35;
+  const similarityLevels = [
+    { threshold: 0.8, radius: maxRadius * 0.3, color: 'rgba(34, 197, 94, 0.1)', label: '高い類似度(80%以上)' },
+    { threshold: 0.6, radius: maxRadius * 0.5, color: 'rgba(59, 130, 246, 0.1)', label: '中程度の類似度(60-80%)' },
+    { threshold: 0.4, radius: maxRadius * 0.7, color: 'rgba(249, 115, 22, 0.1)', label: '低い類似度(40-60%)' },
+    { threshold: 0.0, radius: maxRadius, color: 'rgba(156, 163, 175, 0.1)', label: '低い類似度(40%未満)' }
+  ];
+
+  similarityLevels.reverse().forEach(level => {
+    svg.append('circle')
+      .attr('cx', centerX)
+      .attr('cy', centerY)
+      .attr('r', level.radius)
+      .attr('fill', level.color)
+      .attr('stroke', level.color.replace('0.1', '0.3'))
+      .attr('stroke-width', 1)
+      .attr('stroke-dasharray', '3,3');
+  });
+
+  // ユーザーノードを描画
+  console.log('Creating user nodes...');
+  allUsers.forEach((user, index) => {
+    console.log(`Processing user ${index}:`, user);
+    
+    let x, y;
+    
+    if (user.id === currentUserData.id) {
+      // 現在のユーザーは中心に配置
+      x = centerX;
+      y = centerY;
+    } else {
+      // 類似度に基づいて距離を決定
+      let targetRadius;
+      if (user.similarity >= 0.8) {
+        targetRadius = maxRadius * 0.3;
+      } else if (user.similarity >= 0.6) {
+        targetRadius = maxRadius * 0.5;
+      } else if (user.similarity >= 0.4) {
+        targetRadius = maxRadius * 0.7;
+      } else {
+        targetRadius = maxRadius;
+      }
+      
+      // 同じ類似度レベルのユーザー数を考慮して角度を分散
+      const angle = (index / allUsers.length) * 2 * Math.PI + Math.random() * 0.5 - 0.25;
+      const radiusVariation = targetRadius * 0.15; // ±15%の幅でランダム
+      const finalRadius = targetRadius + (Math.random() - 0.5) * radiusVariation;
+      
+      x = centerX + Math.cos(angle) * finalRadius;
+      y = centerY + Math.sin(angle) * finalRadius;
+    }
+    
+    console.log(`User ${user.name}: position (${x}, ${y}), similarity: ${user.similarity}`);
+    
+    // 円を描画
+    svg.append('circle')
+      .attr('cx', x)
+      .attr('cy', y)
+      .attr('r', getUserRadius(user))
+      .attr('fill', getUserColor(user))
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 2)
+      .style('cursor', 'pointer')
+      .on('click', function() {
+        showUserDetail(user);
+      });
+    
+    // ラベルを描画
+    svg.append('text')
+      .attr('x', x)
+      .attr('y', y + getUserRadius(user) + 15)
+      .text(user.name)
+      .attr('font-size', '12px')
+      .attr('text-anchor', 'middle')
+      .attr('font-weight', user.id === currentUserData.id ? 'bold' : 'normal')
+      .style('fill', '#374151');
+  });
+  
+  console.log(`Drew ${allUsers.length} users`);
+  
+  // ユーザー詳細表示
+  function showUserDetail(userData) {
+    const modal = document.getElementById('user-detail-modal');
+    const nameElement = document.getElementById('modal-user-name');
+    const contentElement = document.getElementById('modal-user-content');
+    const similarityElement = document.getElementById('modal-similarity');
+    
+    nameElement.textContent = userData.name;
+    similarityElement.textContent = `類似度: ${Math.round(userData.similarity * 100)}%`;
+    
+    // プロフィール詳細を表示
+    let content = '';
+    
+    if (userData.profile.interests) {
+      content += `<div><strong>興味・関心:</strong> ${userData.profile.interests}</div>`;
+    }
+    if (userData.profile.creation_experience) {
+      content += `<div><strong>創作経験:</strong> ${userData.profile.creation_experience}</div>`;
+    }
+    if (userData.profile.favorite_artists) {
+      content += `<div><strong>好きなアーティスト:</strong> ${userData.profile.favorite_artists}</div>`;
+    }
+    if (userData.profile.personality_traits) {
+      content += `<div><strong>性格特性:</strong> ${userData.profile.personality_traits}</div>`;
+    }
+    if (userData.profile.support_genres) {
+      content += `<div><strong>サポートジャンル:</strong> ${userData.profile.support_genres}</div>`;
+    }
+    
+    contentElement.innerHTML = content || '<div class="text-gray-500">プロフィール情報がありません</div>';
+    modal.classList.remove('hidden');
+  }
+  
+  // モーダルを閉じる
+  document.getElementById('close-modal').addEventListener('click', function() {
+    document.getElementById('user-detail-modal').classList.add('hidden');
+  });
+  
+  // モーダル外をクリックしたら閉じる
+  document.getElementById('user-detail-modal').addEventListener('click', function(event) {
+    if (event.target === this) {
+      this.classList.add('hidden');
+    }
+  });
+});
+</script>
+<% end %>
+
+<style>
+  /* レスポンシブ対応 */
+  @media (max-width: 768px) {
+    #user-network {
+      height: 400px !important;
+    }
+    
+    .max-w-7xl {
+      max-width: 100%;
+      padding: 0 1rem;
+    }
+  }
+</style>

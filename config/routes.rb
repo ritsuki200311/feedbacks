@@ -21,6 +21,9 @@ Rails.application.routes.draw do
 
   # 投稿検索（postsリソースの前に配置）
   get "posts/search", to: "posts#search", as: :search_posts
+  
+  # 作品マップ（postsリソースの前に配置）
+  get "posts/map", to: "posts#map", as: :posts_map
 
   # 投稿とコメント
   resources :posts, only: [ :new, :create, :show, :destroy ] do

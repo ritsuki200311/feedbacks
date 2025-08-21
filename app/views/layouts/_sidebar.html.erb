@@ -16,6 +16,7 @@
         <% if current_user.supporter_profile.present? %>
           <%= link_to "プロフィールを見る", supporter_profile_path, class: sidebar_link_class(supporter_profile_path) %>
           <%= link_to "ユーザー関係性", user_relationships_path, class: sidebar_link_class(user_relationships_path) %>
+          <%= link_to "作品マップ", posts_map_path, class: sidebar_link_class(posts_map_path) %>
         <% else %>
           <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
         <% end %>
@@ -47,6 +48,7 @@
         <% if current_user.supporter_profile.present? %>
           <%= link_to "プロフィールを見る", supporter_profile_path, class: sidebar_link_class(supporter_profile_path) %>
           <%= link_to "ユーザー関係性", user_relationships_path, class: sidebar_link_class(user_relationships_path) %>
+          <%= link_to "作品マップ", posts_map_path, class: sidebar_link_class(posts_map_path) %>
         <% else %>
           <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
         <% end %>

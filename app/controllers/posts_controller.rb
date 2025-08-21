@@ -67,6 +67,66 @@ class PostsController < ApplicationController
     end
   end
 
+  def map
+    @posts = Post.includes(:user, :comments, images_attachments: :blob)
+                 .order(created_at: :desc)
+                 .limit(100)
+
+    respond_to do |format|
+      format.html
+      format.json do
+        render json: {
+          posts: @posts.map do |post|
+            {
+              id: post.id,
+              title: post.title,
+              body: post.body,
+              user_name: post.user.name,
+              user_id: post.user.id,
+              is_current_user: (post.user == current_user),
+              created_at: post.created_at,
+              comments_count: post.comments.count,
+              tags: extract_tags(post.tag),
+              image_url: post.images.attached? ? url_for(post.images.first) : nil,
+              comment_sentiments: analyze_comment_sentiments(post.comments)
+            }
+          end
+        }
+      end
+    end
+  end
+
+  private
+
+  def extract_tags(tag_string)
+    return [] if tag_string.blank?
+    tag_string.split(',').map(&:strip).reject(&:blank?)
+  end
+
+  def analyze_comment_sentiments(comments)
+    return {} if comments.empty?
+    
+    sentiment_words = {
+      positive: ['きれい', '美しい', 'すてき', '素敵', '良い', 'いい', '好き', '素晴らしい', '感動', '癒される'],
+      strong: ['力強い', '迫力', 'すごい', '凄い', 'パワフル', '強烈', 'インパクト', '圧倒'],
+      unique: ['独特', 'ユニーク', '面白い', 'おもしろい', '個性的', '斬新', '新しい', '珍しい'],
+      gentle: ['やさしい', '優しい', 'ほっこり', '温かい', 'あたたかい', '穏やか', 'ソフト', '柔らか']
+    }
+    
+    sentiment_counts = { positive: 0, strong: 0, unique: 0, gentle: 0 }
+    
+    comments.each do |comment|
+      content = comment.body.to_s.downcase
+      sentiment_words.each do |sentiment, words|
+        words.each do |word|
+          sentiment_counts[sentiment] += content.scan(word).length
+        end
+      end
+    end
+    
+    sentiment_counts
+  end
+
   private
 
   def search_users

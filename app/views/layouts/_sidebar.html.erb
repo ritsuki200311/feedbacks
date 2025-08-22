@@ -5,7 +5,7 @@
     <!-- デスクトップ表示用の全メニュー（md以上で表示） -->
     <div class="hidden md:flex md:flex-col md:space-y-2">
       <%= link_to "ホーム", root_path, class: sidebar_link_class(root_path) %>
-      <%= link_to "投稿検索", search_posts_path, class: sidebar_link_class(search_posts_path) %>
+      <%= link_to "検索", search_path, class: sidebar_link_class(search_path) %>
       <%= link_to "新規投稿", new_post_path, class: sidebar_link_class(new_post_path) %>
       <hr class="my-2">
       <% if user_signed_in? %>

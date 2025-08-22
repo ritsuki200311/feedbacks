@@ -9,6 +9,7 @@ Rails.application.routes.draw do
 
   # この順番が大事！
   get "users/mypage", to: "users#mypage", as: :mypage
+  patch "users/update", to: "users#update", as: :update_user
   resources :users, only: [ :show ]
   get "users/index"
 
@@ -17,8 +18,10 @@ Rails.application.routes.draw do
   # プロフィール（シングルリソースでルーティング）
   resource :supporter_profile, only: [ :new, :create, :show, :edit, :update ]
 
-  # 投稿検索（postsリソースの前に配置）
-  get "posts/search", to: "posts#search", as: :search_posts
+  # 検索（postsリソースの前に配置）
+  get "search", to: "posts#search", as: :search
+  get "search_simple", to: "posts#search_simple", as: :search_simple
+  get "search_debug", to: "posts#search", as: :search_debug
 
   # 投稿とコメント
   resources :posts, only: [ :new, :create, :show, :destroy ] do

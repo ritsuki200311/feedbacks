@@ -50,3 +50,9 @@ screenshot*.png
 # Ignore large temporary development files
 /artifacts/
 /reports/
+
+/node_modules
+
+# Ignore temporary view files
+app/views/posts/search_debug.html.erb
+app/views/posts/search_simple.html.erb

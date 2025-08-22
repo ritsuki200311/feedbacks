@@ -13,11 +13,7 @@
         <%= link_to "コミュニティ", communities_path, class: sidebar_link_class(communities_path) %>
         <%= link_to "アカウント編集", edit_user_registration_path, class: sidebar_link_class(edit_user_registration_path) %>
         <%= link_to "好みを登録", new_preference_path, class: sidebar_link_class(new_preference_path) %>
-        <% if current_user.supporter_profile.present? %>
-          <%= link_to "プロフィールを見る", supporter_profile_path, class: sidebar_link_class(supporter_profile_path) %>
-        <% else %>
-          <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
-        <% end %>
+        <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
         
         <!-- グローバルコメントピン表示切り替え -->
         <div class="px-4 py-2" data-controller="global-comment-pins">
@@ -43,11 +39,6 @@
       <% if user_signed_in? %>
         <%= link_to "アカウント編集", edit_user_registration_path, class: sidebar_link_class(edit_user_registration_path) %>
         <%= link_to "好みを登録", new_preference_path, class: sidebar_link_class(new_preference_path) %>
-        <% if current_user.supporter_profile.present? %>
-          <%= link_to "プロフィールを見る", supporter_profile_path, class: sidebar_link_class(supporter_profile_path) %>
-        <% else %>
-          <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
-        <% end %>
         
         <!-- グローバルコメントピン表示切り替え -->
         <div class="px-4 py-2" data-controller="global-comment-pins">

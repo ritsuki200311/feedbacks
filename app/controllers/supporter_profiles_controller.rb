@@ -32,12 +32,6 @@ class SupporterProfilesController < ApplicationController
     end
   end
 
-  def show
-    @supporter_profile = current_user.supporter_profile
-    unless @supporter_profile
-      redirect_to new_supporter_profile_path, alert: "プロフィールがまだ登録されていません。" and return
-    end
-  end
 
   private
 

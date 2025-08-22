@@ -1,23 +1,24 @@
 <div class="flex flex-col lg:flex-row">
   <!-- メインコンテンツ（左側） -->
   <div class="flex-1 p-4 lg:p-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-4">新規投稿を作成</h1>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-3xl font-bold text-gray-800">新規投稿を作成</h1>
+      <div class="text-right">
+        <p class="text-sm text-gray-600">保有コイン</p>
+        <p class="text-xl font-bold text-gray-800">💰 <%= current_user.coins %></p>
+      </div>
+    </div>
 
     <%= form_with model: @post, local: true, class: "space-y-6 bg-white p-6 rounded-lg shadow-md" do |form| %>
 
-      <% if @post.errors.any? || flash[:alert].present? %>
+      <% if @post.errors.any? %>
         <div class="bg-red-100 text-red-700 p-4 rounded">
-          <% if flash[:alert].present? %>
-            <p class="font-bold mb-2"><%= flash[:alert] %></p>
-          <% end %>
-          <% if @post.errors.any? %>
-            <h2 class="font-bold mb-2"><%= pluralize(@post.errors.count, "件のエラー") %>が発生しました：</h2>
-            <ul class="list-disc list-inside">
-              <% @post.errors.full_messages.each do |msg| %>
-                <li><%= msg %></li>
-              <% end %>
-            </ul>
-          <% end %>
+          <h2 class="font-bold mb-2"><%= pluralize(@post.errors.count, "件のエラー") %>が発生しました：</h2>
+          <ul class="list-disc list-inside">
+            <% @post.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
         </div>
       <% end %>
 

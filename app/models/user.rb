@@ -34,11 +34,17 @@ class User < ApplicationRecord
   end
 
   def add_coins(amount)
+    return false unless amount.is_a?(Integer) && amount > 0
+    return false if coins + amount > 999999 # 上限設定
+    
     self.coins += amount
     save
   end
 
   def remove_coins(amount)
+    return false unless amount.is_a?(Integer) && amount > 0
+    return false if coins - amount < 0 # マイナス防止
+    
     self.coins -= amount
     save
   end

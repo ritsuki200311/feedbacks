@@ -14,8 +14,8 @@ Rails.application.routes.draw do
 
 
 
-  # プロフィール（シングルリソースでルーティング）
-  resource :supporter_profile, only: [ :new, :create, :show, :edit, :update ]
+  # プロフィール（作成・編集のみ、表示はマイページで統合）
+  resource :supporter_profile, only: [ :new, :create, :edit, :update ]
 
   # 投稿検索（postsリソースの前に配置）
   get "posts/search", to: "posts#search", as: :search_posts
@@ -55,12 +55,14 @@ Rails.application.routes.draw do
     mount LetterOpenerWeb::Engine, at: "/letter_opener"
   end
 
-  # 管理者
-  namespace :admin do
-    resources :users, only: [ :index ] do
-      member do
-        post :add_coins
-        post :remove_coins
+  # 管理者（開発環境のみ）
+  if Rails.env.development?
+    namespace :admin do
+      resources :users, only: [ :index ] do
+        member do
+          post :add_coins
+          post :remove_coins
+        end
       end
     end
   end

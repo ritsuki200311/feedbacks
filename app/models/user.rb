@@ -3,6 +3,9 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
 
+  # バリデーション
+  validates :name, presence: true, length: { minimum: 1, maximum: 50 }, uniqueness: true
+
   # 投稿・コメント関連
   has_many :comments, dependent: :destroy
   has_many :posts

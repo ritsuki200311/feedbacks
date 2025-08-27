@@ -28,6 +28,10 @@ Rails.application.routes.draw do
     resources :comments, only: [ :index, :create ]
     # AI comment assistant
     post 'ai_comment_assistant/analyze', to: 'ai_comment_assistant#analyze_post'
+    # ユーザー選択画面
+    get 'select_recipient', to: 'posts#select_recipient'
+    post 'send_to_user', to: 'posts#send_to_user'
+    get 'match_users', to: 'posts#match_users'
   end
 
   # 投票機能
@@ -35,7 +39,7 @@ Rails.application.routes.draw do
 
 
   # DM機能
-  resources :rooms, only: [ :create, :show ] do
+  resources :rooms, only: [ :index, :create, :show ] do
     resources :messages, only: [ :create ]
   end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_15_000002) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_27_041738) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -50,8 +50,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_000002) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
-    t.decimal "x_position"
-    t.decimal "y_position"
+    t.integer "x_position"
+    t.integer "y_position"
+    t.text "range_data"
     t.index ["post_id"], name: "index_comments_on_post_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
@@ -92,6 +93,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_000002) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "is_read"
+    t.bigint "post_id"
+    t.index ["post_id"], name: "index_messages_on_post_id"
     t.index ["room_id"], name: "index_messages_on_room_id"
     t.index ["user_id"], name: "index_messages_on_user_id"
   end
@@ -109,6 +112,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_000002) do
     t.integer "creation_type"
     t.string "request_tag"
     t.bigint "community_id"
+    t.boolean "is_private", default: false, null: false
     t.index ["community_id"], name: "index_posts_on_community_id"
     t.index ["received_user_id"], name: "index_posts_on_received_user_id"
   end
@@ -200,6 +204,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_15_000002) do
   add_foreign_key "community_users", "users"
   add_foreign_key "entries", "rooms"
   add_foreign_key "entries", "users"
+  add_foreign_key "messages", "posts"
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users"
   add_foreign_key "posts", "communities"

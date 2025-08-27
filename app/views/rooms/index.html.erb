@@ -1,0 +1,86 @@
+<div class="px-4 mt-6">
+  <!-- Header -->
+  <div class="bg-gradient-to-r from-blue-500 via-purple-500 to-teal-500 rounded-2xl p-6 mb-6 shadow-lg">
+    <h1 class="text-4xl font-bold text-black bg-white bg-opacity-90 px-4 py-2 rounded-lg inline-block shadow-md">💬 ダイレクトメッセージ</h1>
+    <p class="text-white mt-2 text-lg">他のユーザーとのやり取りを確認できます</p>
+  </div>
+
+  <!-- DM Section -->
+  <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+      💬 トーク・メッセージ
+    </h2>
+    
+    <% if @unread_rooms.any? %>
+      <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg">
+        <div class="flex items-center">
+          <div class="text-red-400 text-xl mr-3">🔴</div>
+          <div>
+            <h3 class="text-lg font-semibold text-red-800">未読メッセージがあります！</h3>
+            <div class="mt-2 space-y-2">
+              <% @unread_rooms.each do |room| %>
+                <% other_entry = room.entries.where.not(user_id: current_user.id).first %>
+                <% if other_entry %>
+                  <% other_user = other_entry.user %>
+                  <div class="bg-white rounded-lg p-3 shadow-sm">
+                    <%= link_to "📩 #{other_user.name}さんとのチャット", room_path(room), class: "text-red-600 hover:text-red-800 font-medium hover:underline" %>
+                    <span class="ml-2 bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
+                      未読 <%= @unread_counts[room.id] || 0 %> 件
+                    </span>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @entries.any? %>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <% @entries.each do |entry| %>
+          <% room = entry.room %>
+          <% other_entry = room.entries.where.not(user_id: current_user.id).first %>
+          <% if other_entry %>
+            <% other_user = other_entry.user %>
+            <% last_message = room.messages.order(created_at: :desc).first %>
+            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 p-4 rounded-xl hover:shadow-md transition-all duration-300 hover:scale-102">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="text-2xl">👤</div>
+                <div class="flex-1">
+                  <%= link_to "💬 #{other_user.name}さんとのチャット", room_path(room), class: "text-blue-600 hover:text-blue-800 font-semibold hover:underline block" %>
+                  <% if last_message %>
+                    <p class="text-sm text-gray-600 mt-1">
+                      <%= truncate(last_message.body, length: 50) %>
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">
+                      <%= time_ago_in_words(last_message.created_at) %>前
+                    </p>
+                  <% else %>
+                    <p class="text-sm text-gray-400 mt-1">メッセージがありません</p>
+                  <% end %>
+                </div>
+                <% unread_count = room.messages.where(user: other_user, is_read: false).count %>
+                <% if unread_count > 0 %>
+                  <span class="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
+                    <%= unread_count %>
+                  </span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-8 bg-gray-50 rounded-xl">
+        <div class="text-4xl mb-3">💬</div>
+        <p class="text-gray-500">トーク履歴がありません</p>
+        <p class="text-sm text-gray-400 mt-1">他のユーザーとメッセージを始めてみましょう！</p>
+        <div class="mt-6">
+          <%= link_to "新規投稿を作成", new_post_path, 
+              class: "inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

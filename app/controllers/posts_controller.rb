@@ -1,7 +1,7 @@
 class PostsController < ApplicationController
   include PostsHelper
   before_action :set_post, only: [ :show, :edit, :update, :destroy ]
-  before_action :authenticate_user!, only: [ :new, :create, :destroy, :edit, :update ]
+  before_action :authenticate_user!, only: [ :new, :create, :destroy, :edit, :update, :select_recipient, :send_to_user ]
   before_action :authorize_post_owner, only: [ :edit, :update, :destroy ]
 
   def new
@@ -12,24 +12,14 @@ class PostsController < ApplicationController
     @post = Post.new(post_params.except(:tag_list))
     @post.user = current_user
     @post.tag_list = post_params[:tag_list]
+    @post.is_private = true  # 最初は非公開投稿として保存
 
     respond_to do |format|
-      # バリデーションチェック
       if @post.valid?
-        # バリデーション成功後、コイン消費チェック
-        if CoinService.deduct_for_post(@post)
-          @post.save
-          redirect_path = @post.community.present? ? community_path(@post.community) : root_path
-          format.html { redirect_to redirect_path, notice: "投稿が作成されました。" }
-          format.turbo_stream { flash.now[:notice] = "投稿が作成されました。" }
-        else
-          # コイン不足の場合、newページを再表示（リダイレクトしない）
-          Rails.logger.debug "Coin deduction failed: #{@post.errors.full_messages.join(', ')}"
-          format.html { render :new, status: :unprocessable_entity }
-          format.turbo_stream { render :new, status: :unprocessable_entity }
-        end
+        @post.save
+        session[:pending_post_id] = @post.id
+        format.html { redirect_to post_select_recipient_path(@post), notice: "投稿内容を保存しました。送信相手を選んでください。" }
       else
-        # バリデーション失敗の場合、newページを再表示
         Rails.logger.debug "Post validation failed: #{@post.errors.full_messages.join(', ')}"
         format.html { render :new, status: :unprocessable_entity }
         format.turbo_stream { render :new, status: :unprocessable_entity }
@@ -39,7 +29,16 @@ class PostsController < ApplicationController
 
 
   def show
+    # 非公開投稿の場合、アクセス権限をチェック
+    if @post.is_private?
+      unless can_access_private_post?(@post)
+        redirect_to root_path, alert: "この投稿にはアクセスできません。"
+        return
+      end
+    end
+    
     @comment = @post.comments.build  # コメント投稿フォーム用
+    @is_private_view = @post.is_private?
   end
 
   def edit
@@ -106,6 +105,128 @@ class PostsController < ApplicationController
     Rails.logger.debug "=========================="
     
     render :search_simple
+  end
+
+  def select_recipient
+    @post = Post.find(params[:post_id])
+    unless @post.user == current_user
+      redirect_to root_path, alert: "権限がありません。"
+      return
+    end
+    
+    # アンケート質問を設定
+    @survey_questions = [
+      {
+        question: "どのようなフィードバックを求めていますか？",
+        options: ["技術的なアドバイス", "感情的な感想", "改善提案", "励ましのコメント"]
+      },
+      {
+        question: "送信先の経験レベルは？",
+        options: ["初心者", "中級者", "上級者", "プロフェッショナル"]
+      },
+      {
+        question: "どの分野の人に見てもらいたいですか？",
+        options: ["同じ分野", "異分野", "どちらでも"]
+      }
+    ]
+  end
+
+  def send_to_user
+    @post = Post.find(params[:post_id])
+    unless @post.user == current_user
+      redirect_to root_path, alert: "権限がありません。"
+      return
+    end
+
+    selected_user_ids = params[:selected_user_ids]
+    if selected_user_ids.blank?
+      redirect_to post_select_recipient_path(@post), alert: "送信先ユーザーを選択してください。"
+      return
+    end
+
+    # カンマ区切りのIDを配列に変換
+    user_ids = selected_user_ids.split(',').map(&:strip).reject(&:blank?)
+    if user_ids.empty?
+      redirect_to post_select_recipient_path(@post), alert: "送信先ユーザーを選択してください。"
+      return
+    end
+
+    sent_users = []
+    errors = []
+
+    user_ids.each do |user_id|
+      begin
+        recipient = User.find(user_id)
+        
+        # DM room を作成または取得
+        room = Room.find_existing_room_for_users(current_user, recipient)
+        unless room
+          room = Room.create!
+          Entry.create!(user: current_user, room: room)
+          Entry.create!(user: recipient, room: room)
+        end
+
+        # 投稿リンクをメッセージとして送信
+        post_url = Rails.application.routes.url_helpers.post_url(@post, host: request.host_with_port)
+        message_body = "新しい作品を共有します：#{@post.title}"
+        
+        Message.create!(
+          user: current_user,
+          room: room,
+          body: message_body,
+          post: @post,
+          is_read: false
+        )
+        
+        sent_users << recipient.name
+      rescue ActiveRecord::RecordNotFound
+        errors << "ユーザーID #{user_id} が見つかりません"
+      rescue => e
+        errors << "#{user_id} への送信でエラーが発生しました: #{e.message}"
+      end
+    end
+
+    if sent_users.any?
+      if errors.any?
+        redirect_to rooms_path, notice: "#{sent_users.join('、')}さんに作品を送信しました。エラー: #{errors.join('、')}"
+      else
+        redirect_to rooms_path, notice: "#{sent_users.join('、')}さんに作品を送信しました。"
+      end
+    else
+      redirect_to post_select_recipient_path(@post), alert: "送信に失敗しました: #{errors.join('、')}"
+    end
+  end
+
+  def match_users
+    @post = Post.find(params[:post_id])
+    unless @post.user == current_user
+      render json: { error: "権限がありません" }, status: :forbidden
+      return
+    end
+
+    # アンケート回答を取得
+    feedback_type = params[:survey_0]
+    experience_level = params[:survey_1] 
+    field_preference = params[:survey_2]
+
+    # シンプルなマッチング実装
+    matched_users = User.where.not(id: current_user.id).limit(5)
+    
+    # 実際のマッチング結果を生成（実装例）
+    user_data = matched_users.map do |user|
+      score = calculate_match_score(user, feedback_type, experience_level, field_preference)
+      {
+        id: user.id,
+        name: user.name,
+        description: generate_user_description(user, feedback_type, experience_level),
+        score: score
+      }
+    end
+
+    # スコア順でソート
+    user_data = user_data.sort_by { |u| -u[:score] }.first(3)
+
+    render json: { users: user_data }
   end
 
 
@@ -190,6 +311,73 @@ class PostsController < ApplicationController
     return if @post&.user == current_user
 
     redirect_to root_path, alert: "権限がありません。" and return
+  end
+
+  def calculate_match_score(user, feedback_type, experience_level, field_preference)
+    score = 50  # ベーススコア
+    
+    # ユーザーの投稿数に基づくスコア調整
+    post_count = user.posts.count
+    score += post_count * 2 if post_count > 0
+    
+    # ランダム要素を追加（実際の実装では別のロジックを使用）
+    score += rand(1..30)
+    
+    score
+  end
+
+  def generate_user_description(user, feedback_type, experience_level)
+    descriptions = []
+    
+    case feedback_type
+    when "技術的なアドバイス"
+      descriptions << "技術的な観点からのアドバイスが得意"
+    when "感情的な感想"
+      descriptions << "作品の感情的な価値を理解するのが上手"
+    when "改善提案"
+      descriptions << "建設的な改善提案に定評"
+    when "励ましのコメント"
+      descriptions << "励ましとモチベーション向上が得意"
+    end
+    
+    case experience_level
+    when "初心者"
+      descriptions << "初心者に優しいフィードバック"
+    when "中級者"
+      descriptions << "中級者レベルの適切なアドバイス"
+    when "上級者"
+      descriptions << "上級者向けの専門的な視点"
+    when "プロフェッショナル"
+      descriptions << "プロフェッショナルレベルの詳細な分析"
+    end
+    
+    # ユーザーの投稿数情報も追加
+    post_count = user.posts.count
+    if post_count > 10
+      descriptions << "活発な投稿者"
+    elsif post_count > 5
+      descriptions << "経験豊富"
+    else
+      descriptions << "新しいメンバー"
+    end
+    
+    descriptions.join("、")
+  end
+
+  def can_access_private_post?(post)
+    return false unless user_signed_in?
+    
+    # 投稿者本人は常にアクセス可能
+    return true if post.user == current_user
+    
+    # DMでリンクを共有されているユーザーのみアクセス可能
+    # 投稿者とのDMルームが存在し、そのルームで投稿リンクが共有されているかチェック
+    room = Room.find_existing_room_for_users(current_user, post.user)
+    return false unless room
+    
+    # メッセージ内に投稿のURLが含まれているかチェック
+    post_url_pattern = /posts\/#{post.id}/
+    room.messages.where(user: post.user).any? { |message| message.body.match?(post_url_pattern) }
   end
 
 end

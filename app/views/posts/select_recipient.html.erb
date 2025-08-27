@@ -1,0 +1,246 @@
+<div class="max-w-4xl mx-auto p-6">
+  <div class="bg-white rounded-lg shadow-md p-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">送信相手を選択</h1>
+    
+    <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+      <h3 class="font-bold text-blue-800 mb-2">投稿内容プレビュー</h3>
+      <p class="text-lg font-semibold"><%= @post.title %></p>
+      <p class="text-gray-600 mt-2"><%= truncate(@post.body, length: 100) %></p>
+    </div>
+
+    <%= form_with url: post_send_to_user_path(@post), method: :post, local: true, class: "space-y-8" do |form| %>
+      
+      <!-- アンケートセクション -->
+      <div class="space-y-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">フィードバックの希望を教えてください</h2>
+        
+        <% @survey_questions.each_with_index do |question, index| %>
+          <div class="p-4 border border-gray-200 rounded-lg">
+            <h3 class="font-semibold text-gray-800 mb-3"><%= question[:question] %></h3>
+            <div class="space-y-2">
+              <% question[:options].each do |option| %>
+                <label class="flex items-center">
+                  <%= form.radio_button "survey_#{index}", option, class: "form-radio h-4 w-4 text-indigo-600 mr-3" %>
+                  <span class="text-gray-700"><%= option %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- マッチング結果表示エリア -->
+      <div id="matching-results" class="hidden">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">おすすめのユーザー</h2>
+        <div id="user-list" class="space-y-3">
+          <!-- JavaScriptで動的に挿入 -->
+        </div>
+      </div>
+
+      <!-- 手動ユーザー検索セクション -->
+      <div class="border-t pt-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">または、ユーザーを検索</h2>
+        <div class="flex gap-4 mb-4">
+          <input type="text" id="user-search" placeholder="ユーザー名で検索..." 
+                 class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+          <button type="button" id="search-btn" 
+                  class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+            検索
+          </button>
+        </div>
+        <div id="search-results" class="space-y-2">
+          <!-- 検索結果がここに表示される -->
+        </div>
+      </div>
+
+      <!-- 選択されたユーザー表示 -->
+      <div id="selected-users" class="hidden p-4 bg-green-50 border border-green-200 rounded-lg">
+        <h3 class="font-semibold text-green-800 mb-2">送信先ユーザー</h3>
+        <div id="selected-users-list" class="space-y-2"></div>
+        <%= form.hidden_field :selected_user_ids, id: "selected_user_ids" %>
+      </div>
+
+      <!-- 送信ボタン -->
+      <div class="text-center pt-6">
+        <%= form.submit "選択したユーザーに送信", 
+            class: "px-8 py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400", 
+            id: "submit-btn", 
+            disabled: true %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+// マッチング機能
+async function showMatchingUsers() {
+  try {
+    // アンケート回答を取得
+    const answers = {};
+    document.querySelectorAll('input[type="radio"]:checked').forEach(checkedRadio => {
+      const questionIndex = checkedRadio.name.match(/survey_(\d+)/)[1];
+      answers[`survey_${questionIndex}`] = checkedRadio.value;
+    });
+    
+    // APIを呼び出してマッチング結果を取得
+    const params = new URLSearchParams(answers);
+    const response = await fetch(`<%= post_match_users_path(@post) %>?${params}`);
+    const data = await response.json();
+    
+    if (data.error) {
+      console.error('Matching error:', data.error);
+      return;
+    }
+    
+    const resultsDiv = document.getElementById('matching-results');
+    const userListDiv = document.getElementById('user-list');
+    
+    userListDiv.innerHTML = '';
+    data.users.forEach(user => {
+      const userDiv = document.createElement('div');
+      userDiv.className = 'p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer';
+      userDiv.innerHTML = `
+        <div class="flex justify-between items-center">
+          <div>
+            <h4 class="font-semibold">${user.name}</h4>
+            <p class="text-sm text-gray-600">${user.description}</p>
+            <p class="text-xs text-indigo-600 mt-1">マッチ度: ${user.score}%</p>
+          </div>
+          <button type="button" onclick="selectUser(${user.id}, '${user.name}')" 
+                  class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                  id="select-btn-${user.id}">
+            選択
+          </button>
+        </div>
+      `;
+      userListDiv.appendChild(userDiv);
+    });
+    
+    resultsDiv.classList.remove('hidden');
+  } catch (error) {
+    console.error('Matching API error:', error);
+  }
+}
+
+// アンケートの回答をチェック
+document.querySelectorAll('input[type="radio"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    // 3つの質問すべてに回答したかチェック
+    const answeredQuestions = new Set();
+    document.querySelectorAll('input[type="radio"]:checked').forEach(checkedRadio => {
+      const questionIndex = checkedRadio.name.match(/survey_(\d+)/)[1];
+      answeredQuestions.add(questionIndex);
+    });
+    
+    if (answeredQuestions.size === 3) {
+      showMatchingUsers();
+    }
+  });
+});
+
+// ユーザー検索機能
+document.getElementById('search-btn').addEventListener('click', async () => {
+  const query = document.getElementById('user-search').value.trim();
+  if (!query) return;
+  
+  try {
+    const response = await fetch(`/search_simple?query=${encodeURIComponent(query)}&search_type=users`);
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const resultsDiv = document.getElementById('search-results');
+    resultsDiv.innerHTML = '';
+    
+    // 検索結果を表示（簡易版）
+    const users = doc.querySelectorAll('.user-card'); // 適切なセレクタに調整が必要
+    if (users.length === 0) {
+      resultsDiv.innerHTML = '<p class="text-gray-500">ユーザーが見つかりませんでした</p>';
+    } else {
+      // 検索結果の処理（実際の実装に応じて調整）
+      resultsDiv.innerHTML = '<p class="text-green-600">検索機能は実装中です</p>';
+    }
+  } catch (error) {
+    console.error('検索エラー:', error);
+  }
+});
+
+// 選択済みユーザーを管理する配列
+let selectedUsers = [];
+
+// ユーザー選択関数（複数選択対応）
+function selectUser(userId, userName) {
+  const existingIndex = selectedUsers.findIndex(user => user.id === userId);
+  const button = document.getElementById(`select-btn-${userId}`);
+  
+  if (existingIndex !== -1) {
+    // 既に選択済み - 選択解除
+    selectedUsers.splice(existingIndex, 1);
+    button.textContent = '選択';
+    button.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+    button.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+  } else {
+    // 新規選択
+    selectedUsers.push({ id: userId, name: userName });
+    button.textContent = '選択済み';
+    button.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+    button.classList.add('bg-gray-500', 'hover:bg-gray-600');
+  }
+  
+  updateSelectedUsersDisplay();
+}
+
+// 選択ユーザー表示を更新
+function updateSelectedUsersDisplay() {
+  const container = document.getElementById('selected-users');
+  const list = document.getElementById('selected-users-list');
+  const submitBtn = document.getElementById('submit-btn');
+  const hiddenInput = document.getElementById('selected_user_ids');
+  
+  if (selectedUsers.length > 0) {
+    // 選択済みユーザーを表示
+    list.innerHTML = selectedUsers.map(user => `
+      <div class="flex items-center justify-between bg-white p-2 rounded border">
+        <span><strong>${user.name}</strong></span>
+        <button type="button" onclick="removeUser(${user.id})" 
+                class="text-red-500 hover:text-red-700 text-sm">
+          削除
+        </button>
+      </div>
+    `).join('');
+    
+    container.classList.remove('hidden');
+    submitBtn.disabled = false;
+    
+    // 選択ユーザーIDを隠しフィールドに設定
+    hiddenInput.value = selectedUsers.map(user => user.id).join(',');
+    
+    // ボタンテキストを更新
+    submitBtn.textContent = `${selectedUsers.length}人のユーザーに送信`;
+  } else {
+    // 選択なしの状態
+    container.classList.add('hidden');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '選択したユーザーに送信';
+    hiddenInput.value = '';
+  }
+}
+
+// ユーザー削除関数
+function removeUser(userId) {
+  const index = selectedUsers.findIndex(user => user.id === userId);
+  if (index !== -1) {
+    selectedUsers.splice(index, 1);
+    
+    // ボタンの状態もリセット
+    const button = document.getElementById(`select-btn-${userId}`);
+    if (button) {
+      button.textContent = '選択';
+      button.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+      button.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+    }
+    
+    updateSelectedUsersDisplay();
+  }
+}
+</script>

@@ -2,6 +2,29 @@ class RoomsController < ApplicationController
   before_action :authenticate_user!
   layout "chat", only: [ :show ]
 
+  def index
+    # マイページと同じ方式で取得（エントリ経由）
+    @entries = current_user.entries.includes(room: [:messages, :users])
+    
+    # 未読メッセージがあるルーム
+    @unread_rooms = []
+    @unread_counts = {}
+    
+    @entries.each do |entry|
+      room = entry.room
+      other_entry = room.entries.where.not(user_id: current_user.id).first
+      next unless other_entry
+      
+      other_user = other_entry.user
+      unread_count = room.messages.where(user: other_user, is_read: false).count
+      
+      if unread_count > 0
+        @unread_rooms << room
+        @unread_counts[room.id] = unread_count
+      end
+    end
+  end
+
   def create
     other_user = User.find(params[:user_id])
 
@@ -30,7 +53,7 @@ class RoomsController < ApplicationController
       return
     end
 
-    @messages = @room.messages.includes(:user)
+    @messages = @room.messages.includes(:user, post: :images)
     @message = Message.new
     @other_user = @room.entries.where.not(user_id: current_user.id).first&.user
 

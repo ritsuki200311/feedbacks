@@ -59,51 +59,51 @@ class PostsController < ApplicationController
   end
 
   def search
-    @search_type = params[:search_type] || 'posts'
+    @search_type = params[:search_type] || "posts"
     @query = params[:query]&.strip
     @creation_type = params[:creation_type]
     @tag_list = params[:tag_list]
     @request_tag = params[:request_tag]
-    
+
     Rails.logger.debug "=== SEARCH ACTION ==="
     Rails.logger.debug "Search type: #{@search_type}"
     Rails.logger.debug "Query: '#{@query}'"
     Rails.logger.debug "All params: #{params.inspect}"
-    
+
     case @search_type
-    when 'users'
+    when "users"
       search_users
-    when 'posts'  
+    when "posts"
       search_posts_and_tags
     else
-      @search_type = 'posts'
+      @search_type = "posts"
       @results = []
     end
-    
+
     Rails.logger.debug "Final results count: #{@results&.count}"
     Rails.logger.debug "===================="
-    
+
     # デバッグビューがリクエストされた場合
-    if request.path == '/search_debug'
+    if request.path == "/search_debug"
       render :search_debug
     end
   end
 
   def search_simple
-    @search_type = params[:search_type] || 'users'
+    @search_type = params[:search_type] || "users"
     @query = params[:query]&.strip
-    
+
     Rails.logger.debug "=== Search Simple Debug ==="
     Rails.logger.debug "Search type: #{@search_type}"
     Rails.logger.debug "Query: #{@query}"
     Rails.logger.debug "Params: #{params.inspect}"
-    
+
     search_users
-    
+
     Rails.logger.debug "Results count: #{@results&.count}"
     Rails.logger.debug "Results: #{@results&.map(&:name)}"
     Rails.logger.debug "=========================="
-    
+
     render :search_simple
   end
 
@@ -236,14 +236,14 @@ class PostsController < ApplicationController
     Rails.logger.debug "=== search_users called ==="
     Rails.logger.debug "Query: '#{@query}'"
     Rails.logger.debug "Query present?: #{@query.present?}"
-    
+
     if @query.present?
       if @query.match?(/\A\d+\z/)
         # 数字のみの場合はIDで検索
         Rails.logger.debug "Searching by ID: #{@query.to_i}"
         user = User.find_by(id: @query.to_i)
-        @results = user ? [user] : []
-        Rails.logger.debug "ID search result: #{user&.name || 'not found'}"
+        @results = user ? [ user ] : []
+        Rails.logger.debug "ID search result: #{user&.name || "not found"}"
       else
         # 文字列の場合はユーザーネームで検索
         Rails.logger.debug "Searching by name: '%#{@query}%'"
@@ -253,7 +253,7 @@ class PostsController < ApplicationController
     else
       @results = []
     end
-    
+
     Rails.logger.debug "Final results count: #{@results.count}"
     Rails.logger.debug "========================="
   end
@@ -262,32 +262,32 @@ class PostsController < ApplicationController
     @creation_types = Post::CREATION_TYPES.keys
     @tag_options = tag_options
     @request_tags = request_tag_options
-    
+
     @results = Post.includes(:user, images_attachments: :blob)
-    
+
     # テキスト検索（タイトル・本文）
     if @query.present?
       @results = @results.where("title ILIKE ? OR body ILIKE ?", "%#{@query}%", "%#{@query}%")
     end
-    
+
     # 作成タイプでフィルタ
     if @creation_type.present?
       creation_type_value = Post::CREATION_TYPES[@creation_type]
       @results = @results.where(creation_type: creation_type_value) if creation_type_value
     end
-    
+
     # タグでフィルタ
     if @tag_list.present? && @tag_list.is_a?(Array)
       @tag_list.reject(&:blank?).each do |tag|
         @results = @results.where("tag ILIKE ?", "%#{tag}%")
       end
     end
-    
+
     # リクエストタグでフィルタ
     if @request_tag.present?
       @results = @results.where(request_tag: @request_tag)
     end
-    
+
     # 何も検索条件がない場合は空の結果
     if @query.blank? && @creation_type.blank? && (@tag_list.blank? || @tag_list.all?(&:blank?)) && @request_tag.blank?
       @results = []

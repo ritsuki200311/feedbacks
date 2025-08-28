@@ -29,6 +29,9 @@ class Post < ApplicationRecord
   has_many :votes, as: :votable, dependent: :destroy
   belongs_to :user, optional: true
   belongs_to :community, optional: true
+  has_many :post_recipients, dependent: :destroy
+  has_many :recipients, through: :post_recipients, source: :user
+  has_many :messages, dependent: :destroy
     # validates :video, presence: true  # この行をコメントアウトして無効にする
 
 
@@ -40,6 +43,15 @@ class Post < ApplicationRecord
 
     def tag_list=(value)
       self.tag = Array(value).reject(&:blank?).join(",")
+    end
+
+    # フィードバック希望リスト管理
+    def feedback_request_list
+      feedback_requests.to_s.split(",")
+    end
+
+    def feedback_request_list=(value)
+      self.feedback_requests = Array(value).reject(&:blank?).join(",")
     end
 
     private

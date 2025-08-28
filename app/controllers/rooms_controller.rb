@@ -53,7 +53,7 @@ class RoomsController < ApplicationController
       return
     end
 
-    @messages = @room.messages.includes(:user, post: :images)
+    @messages = @room.messages.includes(:user, post: { images_attachments: :blob })
     @message = Message.new
     @other_user = @room.entries.where.not(user_id: current_user.id).first&.user
 

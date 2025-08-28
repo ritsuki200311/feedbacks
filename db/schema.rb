@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_27_041738) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_28_023023) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_stat_statements"
@@ -98,6 +98,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_27_041738) do
     t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
+  create_table "post_recipients", force: :cascade do |t|
+    t.bigint "post_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "sent_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["post_id"], name: "index_post_recipients_on_post_id"
+    t.index ["user_id"], name: "index_post_recipients_on_user_id"
+  end
+
   create_table "posts", force: :cascade do |t|
     t.string "title"
     t.text "body"
@@ -112,6 +122,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_27_041738) do
     t.string "request_tag"
     t.bigint "community_id"
     t.boolean "is_private", default: false, null: false
+    t.text "feedback_requests"
     t.index ["community_id"], name: "index_posts_on_community_id"
     t.index ["received_user_id"], name: "index_posts_on_received_user_id"
   end
@@ -206,6 +217,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_27_041738) do
   add_foreign_key "messages", "posts"
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users"
+  add_foreign_key "post_recipients", "posts"
+  add_foreign_key "post_recipients", "users"
   add_foreign_key "posts", "communities"
   add_foreign_key "preferences", "users"
   add_foreign_key "received_videos", "posts"

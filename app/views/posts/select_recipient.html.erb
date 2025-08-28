@@ -1,6 +1,11 @@
 <div class="max-w-4xl mx-auto p-6">
   <div class="bg-white rounded-lg shadow-md p-8">
     <h1 class="text-3xl font-bold text-gray-800 mb-6">送信相手を選択</h1>
+    <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+      <p class="text-sm text-yellow-800">
+        <span class="font-semibold">📋 注意:</span> 送信相手は最大5人まで選択できます。
+      </p>
+    </div>
     
     <div class="mb-6 p-4 bg-blue-50 rounded-lg">
       <h3 class="font-bold text-blue-800 mb-2">投稿内容プレビュー</h3>
@@ -10,28 +15,16 @@
 
     <%= form_with url: post_send_to_user_path(@post), method: :post, local: true, class: "space-y-8" do |form| %>
       
-      <!-- アンケートセクション -->
+      <!-- フィードバック希望選択セクション -->
       <div class="space-y-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">フィードバックの希望を教えてください</h2>
-        
-        <% @survey_questions.each_with_index do |question, index| %>
-          <div class="p-4 border border-gray-200 rounded-lg">
-            <h3 class="font-semibold text-gray-800 mb-3"><%= question[:question] %></h3>
-            <div class="space-y-2">
-              <% question[:options].each do |option| %>
-                <label class="flex items-center">
-                  <%= form.radio_button "survey_#{index}", option, class: "form-radio h-4 w-4 text-indigo-600 mr-3" %>
-                  <span class="text-gray-700"><%= option %></span>
-                </label>
-              <% end %>
-            </div>
-          </div>
-        <% end %>
+        <h2 class="text-xl font-bold text-gray-800 mb-4">どのようなフィードバックを希望しますか？</h2>
+        <%= render 'posts/checkbox_options', title: "フィードバックの希望（複数選択可）", field_name: "feedback_request_list[]", options: feedback_request_options, selected: [] %>
       </div>
 
       <!-- マッチング結果表示エリア -->
       <div id="matching-results" class="hidden">
         <h2 class="text-xl font-bold text-gray-800 mb-4">おすすめのユーザー</h2>
+        <p class="text-gray-600 mb-4">あなたのフィードバック希望に基づいて、おすすめのユーザーを表示しています。</p>
         <div id="user-list" class="space-y-3">
           <!-- JavaScriptで動的に挿入 -->
         </div>
@@ -58,6 +51,8 @@
         <h3 class="font-semibold text-green-800 mb-2">送信先ユーザー</h3>
         <div id="selected-users-list" class="space-y-2"></div>
         <%= form.hidden_field :selected_user_ids, id: "selected_user_ids" %>
+        <!-- フィードバック希望の隠しフィールド -->
+        <input type="hidden" name="feedback_requests" id="feedback_requests" value="">
       </div>
 
       <!-- 送信ボタン -->
@@ -75,16 +70,22 @@
 // マッチング機能
 async function showMatchingUsers() {
   try {
-    // アンケート回答を取得
-    const answers = {};
-    document.querySelectorAll('input[type="radio"]:checked').forEach(checkedRadio => {
-      const questionIndex = checkedRadio.name.match(/survey_(\d+)/)[1];
-      answers[`survey_${questionIndex}`] = checkedRadio.value;
-    });
+    // フィードバック希望を取得
+    const feedbackRequests = Array.from(document.querySelectorAll('input[name="feedback_request_list[]"]:checked'))
+                                   .map(checkbox => checkbox.value);
+    
+    if (feedbackRequests.length === 0) {
+      document.getElementById('matching-results').classList.add('hidden');
+      return;
+    }
     
     // APIを呼び出してマッチング結果を取得
-    const params = new URLSearchParams(answers);
-    const response = await fetch(`<%= post_match_users_path(@post) %>?${params}`);
+    const params = new URLSearchParams();
+    feedbackRequests.forEach(request => {
+      params.append('feedback_requests[]', request);
+    });
+    
+    const response = await fetch(`<%= post_match_users_path(@post) %>?${params.toString()}`);
     const data = await response.json();
     
     if (data.error) {
@@ -92,7 +93,6 @@ async function showMatchingUsers() {
       return;
     }
     
-    const resultsDiv = document.getElementById('matching-results');
     const userListDiv = document.getElementById('user-list');
     
     userListDiv.innerHTML = '';
@@ -116,25 +116,23 @@ async function showMatchingUsers() {
       userListDiv.appendChild(userDiv);
     });
     
-    resultsDiv.classList.remove('hidden');
+    document.getElementById('matching-results').classList.remove('hidden');
+    
+    // フィードバック希望を隠しフィールドに設定
+    document.getElementById('feedback_requests').value = feedbackRequests.join(',');
+    
   } catch (error) {
     console.error('Matching API error:', error);
   }
 }
 
-// アンケートの回答をチェック
-document.querySelectorAll('input[type="radio"]').forEach(radio => {
-  radio.addEventListener('change', () => {
-    // 3つの質問すべてに回答したかチェック
-    const answeredQuestions = new Set();
-    document.querySelectorAll('input[type="radio"]:checked').forEach(checkedRadio => {
-      const questionIndex = checkedRadio.name.match(/survey_(\d+)/)[1];
-      answeredQuestions.add(questionIndex);
-    });
-    
-    if (answeredQuestions.size === 3) {
+// フィードバック希望の変更を監視
+document.addEventListener('DOMContentLoaded', function() {
+  // チェックボックス変更時にマッチング結果を更新
+  document.querySelectorAll('input[name="feedback_request_list[]"]').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
       showMatchingUsers();
-    }
+    });
   });
 });
 
@@ -168,7 +166,7 @@ document.getElementById('search-btn').addEventListener('click', async () => {
 // 選択済みユーザーを管理する配列
 let selectedUsers = [];
 
-// ユーザー選択関数（複数選択対応）
+// ユーザー選択関数（複数選択対応・5人制限）
 function selectUser(userId, userName) {
   const existingIndex = selectedUsers.findIndex(user => user.id === userId);
   const button = document.getElementById(`select-btn-${userId}`);
@@ -179,12 +177,25 @@ function selectUser(userId, userName) {
     button.textContent = '選択';
     button.classList.remove('bg-gray-500', 'hover:bg-gray-600');
     button.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+    
+    // 選択解除時、他のボタンを再有効化
+    updateButtonStates();
   } else {
-    // 新規選択
+    // 新規選択 - 5人制限チェック
+    if (selectedUsers.length >= 5) {
+      alert('送信相手は最大5人まで選択できます。');
+      return;
+    }
+    
     selectedUsers.push({ id: userId, name: userName });
     button.textContent = '選択済み';
     button.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
     button.classList.add('bg-gray-500', 'hover:bg-gray-600');
+    
+    // 5人に達した場合、他のボタンを無効化
+    if (selectedUsers.length >= 5) {
+      updateButtonStates();
+    }
   }
   
   updateSelectedUsersDisplay();
@@ -216,7 +227,7 @@ function updateSelectedUsersDisplay() {
     hiddenInput.value = selectedUsers.map(user => user.id).join(',');
     
     // ボタンテキストを更新
-    submitBtn.textContent = `${selectedUsers.length}人のユーザーに送信`;
+    submitBtn.textContent = `${selectedUsers.length}人のユーザーに送信 (${selectedUsers.length}/5)`;
   } else {
     // 選択なしの状態
     container.classList.add('hidden');
@@ -224,6 +235,30 @@ function updateSelectedUsersDisplay() {
     submitBtn.textContent = '選択したユーザーに送信';
     hiddenInput.value = '';
   }
+}
+
+// ボタン状態更新関数
+function updateButtonStates() {
+  const allSelectButtons = document.querySelectorAll('[id^="select-btn-"]');
+  
+  allSelectButtons.forEach(button => {
+    const userId = parseInt(button.id.replace('select-btn-', ''));
+    const isSelected = selectedUsers.some(user => user.id === userId);
+    
+    if (!isSelected) {
+      if (selectedUsers.length >= 5) {
+        // 5人に達している場合、未選択ボタンを無効化
+        button.disabled = true;
+        button.classList.add('opacity-50', 'cursor-not-allowed');
+        button.classList.remove('hover:bg-indigo-700');
+      } else {
+        // 5人未満の場合、未選択ボタンを有効化
+        button.disabled = false;
+        button.classList.remove('opacity-50', 'cursor-not-allowed');
+        button.classList.add('hover:bg-indigo-700');
+      }
+    }
+  });
 }
 
 // ユーザー削除関数
@@ -240,6 +275,8 @@ function removeUser(userId) {
       button.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
     }
     
+    // ボタン状態を更新
+    updateButtonStates();
     updateSelectedUsersDisplay();
   }
 }

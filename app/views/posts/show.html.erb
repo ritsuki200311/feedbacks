@@ -25,7 +25,15 @@
       <% end %>
       
       <div class="bg-white rounded-xl shadow p-4 mb-6">
-        <h1 class="text-lg font-bold mb-2 text-gray-900"><%= @post.title %></h1>
+        <h1 class="text-lg font-bold mb-2 text-gray-900 flex items-center gap-2">
+          <%= @post.title %>
+          <% if @post.is_private? %>
+            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">🔒 プライベート</span>
+            <% if user_signed_in? && @post.user != current_user %>
+              <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">📨 受信済み</span>
+            <% end %>
+          <% end %>
+        </h1>
         
         <div class="flex items-center gap-2 mb-2 text-sm">
           <span class="font-medium text-gray-600">投稿者:</span>

@@ -9,9 +9,8 @@ class PostsController < ApplicationController
   end
 
   def create
-    @post = Post.new(post_params.except(:tag_list))
+    @post = Post.new(post_params)
     @post.user = current_user
-    @post.tag_list = post_params[:tag_list]
     @post.is_private = true  # 最初は非公開投稿として保存
 
     respond_to do |format|
@@ -114,21 +113,6 @@ class PostsController < ApplicationController
       return
     end
     
-    # アンケート質問を設定
-    @survey_questions = [
-      {
-        question: "どのようなフィードバックを求めていますか？",
-        options: ["技術的なアドバイス", "感情的な感想", "改善提案", "励ましのコメント"]
-      },
-      {
-        question: "送信先の経験レベルは？",
-        options: ["初心者", "中級者", "上級者", "プロフェッショナル"]
-      },
-      {
-        question: "どの分野の人に見てもらいたいですか？",
-        options: ["同じ分野", "異分野", "どちらでも"]
-      }
-    ]
   end
 
   def send_to_user
@@ -150,6 +134,18 @@ class PostsController < ApplicationController
       redirect_to post_select_recipient_path(@post), alert: "送信先ユーザーを選択してください。"
       return
     end
+    
+    # 5人制限チェック
+    if user_ids.length > 5
+      redirect_to post_select_recipient_path(@post), alert: "送信相手は最大5人まで選択できます。"
+      return
+    end
+
+    # フィードバック希望を投稿に保存
+    feedback_requests = params[:feedback_requests]
+    if feedback_requests.present?
+      @post.update(feedback_requests: feedback_requests)
+    end
 
     sent_users = []
     errors = []
@@ -157,6 +153,13 @@ class PostsController < ApplicationController
     user_ids.each do |user_id|
       begin
         recipient = User.find(user_id)
+        
+        # PostRecipientレコードを作成して送信関係を記録
+        PostRecipient.create!(
+          post: @post,
+          user: recipient,
+          sent_at: Time.current
+        )
         
         # DM room を作成または取得
         room = Room.find_existing_room_for_users(current_user, recipient)
@@ -204,21 +207,19 @@ class PostsController < ApplicationController
       return
     end
 
-    # アンケート回答を取得
-    feedback_type = params[:survey_0]
-    experience_level = params[:survey_1] 
-    field_preference = params[:survey_2]
+    # パラメータからフィードバック希望を取得
+    feedback_requests = params[:feedback_requests] || []
 
     # シンプルなマッチング実装
     matched_users = User.where.not(id: current_user.id).limit(5)
     
-    # 実際のマッチング結果を生成（実装例）
+    # 実際のマッチング結果を生成（フィードバック希望に基づく）
     user_data = matched_users.map do |user|
-      score = calculate_match_score(user, feedback_type, experience_level, field_preference)
+      score = calculate_match_score_by_feedback(user, feedback_requests)
       {
         id: user.id,
         name: user.name,
-        description: generate_user_description(user, feedback_type, experience_level),
+        description: generate_user_description_by_feedback(user, feedback_requests),
         score: score
       }
     end
@@ -262,9 +263,8 @@ class PostsController < ApplicationController
     @creation_types = Post::CREATION_TYPES.keys
     @tag_options = tag_options
     @request_tags = request_tag_options
-
-    @results = Post.includes(:user, images_attachments: :blob)
-
+    
+    @results = Post.where(is_private: false).includes(:user, images_attachments: :blob)
     # テキスト検索（タイトル・本文）
     if @query.present?
       @results = @results.where("title ILIKE ? OR body ILIKE ?", "%#{@query}%", "%#{@query}%")
@@ -299,7 +299,7 @@ class PostsController < ApplicationController
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :creation_type, :request_tag, :tag_list, :community_id, images: [], videos: [], audios: [])
+    params.require(:post).permit(:title, :body, :community_id, images: [], videos: [], audios: [])
   end
 
 
@@ -324,6 +324,67 @@ class PostsController < ApplicationController
     score += rand(1..30)
     
     score
+  end
+
+  def calculate_match_score_by_feedback(user, feedback_requests)
+    score = 50  # ベーススコア
+    
+    # ユーザーの投稿数に基づくスコア調整
+    post_count = user.posts.count
+    score += post_count * 2 if post_count > 0
+    
+    # フィードバック希望に基づくスコア調整
+    if feedback_requests.present?
+      feedback_requests.each do |request|
+        case request
+        when "批評ください", "厳しい意見お待ちしています"
+          score += 10 if post_count > 5  # 経験豊富なユーザーに高スコア
+        when "優しい意見ください", "感想ください！"
+          score += 8  # 全般的に適性あり
+        when "困ってます！", "アドバイスください！"
+          score += 12 if post_count > 3  # アドバイス経験者に高スコア
+        end
+      end
+    end
+    
+    # ランダム要素を追加
+    score += rand(1..20)
+    
+    score
+  end
+
+  def generate_user_description_by_feedback(user, feedback_requests)
+    descriptions = []
+    
+    if feedback_requests.present?
+      feedback_requests.each do |request|
+        case request
+        when "批評ください"
+          descriptions << "作品の批評・分析が得意"
+        when "優しい意見ください"
+          descriptions << "優しく建設的なフィードバックが得意"
+        when "厳しい意見お待ちしています"
+          descriptions << "率直で具体的なアドバイスを提供"
+        when "感想ください！"
+          descriptions << "作品への感想・印象を丁寧に伝える"
+        when "アドバイスください！"
+          descriptions << "実践的なアドバイス・指導が得意"
+        when "困ってます！"
+          descriptions << "問題解決・サポートが得意"
+        end
+      end
+    end
+    
+    post_count = user.posts.count
+    if post_count > 10
+      descriptions << "活発に投稿活動中（#{post_count}件の投稿）"
+    elsif post_count > 0
+      descriptions << "投稿経験あり（#{post_count}件）"
+    else
+      descriptions << "フィードバック専門ユーザー"
+    end
+    
+    descriptions.uniq.join(" • ")
   end
 
   def generate_user_description(user, feedback_type, experience_level)
@@ -370,14 +431,17 @@ class PostsController < ApplicationController
     # 投稿者本人は常にアクセス可能
     return true if post.user == current_user
     
-    # DMでリンクを共有されているユーザーのみアクセス可能
-    # 投稿者とのDMルームが存在し、そのルームで投稿リンクが共有されているかチェック
-    room = Room.find_existing_room_for_users(current_user, post.user)
-    return false unless room
+    # PostRecipientテーブルで送信されたユーザーかチェック
+    return true if post.post_recipients.exists?(user: current_user)
     
-    # メッセージ内に投稿のURLが含まれているかチェック
-    post_url_pattern = /posts\/#{post.id}/
-    room.messages.where(user: post.user).any? { |message| message.body.match?(post_url_pattern) }
+    # 後方互換性のため、古いメッセージベースのチェックも行う
+    # この投稿を含むメッセージが送信されたルームに現在のユーザーが参加しているかチェック
+    message_rooms = Room.joins(:messages, :entries)
+                       .where(messages: { post_id: post.id })
+                       .where(entries: { user_id: current_user.id })
+                       .distinct
+    
+    message_rooms.exists?
   end
 
 end

@@ -8,7 +8,7 @@ class CommunitiesController < ApplicationController
   end
 
   def show
-    @posts = @community.posts.order(created_at: :desc)
+    @posts = @community.posts.where(is_private: false).order(created_at: :desc)
   end
 
   def new

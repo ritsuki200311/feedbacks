@@ -10,6 +10,8 @@ class User < ApplicationRecord
   has_many :comments, dependent: :destroy
   has_many :posts
   has_many :votes, dependent: :destroy
+  has_many :post_recipients, dependent: :destroy
+  has_many :received_posts, through: :post_recipients, source: :post
 
   # DM機能に必要な関連
   has_many :entries

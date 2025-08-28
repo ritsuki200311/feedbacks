@@ -1,0 +1,19 @@
+<% case attachment.content_type
+   when /image\/(jpeg|png|gif|webp|bmp)/
+%>
+  <%= image_tag attachment, class: "rounded-lg max-w-xs my-2" %>
+<% when /video\// %>
+  <video class="rounded-lg w-full max-w-md my-2" controls>
+    <source src="<%= url_for(attachment) %>" type="<%= attachment.content_type %>">
+    お使いのブラウザは video タグをサポートしていません。
+  </video>
+<% when /audio\// %>
+  <audio controls class="my-2">
+    <source src="<%= url_for(attachment) %>" type="<%= attachment.content_type %>">
+    お使いのブラウザは audio タグをサポートしていません。
+  </audio>
+<% else %>
+  <div class="my-2">
+    <%= link_to attachment.filename, url_for(attachment), class: "text-blue-500 hover:underline" %>
+  </div>
+<% end %>

@@ -1,14 +1,72 @@
-<h2>チャットルーム</h2>
-
-<div class="chat-box">
-  <% @messages.each do |message| %>
-    <div class="message <%= message.user_id == current_user.id ? 'sent' : 'received' %>">
-      <%= message.body %>
+<div class="chat-container">
+  <div class="chat-header">
+    <div class="chat-header-back-button">
+      <%= link_to "←", rooms_path, class: "back-link" %>
     </div>
-  <% end %>
+    <h2><%= @other_user&.name || "チャットルーム" %></h2>
+  </div>
+  <div class="chat-box" id="chat-box">
+    <% @messages.each do |message| %>
+      <div class="message-row <%= message.user_id == current_user.id ? 'sent' : 'received' %>">
+        <div class="message">
+          <% if message.post_message? %>
+            <!-- 投稿共有メッセージ -->
+            <div class="message-body post-share-message">
+              <div class="post-share-header">
+                <span class="post-share-icon">🎨</span>
+                <%= message.body %>
+              </div>
+              <% if message.post&.images&.attached? %>
+                <% if message.post %>
+                  <%= link_to post_path(message.post), class: "post-image-link" do %>
+                    <div class="post-image-container">
+                      <%= image_tag message.post.images.first, class: "post-share-image" %>
+                      <div class="post-overlay">
+                        <span class="view-post-text">投稿を見る</span>
+                      </div>
+                    </div>
+                  <% end %>
+                <% end %>
+              <% else %>
+                <% if message.post %>
+                  <%= link_to post_path(message.post), class: "post-link-only" do %>
+                    <div class="post-no-image">
+                      <span class="post-title"><%= message.post.title %></span>
+                      <span class="view-post-text">投稿を見る →</span>
+                    </div>
+                  <% end %>
+                <% end %>
+              <% end %>
+              <% if message.post %>
+                <div class="post-details">
+                  <span class="post-title-small">「<%= truncate(message.post.title, length: 30) %>」</span>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <!-- 通常のメッセージ -->
+            <div class="message-body">
+              <%= message.body %>
+            </div>
+          <% end %>
+          <div class="message-time">
+            <%= message.created_at.strftime("%H:%M") %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <div class="message-form-container">
+    <%= form_with(model: [@room, @message], local: true, html: { class: "message-form" }) do |form| %>
+      <%= form.text_area :body, rows: 1, placeholder: "メッセージを入力…" %>
+      <%= form.submit "送信", class: "send-button" %>
+    <% end %>
+  </div>
 </div>
 
-<%= form_with(model: [@room, @message], local: true, html: { class: "message-form" }) do |form| %>
-  <%= form.text_area :body, rows: 1, placeholder: "メッセージを入力…" %>
-  <%= form.submit "送信" %>
-<% end %>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const chatBox = document.getElementById("chat-box");
+    chatBox.scrollTop = chatBox.scrollHeight;
+  });
+</script>

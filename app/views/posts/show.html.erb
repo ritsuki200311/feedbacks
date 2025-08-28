@@ -957,13 +957,18 @@
               <!-- 投票ボタン -->
               <div class="flex items-center gap-2">
                 <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500 transition-colors" do %>
-                  <span class="text-sm">👍</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14"/>
+                    <path d="M5 12h14"/>
+                  </svg>
                 <% end %>
                 <span class="text-xs text-gray-600 min-w-[20px] text-center">
                   <%= comment.votes.where(value: 1).count - comment.votes.where(value: -1).count %>
                 </span>
                 <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500 transition-colors" do %>
-                  <span class="text-sm">👎</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"/>
+                  </svg>
                 <% end %>
               </div>
             </div>

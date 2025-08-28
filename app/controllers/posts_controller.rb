@@ -36,7 +36,6 @@ class PostsController < ApplicationController
         return
       end
     end
-    
     @comment = @post.comments.build  # コメント投稿フォーム用
     @is_private_view = @post.is_private?
   end
@@ -113,7 +112,6 @@ class PostsController < ApplicationController
       redirect_to root_path, alert: "権限がありません。"
       return
     end
-    
     # アンケート質問を設定
     @survey_questions = [
       {

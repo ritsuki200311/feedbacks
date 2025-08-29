@@ -24,7 +24,7 @@ Rails.application.routes.draw do
   get "search_debug", to: "posts#search", as: :search_debug
 
   # 投稿とコメント
-  resources :posts, only: [ :new, :create, :show, :destroy ] do
+  resources :posts, only: [ :new, :create, :show, :edit, :update, :destroy ] do
     resources :comments, only: [ :index, :create ]
     # AI comment assistant
     post 'ai_comment_assistant/analyze', to: 'ai_comment_assistant#analyze_post'

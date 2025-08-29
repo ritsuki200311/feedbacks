@@ -11,13 +11,23 @@ class PostsController < ApplicationController
   def create
     @post = Post.new(post_params)
     @post.user = current_user
-    @post.is_private = true  # 最初は非公開投稿として保存
+    
+    # 投稿タイプに応じてis_privateを設定
+    post_type = params[:post_type]
+    @post.is_private = (post_type == "private")
 
     respond_to do |format|
       if @post.valid?
         @post.save
-        session[:pending_post_id] = @post.id
-        format.html { redirect_to post_select_recipient_path(@post), notice: "投稿内容を保存しました。送信相手を選んでください。" }
+        
+        if post_type == "private"
+          # プライベート投稿の場合は受信者選択画面に遷移
+          session[:pending_post_id] = @post.id
+          format.html { redirect_to post_select_recipient_path(@post), notice: "投稿内容を保存しました。送信相手を選んでください。" }
+        else
+          # 公開投稿の場合は投稿詳細画面に遷移
+          format.html { redirect_to @post, notice: "投稿を公開しました！" }
+        end
       else
         Rails.logger.debug "Post validation failed: #{@post.errors.full_messages.join(', ')}"
         format.html { render :new, status: :unprocessable_entity }

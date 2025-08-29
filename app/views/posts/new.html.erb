@@ -47,8 +47,60 @@
         </div>
       </div>
 
+      <!-- 投稿タイプ選択 -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-gray-800">投稿方法を選択</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 border-2 border-indigo-200 rounded-lg hover:border-indigo-400 transition-colors">
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <%= radio_button_tag "post_type", "public", true, class: "text-indigo-600 focus:ring-indigo-500", id: "post_type_public" %>
+              <div>
+                <div class="font-semibold text-gray-800">公開投稿</div>
+                <div class="text-sm text-gray-600">みんなに見てもらう（フィードに表示）</div>
+              </div>
+            </label>
+          </div>
+          <div class="p-4 border-2 border-green-200 rounded-lg hover:border-green-400 transition-colors">
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <%= radio_button_tag "post_type", "private", false, class: "text-green-600 focus:ring-green-500", id: "post_type_private" %>
+              <div>
+                <div class="font-semibold text-gray-800">特定の人に送る</div>
+                <div class="text-sm text-gray-600">選んだ人だけに直接送信</div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
       <div class="pt-6 text-center">
-        <%= form.submit "送るユーザーを選ぶ", class: "w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105" %>
+        <button type="submit" id="submit-btn" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105">
+          公開投稿する
+        </button>
       </div>
     <% end %>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const publicRadio = document.getElementById('post_type_public');
+  const privateRadio = document.getElementById('post_type_private');
+  const submitBtn = document.getElementById('submit-btn');
+
+  function updateSubmitButton() {
+    if (publicRadio.checked) {
+      submitBtn.textContent = '公開投稿する';
+      submitBtn.className = 'w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105';
+    } else if (privateRadio.checked) {
+      submitBtn.textContent = '送るユーザーを選ぶ';
+      submitBtn.className = 'w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105';
+    }
+  }
+
+  // 初期状態を設定
+  updateSubmitButton();
+
+  // ラジオボタンの変更時にボタンを更新
+  publicRadio.addEventListener('change', updateSubmitButton);
+  privateRadio.addEventListener('change', updateSubmitButton);
+});
+</script>

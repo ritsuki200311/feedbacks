@@ -11,6 +11,53 @@
       <h3 class="font-bold text-blue-800 mb-2">投稿内容プレビュー</h3>
       <p class="text-lg font-semibold"><%= @post.title %></p>
       <p class="text-gray-600 mt-2"><%= truncate(@post.body, length: 100) %></p>
+      
+      <!-- 添付画像のプレビュー -->
+      <% if @post.images.attached? %>
+        <div class="mt-3">
+          <p class="text-sm font-medium text-blue-700 mb-2">添付画像:</p>
+          <div class="flex flex-wrap gap-2">
+            <% @post.images.each_with_index do |image, index| %>
+              <div class="relative">
+                <%= image_tag image, class: "w-16 h-16 object-cover rounded border shadow-sm cursor-pointer hover:opacity-80 transition-opacity", 
+                    onclick: "openImageModal('#{url_for(image)}', '#{@post.title} - 画像 #{index + 1}')" %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- 添付動画のプレビュー -->
+      <% if @post.videos.attached? %>
+        <div class="mt-3">
+          <p class="text-sm font-medium text-blue-700 mb-2">添付動画:</p>
+          <div class="flex flex-wrap gap-2">
+            <% @post.videos.each do |video| %>
+              <div class="relative">
+                <div class="w-16 h-16 bg-gray-200 rounded border shadow-sm flex items-center justify-center">
+                  <span class="text-xs text-gray-600">🎬</span>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- 添付音声のプレビュー -->
+      <% if @post.audios.attached? %>
+        <div class="mt-3">
+          <p class="text-sm font-medium text-blue-700 mb-2">添付音声:</p>
+          <div class="flex flex-wrap gap-2">
+            <% @post.audios.each do |audio| %>
+              <div class="relative">
+                <div class="w-16 h-16 bg-gray-200 rounded border shadow-sm flex items-center justify-center">
+                  <span class="text-xs text-gray-600">🎵</span>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
     </div>
 
     <%= form_with url: post_send_to_user_path(@post), method: :post, local: true, class: "space-y-8" do |form| %>
@@ -66,7 +113,52 @@
   </div>
 </div>
 
+<!-- 画像モーダルウィンドウ -->
+<div id="image-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+  <div class="relative max-w-4xl max-h-full">
+    <button onclick="closeImageModal()" class="absolute -top-10 right-0 text-white text-2xl hover:text-gray-300 z-60">
+      ✕
+    </button>
+    <img id="modal-image" src="" alt="" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-lg">
+    <p id="modal-title" class="text-white text-center mt-4 text-lg"></p>
+  </div>
+</div>
+
 <script>
+// 画像モーダル機能
+function openImageModal(imageUrl, title) {
+  const modal = document.getElementById('image-modal');
+  const modalImage = document.getElementById('modal-image');
+  const modalTitle = document.getElementById('modal-title');
+  
+  modalImage.src = imageUrl;
+  modalImage.alt = title;
+  modalTitle.textContent = title;
+  
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden'; // ページのスクロールを無効化
+}
+
+function closeImageModal() {
+  const modal = document.getElementById('image-modal');
+  modal.classList.add('hidden');
+  document.body.style.overflow = 'auto'; // ページのスクロールを有効化
+}
+
+// ESCキーでモーダルを閉じる
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeImageModal();
+  }
+});
+
+// モーダル背景クリックで閉じる
+document.getElementById('image-modal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeImageModal();
+  }
+});
+
 // マッチング機能
 async function showMatchingUsers() {
   try {

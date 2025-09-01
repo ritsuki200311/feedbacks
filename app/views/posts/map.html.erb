@@ -27,7 +27,7 @@
         </div>
       </div>
       
-      <div id="network-map" class="w-full h-96 md:h-[500px] lg:h-[600px] border border-gray-200 rounded-xl bg-gradient-to-br from-white to-gray-50 shadow-inner"></div>
+      <div id="network-map" class="w-full border border-gray-200 rounded-xl bg-gradient-to-br from-white to-gray-50 shadow-inner" style="height: 600px; min-height: 600px;"></div>
       
       
       <div id="post-details" class="mt-6 p-4 bg-gray-50 rounded-md hidden">
@@ -55,7 +55,7 @@ class PostsMapController {
       console.log('Posts data:', data.posts);
       console.log('Number of posts:', data.posts.length);
       
-      if (data.posts.length === 0) {
+      if (!data.posts || data.posts.length === 0) {
         console.warn('No posts found, using dummy data');
         const dummyPosts = [
           { id: 1, title: "美しい夕焼け", user_name: "風景写真家", comments_count: 2, tags: ["自然", "夕焼け"], comment_sentiments: {positive: 1, strong: 0, unique: 0, gentle: 1}, is_current_user: false, image_url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop&crop=center" },
@@ -80,17 +80,28 @@ class PostsMapController {
     console.log('Starting renderNetworkGraph with posts:', posts);
     
     const container = d3.select("#network-map");
+    if (container.empty()) {
+      console.error('Container #network-map not found for D3');
+      return;
+    }
+    
     container.selectAll("*").remove();
 
     const width = container.node().offsetWidth || 800;
-    const height = container.node().offsetHeight || 400;
+    const height = container.node().offsetHeight || 600;
+    
+    // 高さが小さすぎる場合は強制的に600pxにする
+    const actualHeight = height < 100 ? 600 : height;
     
     console.log('Container dimensions:', width, height);
+    console.log('Container node:', container.node());
 
     const svg = container.append("svg")
       .attr("width", width)
-      .attr("height", height)
+      .attr("height", actualHeight)
       .style("background", "white");
+    
+    console.log('SVG created:', svg.node());
 
     // シンプルなdefs（問題解決のため複雑な背景を一時削除）
     const defs = svg.append("defs");
@@ -155,10 +166,10 @@ class PostsMapController {
     const simulation = d3.forceSimulation(nodes)
       .force("link", d3.forceLink(links).id(d => d.id).distance(d => this.calculateLinkDistance(d.similarity)))
       .force("charge", d3.forceManyBody().strength(-100))
-      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("center", d3.forceCenter(width / 2, actualHeight / 2))
       .force("collision", d3.forceCollide().radius(d => d.radius + 10))
       .force("x", d3.forceX(width / 2).strength(0.05))
-      .force("y", d3.forceY(height / 2).strength(0.05));
+      .force("y", d3.forceY(actualHeight / 2).strength(0.05));
 
     // クラスタエリアの描画（ノードより先に描画）
     const clusterAreas = g.append("g").attr("class", "cluster-areas");
@@ -681,6 +692,16 @@ class PostsMapController {
 
 // ページ読み込み後に初期化
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM loaded, initializing PostsMapController...');
+  console.log('D3 version:', d3.version);
+  
+  const container = document.getElementById('network-map');
+  if (!container) {
+    console.error('Container #network-map not found');
+    return;
+  }
+  
+  console.log('Container found, creating map controller...');
   new PostsMapController();
 });
 </script>

@@ -173,8 +173,8 @@ class PostsMapController {
       .data(links)
       .enter().append("line")
       .attr("stroke", d => this.getLinkColor(d.similarity))
-      .attr("stroke-opacity", d => 0.3 + (d.similarity * 0.4))
-      .attr("stroke-width", d => Math.max(1, d.similarity * 3))
+      .attr("stroke-opacity", d => 0.15 + (d.similarity * 0.25))
+      .attr("stroke-width", d => Math.max(0.5, d.similarity * 2))
       .attr("stroke-linecap", "round")
       .on("mouseover", (event, d) => {
         d3.select(event.target)
@@ -186,8 +186,8 @@ class PostsMapController {
       .on("mouseout", (event, d) => {
         d3.select(event.target)
           .transition().duration(200)
-          .attr("stroke-opacity", 0.3 + (d.similarity * 0.4))
-          .attr("stroke-width", Math.max(1, d.similarity * 3));
+          .attr("stroke-opacity", 0.15 + (d.similarity * 0.25))
+          .attr("stroke-width", Math.max(0.5, d.similarity * 2));
         this.hideLinkDetails();
       });
 
@@ -267,7 +267,7 @@ class PostsMapController {
 
   calculateSimilarityLinks(nodes) {
     const links = [];
-    const threshold = 0.01;
+    const threshold = 0.3; // 閾値を0.01から0.3に大幅に上げて網目を減らす
 
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {

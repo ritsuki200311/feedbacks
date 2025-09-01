@@ -76,6 +76,6 @@ Rails.application.configure do
 
   # メールを開発環境で受信する
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
-  config.action_mailer.delivery_method = :letter_opener_web
+  config.action_mailer.delivery_method = :letter_opener
   config.action_mailer.default_options = { from: ENV.fetch("MAILER_SENDER", "noreply@example.com") }
 end

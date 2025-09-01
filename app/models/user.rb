@@ -1,12 +1,17 @@
 class User < ApplicationRecord
   # Deviseの認証モジュール
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable
+         :recoverable, :rememberable, :validatable, :confirmable
+
+  # バリデーション
+  validates :name, presence: true, length: { minimum: 1, maximum: 50 }, uniqueness: true
 
   # 投稿・コメント関連
   has_many :comments, dependent: :destroy
   has_many :posts
   has_many :votes, dependent: :destroy
+  has_many :post_recipients, dependent: :destroy
+  has_many :received_posts, through: :post_recipients, source: :post
 
   # DM機能に必要な関連
   has_many :entries
@@ -34,12 +39,22 @@ class User < ApplicationRecord
   end
 
   def add_coins(amount)
+    return false unless amount.is_a?(Integer) && amount > 0
+    return false if coins + amount > 999999 # 上限設定
+    
     self.coins += amount
     save
   end
 
   def remove_coins(amount)
+    return false unless amount.is_a?(Integer) && amount > 0
+    return false if coins - amount < 0 # マイナス防止
+    
     self.coins -= amount
     save
   end
+
+  # バリデーション
+  validates :name, presence: true, length: { maximum: 50 }
+  validates :email, presence: true, length: { maximum: 254 }
 end

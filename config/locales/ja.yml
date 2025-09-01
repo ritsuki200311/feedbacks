@@ -1,0 +1,392 @@
+ja:
+  errors:
+    format: "%{attribute}%{message}"
+    messages:
+      blank: "を入力してください"
+      too_short: "は%{count}文字以上で入力してください"
+      too_long: "は%{count}文字以内で入力してください"
+      taken: "はすでに使用されています"
+      invalid: "は不正な値です"
+      not_saved: "%{resource}の保存に失敗しました（%{count}件のエラー）"
+      confirmation: "と%{attribute}の入力が一致しません"
+      accepted: "を受諾してください"
+      empty: "を入力してください"
+      equal_to: "は%{count}にしてください"
+      even: "は偶数にしてください"
+      exclusion: "は予約されています"
+      greater_than: "は%{count}より大きい値にしてください"
+      greater_than_or_equal_to: "は%{count}以上の値にしてください"
+      inclusion: "は一覧にありません"
+      less_than: "は%{count}より小さい値にしてください"
+      less_than_or_equal_to: "は%{count}以下の値にしてください"
+      model_invalid: "バリデーションに失敗しました: %{errors}"
+      not_a_number: "は数値で入力してください"
+      not_an_integer: "は整数で入力してください"
+      odd: "は奇数にしてください"
+      other_than: "は%{count}以外の値にしてください"
+      present: "は入力しないでください"
+      required: "を入力してください"
+      wrong_length: "は%{count}文字で入力してください"
+  activerecord:
+    models:
+      user: ユーザー
+      post: 投稿
+      comment: コメント
+      community: コミュニティ
+      supporter_profile: サポータープロフィール
+      preference: 設定
+      room: ルーム
+      message: メッセージ
+      entry: 参加
+      vote: 投票
+      community_user: コミュニティメンバー
+    attributes:
+      user:
+        name: ユーザー名
+        email: メールアドレス
+        password: パスワード
+        password_confirmation: パスワード（確認）
+        current_password: 現在のパスワード
+        remember_me: ログイン状態を保持
+        coins: コイン
+        rank_points: ランクポイント
+        created_at: 登録日時
+        updated_at: 更新日時
+        confirmed_at: 確認日時
+        confirmation_sent_at: 確認メール送信日時
+        reset_password_sent_at: パスワードリセット送信日時
+      post:
+        title: タイトル
+        body: 本文
+        creation_type: 作品種別
+        tag: タグ
+        images: 画像
+        videos: 動画
+        audios: 音声
+        user: 投稿者
+        community: コミュニティ
+        created_at: 投稿日時
+        updated_at: 更新日時
+      comment:
+        body: コメント
+        x_position: X座標
+        y_position: Y座標
+        user: コメント者
+        post: 投稿
+        parent: 親コメント
+        created_at: コメント日時
+        updated_at: 更新日時
+      community:
+        name: コミュニティ名
+        description: 説明
+        user: 作成者
+        created_at: 作成日時
+        updated_at: 更新日時
+      supporter_profile:
+        standing: 立場
+        creation_experience: 創作経験
+        interests: 興味
+        age_group: 年齢層
+        support_genres: サポートジャンル
+        support_styles: サポートスタイル
+        personality_traits: 性格特性
+        user: ユーザー
+      preference:
+        user: ユーザー
+        data: 設定データ
+      room:
+        name: ルーム名
+        created_at: 作成日時
+      message:
+        body: メッセージ
+        user: 送信者
+        room: ルーム
+        read: 既読
+        created_at: 送信日時
+      entry:
+        user: ユーザー
+        room: ルーム
+      vote:
+        user: 投票者
+        votable: 投票対象
+        created_at: 投票日時
+      community_user:
+        user: ユーザー
+        community: コミュニティ
+        created_at: 参加日時
+    errors:
+      models:
+        user:
+          attributes:
+            name:
+              blank: "を入力してください"
+            password:
+              too_short: "は%{count}文字以上で入力してください"
+        post:
+          attributes:
+            title:
+              blank: "を入力してください"
+              too_short: "は%{count}文字以上で入力してください"
+              too_long: "は%{count}文字以内で入力してください"
+            body:
+              blank: "を入力してください"
+  devise:
+    sessions:
+      signed_in: ログインしました。
+      signed_out: ログアウトしました。
+    registrations:
+      signed_up: アカウント登録が完了しました。確認メールをご確認ください。
+      updated: アカウント情報を更新しました。
+    failure:
+      invalid: "メールアドレスまたはパスワードが正しくありません。"
+      unconfirmed: メールアドレスの確認が必要です。確認メールをご確認ください。
+    confirmations:
+      send_instructions: 数分以内にアカウント確認のメールが送信されます。
+      confirmed: アカウントの確認が完了しました。ログインできます。
+  datetime:
+    distance_in_words:
+      about_x_hours:
+        one: "約1時間"
+        other: "約%{count}時間"
+      about_x_months:
+        one: "約1ヶ月"
+        other: "約%{count}ヶ月"
+      about_x_years:
+        one: "約1年"
+        other: "約%{count}年"
+      almost_x_years:
+        one: "1年弱"
+        other: "%{count}年弱"
+      half_a_minute: "30秒前後"
+      less_than_x_seconds:
+        one: "1秒未満"
+        other: "%{count}秒未満"
+      less_than_x_minutes:
+        one: "1分未満"
+        other: "%{count}分未満"
+      over_x_years:
+        one: "1年以上"
+        other: "%{count}年以上"
+      x_seconds:
+        one: "1秒"
+        other: "%{count}秒"
+      x_minutes:
+        one: "1分"
+        other: "%{count}分"
+      x_days:
+        one: "1日"
+        other: "%{count}日"
+      x_months:
+        one: "1ヶ月"
+        other: "%{count}ヶ月"
+      x_years:
+        one: "1年"
+        other: "%{count}年"
+    prompts:
+      second: "秒"
+      minute: "分"
+      hour: "時"
+      day: "日"
+      month: "月"
+      year: "年"
+  date:
+    formats:
+      default: "%Y/%m/%d"
+      short: "%m/%d"
+      long: "%Y年%m月%d日(%a)"
+    day_names:
+      - 日曜日
+      - 月曜日
+      - 火曜日
+      - 水曜日
+      - 木曜日
+      - 金曜日
+      - 土曜日
+    abbr_day_names:
+      - 日
+      - 月
+      - 火
+      - 水
+      - 木
+      - 金
+      - 土
+    month_names:
+      - ~
+      - 1月
+      - 2月
+      - 3月
+      - 4月
+      - 5月
+      - 6月
+      - 7月
+      - 8月
+      - 9月
+      - 10月
+      - 11月
+      - 12月
+    abbr_month_names:
+      - ~
+      - 1月
+      - 2月
+      - 3月
+      - 4月
+      - 5月
+      - 6月
+      - 7月
+      - 8月
+      - 9月
+      - 10月
+      - 11月
+      - 12月
+    order:
+      - :year
+      - :month
+      - :day
+  time:
+    formats:
+      default: "%Y年%m月%d日(%a) %H時%M分%S秒 %z"
+      short: "%m/%d %H:%M"
+      long: "%Y年%m月%d日(%a) %H時%M分%S秒 %z"
+    am: "午前"
+    pm: "午後"
+  number:
+    format:
+      separator: "."
+      delimiter: ","
+      precision: 3
+      significant: false
+      strip_insignificant_zeros: false
+    currency:
+      format:
+        format: "%n%u"
+        unit: "円"
+        separator: "."
+        delimiter: ","
+        precision: 0
+    percentage:
+      format:
+        delimiter: ","
+        format: "%n%"
+    precision:
+      format:
+        delimiter: ","
+    human:
+      format:
+        delimiter: ","
+        precision: 3
+        significant: true
+        strip_insignificant_zeros: true
+      storage_units:
+        format: "%n%u"
+        units:
+          byte: "バイト"
+          kb: "KB"
+          mb: "MB"
+          gb: "GB"
+          tb: "TB"
+  support:
+    array:
+      words_connector: "、"
+      two_words_connector: "、"
+      last_word_connector: "、"
+    select:
+      prompt: "選択してください"
+  helpers:
+    select:
+      prompt: "選択してください"
+    submit:
+      create: "登録する"
+      submit: "保存する"
+      update: "更新する"
+  views:
+    pagination:
+      first: "&laquo; 最初"
+      last: "最後 &raquo;"
+      previous: "&lsaquo; 前"
+      next: "次 &rsaquo;"
+      truncate: "&hellip;"
+  # Action View関連
+  actionview:
+    errors:
+      messages:
+        size:
+          one: "は1文字以内で入力してください"
+          other: "は%{count}文字以内で入力してください"
+        in: "は%{min}〜%{max}文字以内で入力してください"
+        minimum: "は%{min}文字以上で入力してください"
+  # 追加のhelpers
+  enumerize:
+    defaults:
+      sex:
+        female: "女性"
+        male: "男性"
+        other: "その他"
+  # Railsの標準メッセージ
+  attributes:
+    created_at: "作成日時"
+    updated_at: "更新日時"
+    email: "メールアドレス"
+    password: "パスワード"
+    password_confirmation: "パスワード確認"
+    current_password: "現在のパスワード"
+    remember_me: "ログイン状態を保持する"
+    name: "名前"
+    title: "タイトル"
+    body: "本文"
+    content: "内容"
+    description: "説明"
+    image: "画像"
+    file: "ファイル"
+  # よく使われるラベル
+  labels:
+    actions: "操作"
+    back: "戻る"
+    cancel: "キャンセル"
+    confirm: "確認"
+    create: "作成"
+    delete: "削除"
+    destroy: "削除"
+    edit: "編集"
+    new: "新規作成"
+    save: "保存"
+    show: "詳細"
+    submit: "送信"
+    update: "更新"
+  # フラッシュメッセージ
+  flash:
+    actions:
+      create:
+        notice: "%{resource_name}を作成しました。"
+        alert: "%{resource_name}の作成に失敗しました。"
+      update:
+        notice: "%{resource_name}を更新しました。"
+        alert: "%{resource_name}の更新に失敗しました。"
+      destroy:
+        notice: "%{resource_name}を削除しました。"
+        alert: "%{resource_name}の削除に失敗しました。"
+  # アプリケーション固有の翻訳
+  posts:
+    creation_types:
+      "イラスト・マンガ": "イラスト・マンガ"
+      "詩・小説": "詩・小説"
+      "音楽": "音楽"
+  comments:
+    image_comment: "画像コメント"
+    reply: "返信"
+    position: "位置: (%{x}, %{y})"
+  communities:
+    join: "参加"
+    leave: "退会"
+    members_count: "%{count}人のメンバー"
+  users:
+    rank:
+      A: "Aランク"
+      B: "Bランク" 
+      C: "Cランク"
+    coins: "%{count}コイン"
+  rooms:
+    direct_message: "ダイレクトメッセージ"
+    with: "%{user}さんとの会話"
+  votes:
+    voted: "投票済み"
+    vote: "投票する"

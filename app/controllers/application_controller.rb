@@ -10,6 +10,15 @@ class ApplicationController < ActionController::Base
     new_user_session_path # Deviseのログインページ
   end
 
+  # 初回ログイン時はプロフィール登録へ誘導
+  def after_sign_in_path_for(resource)
+    if resource.is_a?(User) && resource.supporter_profile.blank?
+      new_supporter_profile_path
+    else
+      stored_location_for(resource) || root_path
+    end
+  end
+
   protected
 
   # # サインアップ後のリダイレクト先を設定

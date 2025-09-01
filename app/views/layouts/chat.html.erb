@@ -138,6 +138,135 @@
       .send-button:hover {
         background-color: #0056b3;
       }
+
+      /* 投稿共有メッセージのスタイル */
+      .post-share-message {
+        padding: 12px !important;
+        border-radius: 12px !important;
+        max-width: none !important;
+      }
+
+      .post-share-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      .post-share-icon {
+        margin-right: 6px;
+        font-size: 16px;
+      }
+
+      .post-image-container {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+      }
+
+      .post-image-container:hover {
+        transform: scale(1.02);
+      }
+
+      .post-share-image {
+        width: 100%;
+        max-width: 300px;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+        border-radius: 8px;
+      }
+
+      .post-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        border-radius: 8px;
+      }
+
+      .post-image-container:hover .post-overlay {
+        opacity: 1;
+      }
+
+      .view-post-text {
+        color: white;
+        font-weight: 600;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+      }
+
+      .post-link-only {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .post-no-image {
+        padding: 16px;
+        background: rgba(0, 122, 255, 0.1);
+        border-radius: 8px;
+        border: 1px dashed #007AFF;
+        text-align: center;
+        transition: background-color 0.2s ease;
+      }
+
+      .post-no-image:hover {
+        background: rgba(0, 122, 255, 0.2);
+      }
+
+      .post-title {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #1C1E21;
+      }
+
+      .post-details {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+      }
+
+      .post-title-small {
+        font-size: 13px;
+        color: #65676B;
+        font-weight: 500;
+      }
+
+      /* 送信側と受信側での投稿メッセージの色調整 */
+      .sent .post-share-message {
+        background-color: #007AFF !important;
+        color: white !important;
+      }
+
+      .sent .post-share-message .post-title-small {
+        color: rgba(255, 255, 255, 0.8) !important;
+      }
+
+      .sent .post-share-message .post-no-image {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+      }
+
+      .sent .post-share-message .post-title {
+        color: white !important;
+      }
+
+      .received .post-share-message {
+        background-color: #FFFFFF !important;
+        color: #1C1E21 !important;
+      }
     </style>
 
     <%= javascript_importmap_tags %>

@@ -11,13 +11,24 @@ class PostsController < ApplicationController
   def create
     @post = Post.new(post_params)
     @post.user = current_user
-    @post.is_private = true  # 最初は非公開投稿として保存
+    
+    # ボタンのcommitパラメータによって動作を変える
+    if params[:commit] == "投稿する"
+      @post.is_private = false  # 公開投稿として保存
+    else
+      @post.is_private = true  # 非公開投稿として保存
+    end
 
     respond_to do |format|
       if @post.valid?
         @post.save
-        session[:pending_post_id] = @post.id
-        format.html { redirect_to post_select_recipient_path(@post), notice: "投稿内容を保存しました。送信相手を選んでください。" }
+        
+        if params[:commit] == "投稿する"
+          format.html { redirect_to root_path, notice: "投稿を公開しました。" }
+        else
+          session[:pending_post_id] = @post.id
+          format.html { redirect_to post_select_recipient_path(@post), notice: "投稿内容を保存しました。送信相手を選んでください。" }
+        end
       else
         Rails.logger.debug "Post validation failed: #{@post.errors.full_messages.join(', ')}"
         format.html { render :new, status: :unprocessable_entity }

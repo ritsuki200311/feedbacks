@@ -46,11 +46,14 @@ bundle exec brakeman
 
 ### Asset Management
 ```bash
+# Build Tailwind CSS (required before first run)
+bin/rails tailwindcss:build
+
 # Precompile assets
 bin/rails assets:precompile
 
-# Build Tailwind CSS
-bin/rails tailwindcss:build
+# If you get "The asset 'tailwind.css' was not found" error:
+bin/rails tailwindcss:build && bin/rails assets:precompile
 ```
 
 ## Architecture Overview

@@ -51,6 +51,21 @@ bin/rails tailwindcss:build
 
 # Precompile assets
 bin/rails assets:precompile
+```
+
+### AI機能の設定
+```bash
+# .envファイルを作成（初回のみ）
+cp .env.example .env
+
+# .envファイルにGoogle Gemini API keyを設定
+# GOOGLE_GEMINI_API_KEY=your_actual_api_key_here
+```
+
+**API key取得方法:**
+1. [Google AI Studio](https://aistudio.google.com/)にアクセス
+2. 「Get API key」→「Create API key」
+3. 取得したkeyを`.env`ファイルに設定
 
 # If you get "The asset 'tailwind.css' was not found" error:
 bin/rails tailwindcss:build && bin/rails assets:precompile

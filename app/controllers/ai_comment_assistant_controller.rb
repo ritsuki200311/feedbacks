@@ -31,7 +31,7 @@ class AiCommentAssistantController < ApplicationController
     require 'base64'
 
     # Gemini API endpoint
-    api_key = ENV['GOOGLE_GEMINI_API_KEY']
+    api_key = ENV['GOOGLE_GEMINI_API_KEY'] || Rails.application.credentials.dig(:google, :gemini_api_key) || 'AIzaSyBPrMWaLrF2OacBXokFMTXdXyP0D5gIOx8'
     project_id = ENV['GOOGLE_PROJECT_ID']
     
     if api_key.blank?
@@ -43,7 +43,7 @@ class AiCommentAssistantController < ApplicationController
     
     # 画像がある場合はVision対応モデルを使用
     model = post.images.attached? ? 'gemini-1.5-flash' : 'gemini-1.5-flash'
-    url = URI("https://generativelanguage.googleapis.com/v1beta/models/#{model}:generateContent?key=#{api_key}")
+    url = URI("https://generativelanguage.googleapis.com/v1/models/#{model}:generateContent?key=#{api_key}")
     
     http = Net::HTTP.new(url.host, url.port)
     http.use_ssl = true

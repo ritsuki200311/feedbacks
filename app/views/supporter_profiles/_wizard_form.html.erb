@@ -38,7 +38,7 @@
           <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="standing" data-value="<%= option %>">
             <input type="checkbox" name="supporter_profile[standing][]" value="<%= option %>" 
                    <%= 'checked' if @supporter_profile.standing.include?(option) %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300 hover:bg-indigo-50">
+            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
               <span class="text-lg text-gray-700"><%= option %></span>
             </div>
           </label>
@@ -58,7 +58,7 @@
           <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectSingle" data-field="creation_experience" data-value="<%= option %>">
             <input type="radio" name="supporter_profile[creation_experience]" value="<%= option %>" 
                    <%= 'checked' if @supporter_profile.creation_experience == option %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300 hover:bg-indigo-50">
+            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
               <span class="text-lg text-gray-700"><%= option %></span>
             </div>
           </label>
@@ -78,7 +78,7 @@
           <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="interests" data-value="<%= option %>">
             <input type="checkbox" name="supporter_profile[interests][]" value="<%= option %>" 
                    <%= 'checked' if @supporter_profile.interests.include?(option) %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300 hover:bg-indigo-50">
+            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
               <span class="text-base text-gray-700"><%= option %></span>
             </div>
           </label>
@@ -112,7 +112,7 @@
           <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectSingle" data-field="age_group" data-value="<%= option %>">
             <input type="radio" name="supporter_profile[age_group]" value="<%= option %>" 
                    <%= 'checked' if @supporter_profile.age_group == option %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300 hover:bg-indigo-50">
+            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
               <span class="text-lg text-gray-700"><%= option %></span>
             </div>
           </label>
@@ -132,7 +132,7 @@
           <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="support_genres" data-value="<%= option %>">
             <input type="checkbox" name="supporter_profile[support_genres][]" value="<%= option %>" 
                    <%= 'checked' if @supporter_profile.support_genres.include?(option) %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300 hover:bg-indigo-50">
+            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
               <span class="text-base text-gray-700"><%= option %></span>
             </div>
           </label>
@@ -152,7 +152,7 @@
           <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="support_styles" data-value="<%= option %>">
             <input type="checkbox" name="supporter_profile[support_styles][]" value="<%= option %>" 
                    <%= 'checked' if @supporter_profile.support_styles.include?(option) %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300 hover:bg-indigo-50">
+            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
               <span class="text-base text-gray-700"><%= option %></span>
             </div>
           </label>
@@ -172,7 +172,7 @@
           <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="personality_traits" data-value="<%= option %>">
             <input type="checkbox" name="supporter_profile[personality_traits][]" value="<%= option %>" 
                    <%= 'checked' if @supporter_profile.personality_traits.include?(option) %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300 hover:bg-indigo-50">
+            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
               <span class="text-base text-gray-700"><%= option %></span>
             </div>
           </label>
@@ -209,14 +209,14 @@
 
 <style>
   .option-card input:checked + div {
-    @apply border-blue-600 bg-blue-200 text-blue-900;
+    @apply border-blue-600;
     border-width: 4px !important;
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.4), 0 4px 12px rgba(37, 99, 235, 0.3);
     transform: scale(1.02);
   }
   
   .option-card:hover input + div {
-    @apply border-indigo-300 bg-indigo-50;
+    @apply border-indigo-300;
   }
   
   .option-card input + div {

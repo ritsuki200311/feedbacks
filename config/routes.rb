@@ -12,7 +12,9 @@ Rails.application.routes.draw do
   patch "users/update", to: "users#update", as: :update_user
   # ユーザー関係性の可視化（usersリソースより前に配置）
   get "users/relationships", to: "user_relationships#index", as: :user_relationships
-  resources :users, only: [ :show ]
+  resources :users, only: [ :show ] do
+    resource :follows, only: [ :create, :destroy ]
+  end
   get "users/index"
 
 

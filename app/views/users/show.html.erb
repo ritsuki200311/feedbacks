@@ -9,12 +9,41 @@
 
   <!-- Header -->
   <div class="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 rounded-2xl p-6 mb-6 shadow-lg">
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-start">
       <div>
         <h1 class="text-4xl font-bold text-black bg-white bg-opacity-90 px-4 py-2 rounded-lg inline-block shadow-md">
           <%= @user == current_user ? "マイページ" : "#{@user.name}さんのプロフィール" %>
         </h1>
+        
+        <!-- フォロー数・フォロワー数とフォローボタンを横並び -->
+        <div class="flex items-center gap-6 mt-6">
+          <div class="flex gap-4">
+            <div class="bg-white bg-opacity-90 px-3 py-1 rounded-lg text-sm shadow-md">
+              <span class="text-xs text-gray-600">フォロワー</span>
+              <span class="font-bold ml-1 text-gray-800"><%= @user.followers_count %></span>
+            </div>
+            <div class="bg-white bg-opacity-90 px-3 py-1 rounded-lg text-sm shadow-md">
+              <span class="text-xs text-gray-600">フォロー中</span>
+              <span class="font-bold ml-1 text-gray-800"><%= @user.following_count %></span>
+            </div>
+          </div>
+          
+          <!-- フォローボタン（他のユーザーの場合） -->
+          <% if user_signed_in? && current_user != @user %>
+            <% if current_user.following?(@user) %>
+              <%= form_with url: user_follows_path(@user), method: :delete, class: "inline-block", data: { confirm: "#{@user.name}のフォローを解除しますか？" } do |form| %>
+                <%= form.submit "フォロー中", class: "inline-flex items-center px-3 py-2 bg-gray-500 hover:bg-red-600 text-white font-semibold rounded text-sm transition-colors" %>
+              <% end %>
+            <% else %>
+              <%= form_with url: user_follows_path(@user), method: :post, class: "inline-block" do |form| %>
+                <%= form.submit "フォロー", class: "inline-flex items-center px-3 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded text-sm" %>
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
       </div>
+      
+      <!-- パスワード変更ボタン（自分の場合） -->
       <% if @user == current_user %>
         <%= link_to edit_user_registration_path, class: "inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white transition font-semibold px-4 py-2 rounded" do %>
           <svg class="inline-block w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

@@ -1,2 +1,13 @@
-<h1>支援者プロフィール編集</h1>
-<%= render 'form', supporter_profile: @supporter_profile %>
+<!-- 編集時は従来のチェックボックス形式を使用 -->
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-4xl mx-auto p-6">
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">プロフィール編集</h1>
+      <p class="text-gray-600">設定を変更できます</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md">
+      <%= render 'form', supporter_profile: @supporter_profile %>
+    </div>
+  </div>
+</div>

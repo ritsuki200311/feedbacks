@@ -1,2 +1,9 @@
-<h1>支援者プロフィール作成</h1>
-<%= render 'form', supporter_profile: @supporter_profile %>
+<!-- 新規作成時はウィザード形式を使用 -->
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="text-center mb-8">
+    <h1 class="text-4xl font-bold text-gray-800 mb-2">プロフィール設定</h1>
+    <p class="text-gray-600">あなたについて教えてください！簡単な質問にお答えいただくだけです。</p>
+  </div>
+  
+  <%= render 'wizard_form', supporter_profile: @supporter_profile %>
+</div>

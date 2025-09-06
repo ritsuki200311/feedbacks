@@ -21,6 +21,10 @@ class HomeController < ApplicationController
       
       if params[:creation_type].present?
         @posts = base_query.where(creation_type: params[:creation_type]).includes(:comments).order(created_at: :desc)
+      elsif params[:filter] == 'following'
+        # フォロー中のユーザーの投稿のみを表示
+        following_user_ids = current_user.following.pluck(:id)
+        @posts = base_query.where(user_id: following_user_ids).includes(:comments).order(created_at: :desc)
       else
         @posts = base_query.includes(:comments).order(created_at: :desc)
       end

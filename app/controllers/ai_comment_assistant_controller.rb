@@ -24,6 +24,7 @@ class AiCommentAssistantController < ApplicationController
 
   private
 
+
   def call_gemini_api(post)
     require 'net/http'
     require 'json'
@@ -38,9 +39,6 @@ class AiCommentAssistantController < ApplicationController
       raise "Google Gemini API key is not configured"
     end
 
-    # プロンプトを構築
-    prompt = build_prompt(post)
-    
     # 画像がある場合はVision対応モデルを使用
     model = post.images.attached? ? 'gemini-1.5-flash' : 'gemini-1.5-flash'
     url = URI("https://generativelanguage.googleapis.com/v1/models/#{model}:generateContent?key=#{api_key}")
@@ -50,6 +48,9 @@ class AiCommentAssistantController < ApplicationController
     
     request = Net::HTTP::Post.new(url)
     request['Content-Type'] = 'application/json'
+    
+    # プロンプトを構築
+    prompt = build_prompt(post)
     
     # リクエストボディにプロンプト＋画像を含める
     parts = [{ text: prompt }]
@@ -116,8 +117,12 @@ class AiCommentAssistantController < ApplicationController
       result = JSON.parse(response.body)
       content = result.dig('candidates', 0, 'content', 'parts', 0, 'text')
       
+      Rails.logger.info "Gemini API response content: #{content}"
+      
       if content
-        parse_gemini_response(content)
+        parsed_result = parse_gemini_response(content)
+        Rails.logger.info "Parsed result: #{parsed_result}"
+        parsed_result
       else
         raise "Empty response from Gemini API"
       end
@@ -235,6 +240,7 @@ class AiCommentAssistantController < ApplicationController
       "テキスト投稿"
     end
   end
+
 
   def parse_gemini_response(content)
     # レスポンスを解析してコメント例と観察ポイントを抽出

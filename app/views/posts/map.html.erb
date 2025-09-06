@@ -1,0 +1,707 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">作品マップ</h1>
+    
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 space-y-4 lg:space-y-0">
+        <p class="text-gray-600">
+          投稿同士の関係性を可視化したネットワーク図です。類似した作品は近くに配置され、自然なクラスタを形成します。
+        </p>
+        <div class="flex flex-col lg:flex-row items-start lg:items-center space-y-2 lg:space-y-0 lg:space-x-6">
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center">
+              <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+              <span class="text-sm text-gray-600">他のユーザーの投稿</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+              <span class="text-sm text-gray-600">あなたの投稿</span>
+            </div>
+          </div>
+          <div class="text-xs text-gray-500">
+            <div>🔍 スクロール: ズーム</div>
+            <div>🖱️ ノードホバー: タイトル表示</div>
+            <div>🎯 ノードクリック: 詳細表示</div>
+            <div>🔗 線にホバー: 接続理由</div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="network-map" class="w-full border border-gray-200 rounded-xl bg-gradient-to-br from-white to-gray-50 shadow-inner" style="height: 600px; min-height: 600px;"></div>
+      
+      
+      <div id="post-details" class="mt-6 p-4 bg-gray-50 rounded-md hidden">
+        <h4 class="font-semibold text-gray-900 mb-2">投稿詳細</h4>
+        <div id="post-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+
+class PostsMapController {
+  constructor() {
+    this.initializeMap();
+  }
+
+  async initializeMap() {
+    try {
+      console.log('Fetching map data...');
+      const response = await fetch('<%= posts_map_path %>.json');
+      console.log('Response status:', response.status);
+      const data = await response.json();
+      console.log('Posts data:', data.posts);
+      console.log('Number of posts:', data.posts.length);
+      
+      if (!data.posts || data.posts.length === 0) {
+        console.warn('No posts found, using dummy data');
+        const dummyPosts = [
+          { id: 1, title: "美しい夕焼け", user_name: "風景写真家", comments_count: 2, tags: ["自然", "夕焼け"], comment_sentiments: {positive: 1, strong: 0, unique: 0, gentle: 1}, is_current_user: false, image_url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop&crop=center" },
+          { id: 2, title: "都市の夜景", user_name: "都市写真家", comments_count: 3, tags: ["都市", "夜景"], comment_sentiments: {positive: 2, strong: 1, unique: 0, gentle: 0}, is_current_user: true, image_url: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=400&fit=crop&crop=center" },
+          { id: 4, title: "花畑の風景", user_name: "自然愛好家", comments_count: 4, tags: ["花", "自然"], comment_sentiments: {positive: 3, strong: 1, unique: 0, gentle: 2}, is_current_user: false, image_url: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400&h=400&fit=crop&crop=center" },
+          { id: 5, title: "山の絶景", user_name: "登山写真家", comments_count: 5, tags: ["山", "風景"], comment_sentiments: {positive: 4, strong: 0, unique: 1, gentle: 3}, is_current_user: false, image_url: "https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=400&h=400&fit=crop&crop=center" },
+          { id: 6, title: "海辺の夕日", user_name: "海写真家", comments_count: 1, tags: ["海", "夕日"], comment_sentiments: {positive: 1, strong: 2, unique: 2, gentle: 0}, is_current_user: false, image_url: "https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=400&h=400&fit=crop&crop=center" },
+          { id: 7, title: "森の小道", user_name: "森林写真家", comments_count: 3, tags: ["森", "自然"], comment_sentiments: {positive: 2, strong: 0, unique: 1, gentle: 2}, is_current_user: false, image_url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=400&fit=crop&crop=center" },
+          { id: 8, title: "桜並木", user_name: "春写真家", comments_count: 6, tags: ["桜", "春"], comment_sentiments: {positive: 5, strong: 0, unique: 0, gentle: 4}, is_current_user: false, image_url: "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=400&h=400&fit=crop&crop=center" }
+        ];
+        this.renderNetworkGraph(dummyPosts);
+        return;
+      }
+      
+      this.renderNetworkGraph(data.posts);
+    } catch (error) {
+      console.error('マップデータの取得に失敗しました:', error);
+    }
+  }
+
+  renderNetworkGraph(posts) {
+    console.log('Starting renderNetworkGraph with posts:', posts);
+    
+    const container = d3.select("#network-map");
+    if (container.empty()) {
+      console.error('Container #network-map not found for D3');
+      return;
+    }
+    
+    container.selectAll("*").remove();
+
+    const width = container.node().offsetWidth || 800;
+    const height = container.node().offsetHeight || 600;
+    
+    // 高さが小さすぎる場合は強制的に600pxにする
+    const actualHeight = height < 100 ? 600 : height;
+    
+    console.log('Container dimensions:', width, height);
+    console.log('Container node:', container.node());
+
+    const svg = container.append("svg")
+      .attr("width", width)
+      .attr("height", actualHeight)
+      .style("background", "white");
+    
+    console.log('SVG created:', svg.node());
+
+    // シンプルなdefs（問題解決のため複雑な背景を一時削除）
+    const defs = svg.append("defs");
+
+    // ズーム機能を設定
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 4])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+      });
+
+    svg.call(zoom);
+
+    // グラフ要素のコンテナ
+    const g = svg.append("g");
+
+    // ノードとリンクデータの準備（画像がある投稿のみ）
+    console.log('All posts:', posts);
+    
+    if (!posts || posts.length === 0) {
+      console.error('No posts data available');
+      return;
+    }
+    
+    const nodes = posts
+      .map(post => ({
+        id: post.id,
+        title: post.title,
+        body: post.body,
+        userName: post.user_name,
+        userId: post.user_id,
+        isCurrentUser: post.is_current_user,
+        commentsCount: post.comments_count,
+        tags: post.tags,
+        imageUrl: post.image_url,
+        sentiments: post.comment_sentiments,
+        radius: this.calculateNodeRadius(post.comments_count)
+      }));
+
+    // 初期位置を設定
+    nodes.forEach((node, i) => {
+      node.x = width / 2 + (Math.random() - 0.5) * 100;
+      node.y = height / 2 + (Math.random() - 0.5) * 100;
+    });
+
+    console.log('Nodes created:', nodes.length);
+    console.log('Node details:', nodes);
+    
+    if (nodes.length === 0) {
+      console.error('No nodes to display!');
+      return;
+    }
+    
+    const links = this.calculateSimilarityLinks(nodes);
+    console.log('Links created:', links.length);
+    
+    // クラスタを検出
+    const clusters = this.detectClusters(nodes, links);
+    console.log('Clusters detected:', clusters);
+
+    // 力学シミュレーションの設定
+    const simulation = d3.forceSimulation(nodes)
+      .force("link", d3.forceLink(links).id(d => d.id).distance(d => this.calculateLinkDistance(d.similarity)))
+      .force("charge", d3.forceManyBody().strength(-100))
+      .force("center", d3.forceCenter(width / 2, actualHeight / 2))
+      .force("collision", d3.forceCollide().radius(d => d.radius + 10))
+      .force("x", d3.forceX(width / 2).strength(0.05))
+      .force("y", d3.forceY(actualHeight / 2).strength(0.05));
+
+    // クラスタエリアの描画（ノードより先に描画）
+    const clusterAreas = g.append("g").attr("class", "cluster-areas");
+    
+    setTimeout(() => {
+      this.drawClusterAreas(clusterAreas, clusters, nodes);
+    }, 2000);
+
+    // オシャレなリンクスタイル
+    const link = g.append("g")
+      .selectAll("line")
+      .data(links)
+      .enter().append("line")
+      .attr("stroke", d => this.getLinkColor(d.similarity))
+      .attr("stroke-opacity", d => 0.15 + (d.similarity * 0.25))
+      .attr("stroke-width", d => Math.max(0.5, d.similarity * 2))
+      .attr("stroke-linecap", "round")
+      .on("mouseover", (event, d) => {
+        d3.select(event.target)
+          .transition().duration(200)
+          .attr("stroke-opacity", 0.8)
+          .attr("stroke-width", d.similarity * 5);
+        this.showLinkDetails(event, d);
+      })
+      .on("mouseout", (event, d) => {
+        d3.select(event.target)
+          .transition().duration(200)
+          .attr("stroke-opacity", 0.15 + (d.similarity * 0.25))
+          .attr("stroke-width", Math.max(0.5, d.similarity * 2));
+        this.hideLinkDetails();
+      });
+
+    // ノードの描画
+    const nodeGroup = g.append("g")
+      .selectAll("g")
+      .data(nodes)
+      .enter().append("g")
+      .attr("cursor", "pointer");
+
+    // オシャレなノードスタイル
+    const node = nodeGroup.append("circle")
+      .attr("r", d => {
+        console.log(`Node ${d.id} radius: ${d.radius}`);
+        return d.radius;
+      })
+      .attr("fill", d => d.isCurrentUser ? "#ef4444" : "#3b82f6")
+      .attr("stroke", "#ffffff")
+      .attr("stroke-width", 3)
+      .style("filter", "drop-shadow(0px 2px 4px rgba(0,0,0,0.2))");
+
+    console.log('Node circles created:', node.size());
+
+    // 画像がある場合のサムネイル
+    const imageNodes = nodeGroup.filter(d => d.imageUrl);
+    
+    // 画像用のclipPathを定義（既存のdefsを使用）
+    imageNodes.each(function(d) {
+      defs.append("clipPath")
+        .attr("id", `clip-${d.id}`)
+        .append("circle")
+        .attr("r", d.radius - 3)
+        .attr("cx", 0)
+        .attr("cy", 0);
+    });
+
+    // 画像を追加
+    imageNodes.append("image")
+      .attr("href", d => d.imageUrl)
+      .attr("x", d => -(d.radius - 3))
+      .attr("y", d => -(d.radius - 3))
+      .attr("width", d => (d.radius - 3) * 2)
+      .attr("height", d => (d.radius - 3) * 2)
+      .attr("clip-path", d => `url(#clip-${d.id})`)
+      .attr("opacity", 1);
+
+    // ノードラベルは非表示（ホバー時のみ表示）
+
+    // ツールチップとクリックイベント
+    nodeGroup.on("click", (event, d) => {
+      this.showPostDetails(d);
+    });
+
+    // マウスホバーでタイトルを表示
+    nodeGroup.on("mouseover", (event, d) => {
+      this.showNodeTooltip(event, d);
+    }).on("mouseout", () => {
+      this.hideNodeTooltip();
+    });
+
+    // シミュレーション更新
+    simulation.on("tick", () => {
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+
+      nodeGroup
+        .attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+  }
+
+  calculateNodeRadius(commentsCount) {
+    return Math.max(18, Math.min(35, 18 + commentsCount * 3));
+  }
+
+  calculateSimilarityLinks(nodes) {
+    const links = [];
+    const threshold = 0.3; // 閾値を0.01から0.3に大幅に上げて網目を減らす
+
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const similarity = this.calculateSimilarity(nodes[i], nodes[j]);
+        if (similarity > threshold) {
+          links.push({
+            source: nodes[i].id,
+            target: nodes[j].id,
+            similarity: similarity
+          });
+        }
+      }
+    }
+
+    return links;
+  }
+
+  calculateSimilarity(node1, node2) {
+    let similarity = 0;
+    let factors = 0;
+
+    // タグの類似度（重みを増加）
+    const commonTags = node1.tags.filter(tag => node2.tags.includes(tag));
+    const totalTags = new Set([...node1.tags, ...node2.tags]).size;
+    if (totalTags > 0) {
+      similarity += (commonTags.length / totalTags) * 0.5;
+      factors += 0.5;
+    }
+
+    // タグのカテゴリー類似度（新規追加）
+    const natureTags = ['自然', '風景', '山', '海', '森', '花', '夕焼け', '夕日'];
+    const urbanTags = ['都市', '夜景', '建物', '街'];
+    const seasonTags = ['春', '夏', '秋', '冬', '桜'];
+    
+    const isNature1 = node1.tags.some(tag => natureTags.includes(tag));
+    const isNature2 = node2.tags.some(tag => natureTags.includes(tag));
+    const isUrban1 = node1.tags.some(tag => urbanTags.includes(tag));
+    const isUrban2 = node2.tags.some(tag => urbanTags.includes(tag));
+    const isSeason1 = node1.tags.some(tag => seasonTags.includes(tag));
+    const isSeason2 = node2.tags.some(tag => seasonTags.includes(tag));
+    
+    if ((isNature1 && isNature2) || (isUrban1 && isUrban2) || (isSeason1 && isSeason2)) {
+      similarity += 0.3;
+      factors += 0.3;
+    }
+
+    // センチメントの類似度
+    const sentiments1 = node1.sentiments;
+    const sentiments2 = node2.sentiments;
+    let sentimentSimilarity = 0;
+    let sentimentFactors = 0;
+
+    ['positive', 'strong', 'unique', 'gentle'].forEach(sentiment => {
+      const score1 = sentiments1[sentiment] || 0;
+      const score2 = sentiments2[sentiment] || 0;
+      if (score1 > 0 || score2 > 0) {
+        const maxScore = Math.max(score1, score2, 1);
+        sentimentSimilarity += 1 - Math.abs(score1 - score2) / maxScore;
+        sentimentFactors += 1;
+      }
+    });
+
+    if (sentimentFactors > 0) {
+      similarity += (sentimentSimilarity / sentimentFactors) * 0.2;
+      factors += 0.2;
+    }
+
+    // 基本的な接続保証（最低限の類似度）
+    if (factors === 0) {
+      similarity = 0.02;
+      factors = 1;
+    }
+
+    return factors > 0 ? similarity / factors : 0.02;
+  }
+
+  calculateLinkDistance(similarity) {
+    return 80 - (similarity * 40);
+  }
+
+  getLinkColor(similarity) {
+    // より美しいグラデーションカラー
+    if (similarity > 0.7) return "#8b5cf6"; // 紫
+    if (similarity > 0.5) return "#3b82f6"; // 青
+    if (similarity > 0.3) return "#06b6d4"; // シアン
+    if (similarity > 0.1) return "#10b981"; // 緑
+    return "#64748b"; // グレー
+  }
+
+  getDominantSentimentColor(sentiments) {
+    const colors = {
+      positive: "#10b981",
+      strong: "#ef4444", 
+      unique: "#8b5cf6",
+      gentle: "#3b82f6"
+    };
+
+    let maxSentiment = 'positive';
+    let maxCount = sentiments.positive || 0;
+
+    Object.entries(sentiments).forEach(([sentiment, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        maxSentiment = sentiment;
+      }
+    });
+
+    return colors[maxSentiment] || colors.positive;
+  }
+
+  detectClusters(nodes, links) {
+    // 簡単なクラスタリング: 接続されたノードをグループ化
+    const clusters = [];
+    const visited = new Set();
+    
+    nodes.forEach(node => {
+      if (!visited.has(node.id)) {
+        const cluster = this.findConnectedNodes(node, nodes, links, visited);
+        if (cluster.length > 1) {
+          clusters.push({
+            id: clusters.length,
+            nodes: cluster,
+            commonTags: this.findCommonTags(cluster),
+            dominantSentiment: this.findDominantSentiment(cluster)
+          });
+        }
+      }
+    });
+    
+    return clusters;
+  }
+
+  findConnectedNodes(startNode, allNodes, links, visited) {
+    const cluster = [startNode];
+    const queue = [startNode];
+    visited.add(startNode.id);
+    
+    while (queue.length > 0) {
+      const currentNode = queue.shift();
+      
+      links.forEach(link => {
+        let connectedNode = null;
+        if (link.source.id === currentNode.id) {
+          connectedNode = allNodes.find(n => n.id === link.target.id);
+        } else if (link.target.id === currentNode.id) {
+          connectedNode = allNodes.find(n => n.id === link.source.id);
+        }
+        
+        if (connectedNode && !visited.has(connectedNode.id)) {
+          visited.add(connectedNode.id);
+          cluster.push(connectedNode);
+          queue.push(connectedNode);
+        }
+      });
+    }
+    
+    return cluster;
+  }
+
+  findCommonTags(nodes) {
+    const tagCounts = {};
+    nodes.forEach(node => {
+      node.tags.forEach(tag => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+    });
+    
+    return Object.entries(tagCounts)
+      .filter(([_, count]) => count > 1)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([tag, _]) => tag);
+  }
+
+  findDominantSentiment(nodes) {
+    const sentimentTotals = { positive: 0, strong: 0, unique: 0, gentle: 0 };
+    
+    nodes.forEach(node => {
+      Object.entries(node.sentiments).forEach(([sentiment, count]) => {
+        sentimentTotals[sentiment] += count;
+      });
+    });
+    
+    return Object.entries(sentimentTotals)
+      .sort((a, b) => b[1] - a[1])
+      .filter(([_, count]) => count > 0)
+      .slice(0, 2)
+      .map(([sentiment, _]) => {
+        const labels = {
+          positive: 'ポジティブ',
+          strong: '力強い',
+          unique: '独特',
+          gentle: 'やさしい'
+        };
+        return labels[sentiment];
+      });
+  }
+
+  drawClusterAreas(container, clusters, nodes) {
+    clusters.forEach(cluster => {
+      const positions = cluster.nodes.map(node => ({ x: node.x, y: node.y }));
+      const hull = d3.polygonHull(positions);
+      
+      if (hull && hull.length > 2) {
+        const line = d3.line()
+          .x(d => d[0])
+          .y(d => d[1])
+          .curve(d3.curveBasisClosed);
+
+        // エリアを少し広げる
+        const expandedHull = this.expandHull(hull, 30);
+
+        container.append("path")
+          .datum(expandedHull)
+          .attr("d", line)
+          .attr("fill", "rgba(99, 102, 241, 0.1)")
+          .attr("stroke", "rgba(99, 102, 241, 0.3)")
+          .attr("stroke-width", 2)
+          .attr("stroke-dasharray", "5,5");
+
+        // クラスタラベル
+        const centroid = d3.polygonCentroid(hull);
+        const labelText = this.getClusterLabel(cluster);
+        
+        container.append("text")
+          .attr("x", centroid[0])
+          .attr("y", centroid[1] - 35)
+          .attr("text-anchor", "middle")
+          .attr("font-size", "12px")
+          .attr("font-weight", "bold")
+          .attr("fill", "rgba(99, 102, 241, 0.8)")
+          .text(labelText);
+      }
+    });
+  }
+
+  expandHull(hull, padding) {
+    const centroid = d3.polygonCentroid(hull);
+    return hull.map(point => {
+      const dx = point[0] - centroid[0];
+      const dy = point[1] - centroid[1];
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const factor = (distance + padding) / distance;
+      return [
+        centroid[0] + dx * factor,
+        centroid[1] + dy * factor
+      ];
+    });
+  }
+
+  getClusterLabel(cluster) {
+    const parts = [];
+    
+    if (cluster.commonTags.length > 0) {
+      parts.push(cluster.commonTags.join(' × '));
+    }
+    
+    if (cluster.dominantSentiment.length > 0) {
+      parts.push(`${cluster.dominantSentiment.join(' × ')}な作品`);
+    }
+    
+    return parts.length > 0 ? parts.join(' | ') : `${cluster.nodes.length}つの作品グループ`;
+  }
+
+  showLinkDetails(event, linkData) {
+    const tooltip = d3.select("body")
+      .append("div")
+      .attr("class", "link-tooltip")
+      .style("position", "absolute")
+      .style("background", "rgba(0, 0, 0, 0.8)")
+      .style("color", "white")
+      .style("padding", "8px")
+      .style("border-radius", "4px")
+      .style("font-size", "12px")
+      .style("pointer-events", "none")
+      .style("z-index", "1000");
+
+    const sourceNode = linkData.source;
+    const targetNode = linkData.target;
+    const reason = this.getLinkReason(sourceNode, targetNode);
+    
+    tooltip.html(`
+      <strong>接続理由</strong><br>
+      ${sourceNode.title} ↔ ${targetNode.title}<br>
+      ${reason}
+    `);
+
+    tooltip
+      .style("left", (event.pageX + 10) + "px")
+      .style("top", (event.pageY - 10) + "px");
+  }
+
+  hideLinkDetails() {
+    d3.selectAll(".link-tooltip").remove();
+  }
+
+  getLinkReason(node1, node2) {
+    const reasons = [];
+    
+    // 共通タグをチェック
+    const commonTags = node1.tags.filter(tag => node2.tags.includes(tag));
+    if (commonTags.length > 0) {
+      reasons.push(`共通タグ: ${commonTags.join(', ')}`);
+    }
+    
+    // 類似したセンチメントをチェック
+    const sentiments1 = node1.sentiments;
+    const sentiments2 = node2.sentiments;
+    const commonSentiments = [];
+    
+    Object.keys(sentiments1).forEach(sentiment => {
+      if (sentiments1[sentiment] > 0 && sentiments2[sentiment] > 0) {
+        const labels = {
+          positive: 'ポジティブ',
+          strong: '力強い', 
+          unique: '独特',
+          gentle: 'やさしい'
+        };
+        commonSentiments.push(labels[sentiment]);
+      }
+    });
+    
+    if (commonSentiments.length > 0) {
+      reasons.push(`共通の雰囲気: ${commonSentiments.join(', ')}`);
+    }
+    
+    return reasons.length > 0 ? reasons.join('<br>') : '類似した特徴';
+  }
+
+  showNodeTooltip(event, nodeData) {
+    const tooltip = d3.select("body")
+      .append("div")
+      .attr("class", "node-tooltip")
+      .style("position", "absolute")
+      .style("background", "rgba(0, 0, 0, 0.9)")
+      .style("color", "white")
+      .style("padding", "8px 12px")
+      .style("border-radius", "6px")
+      .style("font-size", "14px")
+      .style("font-weight", "bold")
+      .style("pointer-events", "none")
+      .style("z-index", "1000")
+      .style("box-shadow", "0 4px 6px rgba(0, 0, 0, 0.1)");
+
+    tooltip.html(nodeData.title);
+
+    tooltip
+      .style("left", (event.pageX + 10) + "px")
+      .style("top", (event.pageY - 10) + "px");
+  }
+
+  hideNodeTooltip() {
+    d3.selectAll(".node-tooltip").remove();
+  }
+
+  showPostDetails(post) {
+    const detailsDiv = document.getElementById('post-details');
+    const contentDiv = document.getElementById('post-content');
+    
+    const sentimentText = Object.entries(post.sentiments)
+      .filter(([_, count]) => count > 0)
+      .map(([sentiment, count]) => {
+        const labels = {
+          positive: 'ポジティブ',
+          strong: '力強い',
+          unique: '独特',
+          gentle: 'やさしい'
+        };
+        return `${labels[sentiment]}: ${count}`;
+      })
+      .join(', ');
+
+    contentDiv.innerHTML = `
+      <div class="space-y-2">
+        <h5 class="font-medium">${post.title}</h5>
+        <p class="text-sm text-gray-600">作者: ${post.userName}</p>
+        <p class="text-sm text-gray-600">コメント数: ${post.commentsCount}</p>
+        <p class="text-sm text-gray-600">タグ: ${post.tags.join(', ') || 'なし'}</p>
+        <p class="text-sm text-gray-600">コメント傾向: ${sentimentText || 'なし'}</p>
+        ${post.body ? `<p class="text-sm mt-2">${post.body.substring(0, 100)}${post.body.length > 100 ? '...' : ''}</p>` : ''}
+      </div>
+    `;
+    
+    detailsDiv.classList.remove('hidden');
+  }
+
+  drag(simulation) {
+    function dragstarted(event) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      event.subject.fx = event.subject.x;
+      event.subject.fy = event.subject.y;
+    }
+
+    function dragged(event) {
+      event.subject.fx = event.x;
+      event.subject.fy = event.y;
+    }
+
+    function dragended(event) {
+      if (!event.active) simulation.alphaTarget(0);
+      event.subject.fx = null;
+      event.subject.fy = null;
+    }
+
+    return d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended);
+  }
+}
+
+// ページ読み込み後に初期化
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM loaded, initializing PostsMapController...');
+  console.log('D3 version:', d3.version);
+  
+  const container = document.getElementById('network-map');
+  if (!container) {
+    console.error('Container #network-map not found');
+    return;
+  }
+  
+  console.log('Container found, creating map controller...');
+  new PostsMapController();
+});
+</script>

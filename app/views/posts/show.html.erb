@@ -51,10 +51,10 @@
 
         <!-- 画像表示エリア -->
         <% if @post.images.attached? %>
-          <div class="space-y-4">
+          <div class="space-y-4 flex flex-col items-center">
             <% @post.images.each_with_index do |image, index| %>
               <div class="relative" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
-                <%= image_tag image, class: "w-full rounded-lg cursor-pointer shadow", data: { "image-comments-target": "image" } %>
+                <%= image_tag image, class: "w-full max-w-md rounded-lg cursor-pointer shadow mx-auto", data: { "image-comments-target": "image" } %>
                 
                 <!-- 画像上のコメントマーカー表示エリア -->
                 <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>

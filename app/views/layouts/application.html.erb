@@ -1230,17 +1230,66 @@
             
             vocabsToShow.forEach(vocab => {
               const vocabButton = document.createElement('button')
+              vocabButton.type = 'button' // typeを明示的に設定
               vocabButton.className = 'px-3 py-2 bg-white border-2 border-emerald-300 rounded-full text-sm font-medium text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 transition-all transform hover:scale-105 cursor-pointer'
               vocabButton.textContent = vocab
-              vocabButton.addEventListener('click', () => this.insertVocabulary(vocab))
+              
+              // より確実なイベントリスナー設定
+              vocabButton.addEventListener('click', (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                console.log('Vocabulary button clicked:', vocab)
+                this.insertVocabulary(vocab)
+              })
+              
               this.vocabulariesTarget.appendChild(vocabButton)
             })
+            
+            console.log('Rendered vocabularies:', vocabsToShow.length)
+          } else {
+            console.error('Vocabularies target not found!')
           }
         }
 
         insertVocabulary(vocabulary) {
-          // コメントフォームに語彙を挿入
-          const commentForm = document.querySelector('textarea[name="comment[body]"]')
+          console.log('insertVocabulary called with:', vocabulary)
+          
+          // メインのコメントフォームを優先して検索
+          let commentForm = document.querySelector('textarea[data-comment-form-target="textarea"]')
+          console.log('Found main comment form:', commentForm)
+          
+          if (!commentForm) {
+            // フォールバック：より大きなtextareaを探す
+            const allTextareas = document.querySelectorAll('textarea[name="comment[body]"]')
+            console.log('All comment textareas:', allTextareas)
+            
+            // 最も大きなtextarea（rows属性やclassで判定）を選択
+            let mainTextarea = null
+            let maxSize = 0
+            
+            allTextareas.forEach(textarea => {
+              const rows = parseInt(textarea.getAttribute('rows') || '1')
+              const isMainForm = textarea.classList.contains('w-full') || textarea.getAttribute('data-comment-form-target')
+              const size = isMainForm ? rows + 100 : rows // メインフォームに重み付け
+              
+              console.log('Textarea analysis:', {
+                element: textarea,
+                rows: rows,
+                isMainForm: isMainForm,
+                calculatedSize: size,
+                classes: textarea.className
+              })
+              
+              if (size > maxSize) {
+                maxSize = size
+                mainTextarea = textarea
+              }
+            })
+            
+            commentForm = mainTextarea
+            console.log('Selected textarea:', commentForm, 'with size:', maxSize)
+          }
+          
           if (commentForm) {
             const currentText = commentForm.value
             const cursorPos = commentForm.selectionStart || currentText.length
@@ -1256,8 +1305,17 @@
             // フォーカスを戻す
             commentForm.focus()
             
+            // inputイベントを発火してStimulusコントローラーに通知
+            commentForm.dispatchEvent(new Event('input', { bubbles: true }))
+            commentForm.dispatchEvent(new Event('change', { bubbles: true }))
+            
             // 成功エフェクト
             this.showInsertionFeedback(vocabulary)
+            console.log('Successfully inserted vocabulary into:', commentForm.className)
+          } else {
+            console.error('Comment form not found!')
+            // エラーフィードバック
+            this.showInsertionFeedback('エラー：メインコメント欄が見つかりません')
           }
         }
 

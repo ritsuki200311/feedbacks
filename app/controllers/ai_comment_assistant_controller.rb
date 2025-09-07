@@ -1,5 +1,6 @@
 class AiCommentAssistantController < ApplicationController
   before_action :authenticate_user!
+  skip_before_action :verify_authenticity_token, only: [:analyze_post]
 
   def analyze_post
     @post = Post.find(params[:post_id])
@@ -11,13 +12,15 @@ class AiCommentAssistantController < ApplicationController
       render json: {
         success: true,
         comment_examples: response[:comment_examples],
-        observation_points: response[:observation_points]
+        observation_points: response[:observation_points],
+        vocabularies: response[:vocabularies]
       }
     rescue => e
       Rails.logger.error "Gemini API Error: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
       render json: {
         success: false,
-        error: "申し訳ございませんが、AI分析中にエラーが発生しました。しばらく後にもう一度お試しください。"
+        error: "AI分析中にエラーが発生しました: #{e.message}"
       }, status: 500
     end
   end
@@ -36,7 +39,7 @@ class AiCommentAssistantController < ApplicationController
     project_id = ENV['GOOGLE_PROJECT_ID']
     
     if api_key.blank?
-      raise "Google Gemini API key is not configured"
+      raise "Google Gemini API key is not configured. Please set GOOGLE_GEMINI_API_KEY in your .env file."
     end
 
     # 画像がある場合はVision対応モデルを使用
@@ -155,7 +158,7 @@ class AiCommentAssistantController < ApplicationController
         - 印象的な部分や特徴的な要素
         - 技術的な評価点
 
-        以下の2つを提供してください：
+        以下の3つを提供してください：
 
         **1. コメント例（3つ）:**
         画像の内容を踏まえた具体的なコメント例を3つ生成してください。
@@ -165,7 +168,14 @@ class AiCommentAssistantController < ApplicationController
         - 技術的な観点も含める
         - 各コメントは2-3文程度
 
-        **2. 観察ポイント:**
+        **2. 語彙・表現（6-8個）:**
+        この画像を表現するのに適した語彙やキーワードを提示してください。
+        - 色彩、質感、雰囲気を表す言葉
+        - 芸術的・美的表現に使える語彙
+        - 感情や印象を表現する言葉
+        - 単語のみ（「静謐」「透明感」「ノスタルジー」など）
+
+        **3. 観察ポイント:**
         この画像投稿を分析する際の観察ポイントを提示してください。
         - 画像の構成要素（色彩、線、形、空間など）
         - 技法や表現手法
@@ -180,6 +190,14 @@ class AiCommentAssistantController < ApplicationController
         2. [具体的な画像要素に言及したコメント例2]
         3. [具体的な画像要素に言及したコメント例3]
 
+        【語彙・表現】
+        - [語彙1]
+        - [語彙2]
+        - [語彙3]
+        - [語彙4]
+        - [語彙5]
+        - [語彙6]
+
         【観察ポイント】
         - [ポイント1]
         - [ポイント2]
@@ -193,7 +211,7 @@ class AiCommentAssistantController < ApplicationController
       # 画像がない場合は従来のプロンプト
       text_prompt = <<~TEXT_PROMPT
 
-        以下の2つを提供してください：
+        以下の3つを提供してください：
 
         **1. コメント例（3つ）:**
         この投稿に対する適切なコメント例を3つ生成してください。
@@ -202,7 +220,14 @@ class AiCommentAssistantController < ApplicationController
         - 具体的な観点を含む
         - 各コメントは2-3文程度
 
-        **2. 観察ポイント:**
+        **2. 語彙・表現（6-8個）:**
+        この投稿の内容を表現するのに適した語彙やキーワードを提示してください。
+        - 内容のテーマに関連する表現
+        - 感情や印象を表現する言葉
+        - 建設的なフィードバックに使える語彙
+        - 単語のみ（「独創的」「丁寧」「情熱的」など）
+
+        **3. 観察ポイント:**
         この投稿を分析する際の観察ポイントを提示してください。
         - コンテンツの種類に応じた見方
         - 注目すべき要素
@@ -215,6 +240,14 @@ class AiCommentAssistantController < ApplicationController
         1. [コメント例1]
         2. [コメント例2]
         3. [コメント例3]
+
+        【語彙・表現】
+        - [語彙1]
+        - [語彙2]
+        - [語彙3]
+        - [語彙4]
+        - [語彙5]
+        - [語彙6]
 
         【観察ポイント】
         - [ポイント1]
@@ -243,8 +276,9 @@ class AiCommentAssistantController < ApplicationController
 
 
   def parse_gemini_response(content)
-    # レスポンスを解析してコメント例と観察ポイントを抽出
+    # レスポンスを解析してコメント例、語彙、観察ポイントを抽出
     comment_examples = []
+    vocabularies = []
     observation_points = []
     
     current_section = nil
@@ -255,6 +289,9 @@ class AiCommentAssistantController < ApplicationController
       
       if line.include?("【コメント例】") || line.include?("コメント例")
         current_section = :comments
+        next
+      elsif line.include?("【語彙・表現】") || line.include?("語彙・表現")
+        current_section = :vocabularies
         next
       elsif line.include?("【観察ポイント】") || line.include?("観察ポイント")
         current_section = :observations
@@ -267,6 +304,12 @@ class AiCommentAssistantController < ApplicationController
           comment_examples << match[1]
         elsif line.match(/^[・-]\s*(.+)$/) && comment_examples.empty?
           comment_examples << $1
+        end
+      when :vocabularies
+        if match = line.match(/^[・-]\s*(.+)$/)
+          vocabularies << match[1]
+        elsif match = line.match(/^\d+\.\s*(.+)$/)
+          vocabularies << match[1]
         end
       when :observations
         if match = line.match(/^[・-]\s*(.+)$/)
@@ -297,6 +340,7 @@ class AiCommentAssistantController < ApplicationController
     
     {
       comment_examples: comment_examples,
+      vocabularies: vocabularies,
       observation_points: observation_points
     }
   end

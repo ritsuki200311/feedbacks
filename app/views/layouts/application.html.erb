@@ -1087,12 +1087,12 @@
         }
       }
       
-      // AI Sidebar Controller
+      // AI Sidebar Controller (updated)
       class AiSidebarController extends Controller {
         static targets = [
           "toggleButton", "toggleIcon", "toggleText", 
           "initialMessage", "loading", "aiContent",
-          "commentSuggestions", "summary"
+          "vocabularies", "summary"
         ]
         static values = { postId: Number }
 
@@ -1144,7 +1144,7 @@
             
           } catch (error) {
             console.error('AI loading error:', error)
-            this.showError()
+            this.showError(error.message)
           } finally {
             this.toggleButtonTarget.disabled = false
           }
@@ -1167,156 +1167,147 @@
 
         async loadAIContent() {
           try {
-            // 実際のAI分析APIを呼び出し
+            console.log('Starting AI analysis for post:', this.postIdValue)
+            
             const response = await fetch(`/posts/${this.postIdValue}/ai_comment_assistant/analyze`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
-              }
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+              },
+              body: JSON.stringify({})
             })
-            
-            const data = await response.json()
-            
-            if (data.success) {
-              // AI分析結果を表示
-              this.renderSuggestions(data.comment_examples)
-              
-              // 観察ポイントを要約として表示
-              if (this.hasSummaryTarget && data.observation_points) {
-                const summary = data.observation_points.join(' / ')
-                this.summaryTarget.textContent = `観察ポイント: ${summary}`
-              }
-            } else {
-              // エラー時はフォールバック
-              this.renderFallbackContent()
+
+            console.log('Response status:', response.status)
+
+            if (!response.ok) {
+              const errorText = await response.text()
+              console.error('API error response:', errorText)
+              throw new Error(`AI API エラー (${response.status}): ${errorText}`)
             }
-          } catch (error) {
-            console.error('AI analysis error:', error)
-            this.renderFallbackContent()
-          }
-        }
 
-        renderFallbackContent() {
-          // フォールバック用のコンテンツ
-          const fallbackSuggestions = [
-            "この投稿の表現力が素晴らしいですね。特に印象的な部分があります。",
-            "とても興味深い内容です。どのような思いで制作されたのでしょうか？",
-            "技術的な工夫が感じられる投稿ですね。今後の作品も楽しみです。"
-          ]
-          
-          this.renderSuggestions(fallbackSuggestions)
-          
-          if (this.hasSummaryTarget) {
-            this.summaryTarget.textContent = "投稿の内容や技法に注目して、建設的なコメントを心がけましょう。"
-          }
-        }
-
-        renderSuggestions(suggestions) {
-          this.commentSuggestionsTarget.innerHTML = ''
-          
-          suggestions.forEach((suggestion, index) => {
-            const suggestionElement = document.createElement('div')
-            suggestionElement.className = 'p-2 bg-purple-50 rounded border cursor-pointer hover:bg-purple-100 transition-colors text-sm mb-2'
-            suggestionElement.innerHTML = `
-              <p class="text-gray-700 mb-2">${suggestion}</p>
-              <button class="text-xs text-purple-600 hover:text-purple-800 font-medium" 
-                      data-action="click->ai-sidebar#applySuggestion" 
-                      data-suggestion="${suggestion}">
-                このコメントを使用
-              </button>
-            `
-            this.commentSuggestionsTarget.appendChild(suggestionElement)
-          })
-        }
-
-        simulateAIProcessing() {
-          // AI処理のシミュレーション
-          return new Promise(resolve => {
-            setTimeout(resolve, 1500)
-          })
-        }
-
-        showError() {
-          this.loadingTarget.classList.add('hidden')
-          this.initialMessageTarget.classList.remove('hidden')
-          
-          const errorMessage = document.createElement('div')
-          errorMessage.className = 'text-center py-4 text-red-600 text-sm'
-          errorMessage.textContent = 'AI機能の読み込みに失敗しました。再試行してください。'
-          
-          this.initialMessageTarget.appendChild(errorMessage)
-          
-          setTimeout(() => {
-            errorMessage.remove()
-          }, 5000)
-        }
-
-        applySuggestion(event) {
-          const suggestion = event.currentTarget.dataset.suggestion
-          this.insertIntoCommentField(suggestion)
-        }
-
-        applyTone(event) {
-          const tone = event.currentTarget.dataset.tone
-          const currentText = this.getCurrentCommentText()
-          
-          let tonePrefix = ""
-          switch(tone) {
-            case "褒める":
-              tonePrefix = "素晴らしい！"
-              break
-            case "質問":
-              tonePrefix = "興味深いですね。"
-              break
-            case "建設的":
-              tonePrefix = "改善案として、"
-              break
-            case "励まし":
-              tonePrefix = "頑張っていますね！"
-              break
-          }
-          
-          const newText = currentText ? `${tonePrefix} ${currentText}` : tonePrefix
-          this.insertIntoCommentField(newText)
-        }
-
-        insertIntoCommentField(text) {
-          // メインのコメント入力フィールドを探す
-          const commentField = document.querySelector('textarea[name="comment[body]"]')
-          if (commentField) {
-            commentField.value = text
-            commentField.focus()
-            // 入力イベントを発火してバリデーション等をトリガー
-            commentField.dispatchEvent(new Event('input', { bubbles: true }))
+            const data = await response.json()
+            console.log('AI analysis result:', data)
             
-            // 成功のフィードバック
-            this.showAppliedFeedback()
+            if (!data.success) {
+              throw new Error(data.error || 'AI分析に失敗しました')
+            }
+            
+            // 語彙・表現を表示
+            this.renderVocabularies(data.vocabularies || [])
+            
+            // 観察ポイントを表示
+            if (this.hasSummaryTarget) {
+              this.summaryTarget.innerHTML = ''
+              data.observation_points.slice(0, 4).forEach((point, index) => {
+                const pointDiv = document.createElement('div')
+                pointDiv.className = 'flex items-start gap-3 p-3 bg-white rounded-lg border border-purple-200 shadow-sm'
+                pointDiv.innerHTML = `
+                  <div class="w-6 h-6 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span class="text-white text-xs font-bold">${index + 1}</span>
+                  </div>
+                  <p class="text-sm text-gray-700 leading-relaxed font-medium">${point}</p>
+                `
+                this.summaryTarget.appendChild(pointDiv)
+              })
+            }
+            console.log('AI content rendered successfully')
+          } catch (error) {
+            console.error('Error loading AI content:', error)
+            this.showError(error.message)
           }
         }
 
-        getCurrentCommentText() {
-          const commentField = document.querySelector('textarea[name="comment[body]"]')
-          return commentField ? commentField.value : ""
+        renderVocabularies(vocabularies) {
+          if (this.hasVocabulariesTarget) {
+            this.vocabulariesTarget.innerHTML = ''
+            
+            // フォールバック語彙がない場合のデフォルト
+            const vocabsToShow = vocabularies.length > 0 ? vocabularies.slice(0, 8) : [
+              '美しい', '印象的', '繊細', '力強い', 
+              '調和', '表現力', '創造性', '独創的'
+            ]
+            
+            vocabsToShow.forEach(vocab => {
+              const vocabButton = document.createElement('button')
+              vocabButton.className = 'px-3 py-2 bg-white border-2 border-emerald-300 rounded-full text-sm font-medium text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 transition-all transform hover:scale-105 cursor-pointer'
+              vocabButton.textContent = vocab
+              vocabButton.addEventListener('click', () => this.insertVocabulary(vocab))
+              this.vocabulariesTarget.appendChild(vocabButton)
+            })
+          }
         }
 
-        showAppliedFeedback() {
-          // 一時的なフィードバック表示
+        insertVocabulary(vocabulary) {
+          // コメントフォームに語彙を挿入
+          const commentForm = document.querySelector('textarea[name="comment[body]"]')
+          if (commentForm) {
+            const currentText = commentForm.value
+            const cursorPos = commentForm.selectionStart || currentText.length
+            
+            // カーソル位置に語彙を挿入
+            const newText = currentText.slice(0, cursorPos) + vocabulary + currentText.slice(cursorPos)
+            commentForm.value = newText
+            
+            // カーソル位置を調整
+            const newCursorPos = cursorPos + vocabulary.length
+            commentForm.setSelectionRange(newCursorPos, newCursorPos)
+            
+            // フォーカスを戻す
+            commentForm.focus()
+            
+            // 成功エフェクト
+            this.showInsertionFeedback(vocabulary)
+          }
+        }
+
+        showInsertionFeedback(vocabulary) {
           const feedback = document.createElement('div')
-          feedback.className = 'fixed top-4 right-4 bg-purple-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300'
-          feedback.textContent = '提案を適用しました！'
+          feedback.className = 'fixed top-4 right-4 bg-emerald-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform scale-100 opacity-100 transition-all'
+          feedback.textContent = `「${vocabulary}」を挿入しました`
           document.body.appendChild(feedback)
           
-          // アニメーション
           setTimeout(() => {
-            feedback.style.transform = 'translateY(-10px)'
-            feedback.style.opacity = '0'
+            feedback.classList.add('scale-95', 'opacity-0')
+            setTimeout(() => feedback.remove(), 200)
           }, 2000)
+        }
+
+        showError(message = 'AI分析でエラーが発生しました') {
+          // ローディングを隠す
+          this.loadingTarget.classList.add('hidden')
           
-          setTimeout(() => {
-            feedback.remove()
-          }, 2500)
+          // エラーメッセージを表示
+          this.aiContentTarget.classList.remove('hidden')
+          this.aiContentTarget.innerHTML = `
+            <div class="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                  <span class="text-white text-xs">⚠️</span>
+                </div>
+                <h3 class="text-sm font-bold text-red-800">エラー</h3>
+              </div>
+              <p class="text-sm text-red-700 mb-3">${message}</p>
+              <button 
+                type="button" 
+                data-action="click->ai-sidebar#retryAI"
+                class="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors">
+                再試行
+              </button>
+            </div>
+          `
+          
+          // ボタンの状態を更新
+          this.toggleIconTarget.textContent = '⚠️'
+          this.toggleTextTarget.textContent = 'エラー - 再試行'
+          this.toggleButtonTarget.classList.remove('bg-purple-600', 'hover:bg-purple-700')
+          this.toggleButtonTarget.classList.add('bg-red-600', 'hover:bg-red-700')
+        }
+
+        retryAI() {
+          // AIを再試行
+          this.aiLoaded = false
+          this.startAI()
         }
       }
 

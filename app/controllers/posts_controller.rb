@@ -9,7 +9,7 @@ class PostsController < ApplicationController
   end
 
   def create
-    @post = Post.new(post_params)
+    @post = Post.new(post_params.except(:files))
     @post.user = current_user
     
     # ボタンのcommitパラメータによって動作を変える
@@ -22,6 +22,16 @@ class PostsController < ApplicationController
     respond_to do |format|
       if @post.valid?
         @post.save
+        
+        # filesパラメータを適切なアタッチメントに振り分け
+        if params[:post][:files].present?
+          Rails.logger.debug "Files parameter: #{params[:post][:files].inspect}"
+          Rails.logger.debug "Files parameter class: #{params[:post][:files].class}"
+          params[:post][:files].each_with_index do |file, index|
+            Rails.logger.debug "File #{index}: #{file.inspect} (class: #{file.class})"
+          end
+          attach_files_to_post(@post, params[:post][:files])
+        end
         
         if params[:commit] == "投稿する"
           format.html { redirect_to root_path, notice: "投稿を公開しました。" }
@@ -286,6 +296,25 @@ class PostsController < ApplicationController
 
   private
 
+  def attach_files_to_post(post, files)
+    files.each do |file|
+      # ファイルオブジェクトかどうかを確認
+      next unless file.respond_to?(:content_type) && file.respond_to?(:original_filename)
+      
+      Rails.logger.debug "Attaching file: #{file.original_filename} (#{file.content_type})"
+      
+      case file.content_type
+      when /^image\//
+        post.images.attach(file)
+      when /^video\//
+        post.videos.attach(file)
+      when /^audio\//
+        post.audios.attach(file)
+      else
+        Rails.logger.warn "Unknown file type: #{file.content_type} for file #{file.original_filename}"
+      end
+    end
+  end
 
   def extract_tags(tag_string)
     return [] if tag_string.blank?
@@ -383,7 +412,7 @@ class PostsController < ApplicationController
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :community_id, images: [], videos: [], audios: [])
+    params.require(:post).permit(:title, :body, :community_id, images: [], videos: [], audios: [], files: [])
   end
 
 

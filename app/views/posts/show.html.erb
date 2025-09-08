@@ -759,76 +759,6 @@
   <div class="bg-white rounded-2xl shadow-lg p-6">
     <h3 class="text-xl font-bold mb-6 text-gray-900">評価・コメント・フィードバック</h3>
     
-    <!-- 投票後のみ表示される評価コメント -->
-    <% if user_vote != 0 %>
-      <!-- プラス評価コメント -->
-      <% positive_votes = @post.votes.where(value: 1).where.not(comment: [nil, ""]) %>
-      <% if positive_votes.any? %>
-        <div class="mb-8">
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 5v14"/>
-                <path d="M5 12h14"/>
-              </svg>
-            </div>
-            <h4 class="text-lg font-semibold text-green-700">プラス評価のコメント (<%= positive_votes.count %>件)</h4>
-          </div>
-          <div class="space-y-3">
-            <% positive_votes.order(created_at: :desc).each do |vote| %>
-              <div class="bg-green-50 border-l-4 border-green-400 rounded-lg p-4">
-                <div class="flex items-center gap-2 mb-2">
-                  <span class="font-semibold text-green-800"><%= vote.user.name %></span>
-                  <span class="text-xs text-green-600"><%= time_ago_in_words(vote.created_at) %>前</span>
-                </div>
-                <p class="text-green-900"><%= vote.comment %></p>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-
-      <!-- マイナス評価コメント -->
-      <% negative_votes = @post.votes.where(value: -1).where.not(comment: [nil, ""]) %>
-      <% if negative_votes.any? %>
-        <div class="mb-8">
-          <div class="flex items-center gap-2 mb-4">
-            <div class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M5 12h14"/>
-              </svg>
-            </div>
-            <h4 class="text-lg font-semibold text-red-700">マイナス評価のコメント (<%= negative_votes.count %>件)</h4>
-          </div>
-          <div class="space-y-3">
-            <% negative_votes.order(created_at: :desc).each do |vote| %>
-              <div class="bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
-                <div class="flex items-center gap-2 mb-2">
-                  <span class="font-semibold text-red-800"><%= vote.user.name %></span>
-                  <span class="text-xs text-red-600"><%= time_ago_in_words(vote.created_at) %>前</span>
-                </div>
-                <p class="text-red-900"><%= vote.comment %></p>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-
-      
-    <% else %>
-      <!-- 未投票の場合の説明 -->
-      <div class="text-center py-8 text-gray-500 mb-8 border border-gray-200 rounded-lg bg-gray-50">
-        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-          </svg>
-        </div>
-        <h4 class="text-sm font-semibold text-gray-700 mb-2">評価後に表示されます</h4>
-        <p class="text-xs text-gray-500">
-          上の + または - ボタンから評価してください
-        </p>
-      </div>
-    <% end %>
 
     <!-- 通常のコメント一覧 -->
     <div class="mb-8">
@@ -840,21 +770,22 @@
         <span class="text-sm text-gray-500"><%= @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).count %>件</span>
       </div>
       
-      <div class="space-y-4 max-h-96 overflow-y-auto">
-        <% @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).order(:created_at).each do |comment| %>
-          <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4">
-            <div class="flex items-start justify-between mb-3">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                  <span class="text-sm font-medium text-gray-600">
-                    <%= (comment.user&.name || "匿名")[0] %>
-                  </span>
+      <% if user_can_view_comments?(current_user, @post) %>
+        <div class="space-y-4 max-h-96 overflow-y-auto">
+          <% @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).order(:created_at).each do |comment| %>
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                    <span class="text-sm font-medium text-gray-600">
+                      <%= (comment.user&.name || "匿名")[0] %>
+                    </span>
+                  </div>
+                  <div>
+                    <span class="font-medium text-gray-900"><%= comment.user&.name || "匿名" %></span>
+                    <span class="text-xs text-gray-500 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
+                  </div>
                 </div>
-                <div>
-                  <span class="font-medium text-gray-900"><%= comment.user&.name || "匿名" %></span>
-                  <span class="text-xs text-gray-500 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
-                </div>
-              </div>
               
               <!-- 投票ボタン -->
               <div class="flex items-center gap-2">
@@ -874,20 +805,34 @@
                 <% end %>
               </div>
             </div>
-            <p class="text-gray-700 leading-relaxed"><%= comment.body %></p>
-          </div>
-        <% end %>
-        
-        <% if @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).empty? %>
-          <div class="text-center py-8 text-gray-500">
-            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span class="text-xl">💬</span>
+              <p class="text-gray-700 leading-relaxed"><%= comment.body %></p>
             </div>
-            <p class="text-sm">まだコメントがありません</p>
-            <p class="text-xs text-gray-400">右のフォームからコメントを追加できます</p>
+          <% end %>
+          
+          <% if @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).empty? %>
+            <div class="text-center py-8 text-gray-500">
+              <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span class="text-xl">💬</span>
+              </div>
+              <p class="text-sm">まだコメントがありません</p>
+              <p class="text-xs text-gray-400">右のフォームからコメントを追加できます</p>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <!-- コメントが見れない場合の説明 -->
+        <div class="text-center py-8 text-gray-500 border border-gray-200 rounded-lg bg-gray-50">
+          <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
           </div>
-        <% end %>
-      </div>
+          <h4 class="text-sm font-semibold text-gray-700 mb-2">コメント参加後に表示されます</h4>
+          <p class="text-xs text-gray-500">
+            コメントを投稿するか、投票をするとコメント一覧が見れるようになります
+          </p>
+        </div>
+      <% end %>
     </div>
 
     <!-- 画像上のピンコメント一覧 -->
@@ -901,40 +846,55 @@
         <span class="text-sm text-blue-600"><%= image_comments.count %>件</span>
       </div>
       
-      <div class="space-y-4 max-h-96 overflow-y-auto" data-controller="compact-comments">
-        <% if image_comments.any? %>
-          <% image_comments.each_with_index do |comment, index| %>
-            <div class="bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer hover:bg-blue-100" 
-                 data-comment-id="<%= comment.id %>"
-                 data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
-              <div class="flex items-start justify-between mb-3">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                    <%= index + 1 %>
+      <% if user_can_view_comments?(current_user, @post) %>
+        <div class="space-y-4 max-h-96 overflow-y-auto" data-controller="compact-comments">
+          <% if image_comments.any? %>
+            <% image_comments.each_with_index do |comment, index| %>
+              <div class="bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer hover:bg-blue-100" 
+                   data-comment-id="<%= comment.id %>"
+                   data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                      <%= index + 1 %>
+                    </div>
+                    <div>
+                      <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
+                      <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
+                    </div>
                   </div>
-                  <div>
-                    <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
-                    <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
+                  
+                  <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
+                    画像上のコメント
                   </div>
                 </div>
-                
-                <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
-                  画像上のコメント
-                </div>
+                <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
               </div>
-              <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
+            <% end %>
+          <% else %>
+            <div class="text-center py-8 text-blue-500">
+              <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span class="text-xl">📍</span>
+              </div>
+              <p class="text-sm">画像上のピンコメントはありません</p>
+              <p class="text-xs text-blue-400">画像をクリックしてコメントを追加できます</p>
             </div>
           <% end %>
-        <% else %>
-          <div class="text-center py-8 text-blue-500">
-            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span class="text-xl">📍</span>
-            </div>
-            <p class="text-sm">画像上のピンコメントはありません</p>
-            <p class="text-xs text-blue-400">画像をクリックしてコメントを追加できます</p>
+        </div>
+      <% else %>
+        <!-- 画像コメントが見れない場合の説明 -->
+        <div class="text-center py-8 text-blue-500 border border-blue-200 rounded-lg bg-blue-50">
+          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
           </div>
-        <% end %>
-      </div>
+          <h4 class="text-sm font-semibold text-blue-700 mb-2">コメント参加後に表示されます</h4>
+          <p class="text-xs text-blue-500">
+            コメントを投稿するか、投票をするとピンコメント一覧が見れるようになります
+          </p>
+        </div>
+      <% end %>
     </div>
 
   </div>

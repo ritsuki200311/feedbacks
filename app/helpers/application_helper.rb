@@ -11,4 +11,14 @@ module ApplicationHelper
   def show_sensitive_info?
     Rails.env.development?
   end
+
+  def user_can_view_comments?(user, post)
+    return false unless user
+    return true if user == post.user
+    
+    has_voted = post.votes.exists?(user: user)
+    has_commented = post.comments.exists?(user: user)
+    
+    has_voted || has_commented
+  end
 end

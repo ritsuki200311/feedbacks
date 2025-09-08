@@ -4,7 +4,7 @@ export default class extends Controller {
   static targets = [
     "toggleButton", "toggleIcon", "toggleText", 
     "initialMessage", "loading", "aiContent",
-    "commentSuggestions", "summary"
+    "vocabularies", "summary"
   ]
   static values = { postId: Number }
 
@@ -56,7 +56,7 @@ export default class extends Controller {
       
     } catch (error) {
       console.error('AI loading error:', error)
-      this.showError()
+      this.showError(error.message)
     } finally {
       this.toggleButtonTarget.disabled = false
     }
@@ -93,89 +93,137 @@ export default class extends Controller {
       console.log('Response status:', response.status)
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorText = await response.text()
+        console.error('API error response:', errorText)
+        throw new Error(`AI API エラー (${response.status}): ${errorText}`)
       }
 
       const data = await response.json()
       console.log('AI analysis result:', data)
       
-      if (data.success) {
-        // コメント例と観察ポイントを表示
-        this.renderSuggestions(data.comment_examples || [])
-        if (this.hasSummaryTarget) {
-          this.summaryTarget.innerHTML = ''
-          data.observation_points.forEach(point => {
-            const p = document.createElement('p')
-            p.textContent = `• ${point}`
-            p.className = 'mb-1'
-            this.summaryTarget.appendChild(p)
-          })
-        }
-        console.log('AI content rendered successfully')
-      } else {
-        console.error('AI analysis failed:', data.error)
-        // フォールバックデータを表示
-        this.renderFallbackContent()
+      if (!data.success) {
+        throw new Error(data.error || 'AI分析に失敗しました')
       }
+      
+      // 語彙・表現を表示
+      this.renderVocabularies(data.vocabularies || [])
+      
+      // 観察ポイントを表示
+      if (this.hasSummaryTarget) {
+        this.summaryTarget.innerHTML = ''
+        data.observation_points.slice(0, 4).forEach((point, index) => {
+          const pointDiv = document.createElement('div')
+          pointDiv.className = 'flex items-start gap-3 p-3 bg-white rounded-lg border border-purple-200 shadow-sm'
+          pointDiv.innerHTML = `
+            <div class="w-6 h-6 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span class="text-white text-xs font-bold">${index + 1}</span>
+            </div>
+            <p class="text-sm text-gray-700 leading-relaxed font-medium">${point}</p>
+          `
+          this.summaryTarget.appendChild(pointDiv)
+        })
+      }
+      console.log('AI content rendered successfully')
     } catch (error) {
       console.error('Error loading AI content:', error)
-      this.renderFallbackContent()
+      this.showError(error.message)
     }
   }
 
 
-  renderSuggestions(suggestions) {
-    this.commentSuggestionsTarget.innerHTML = ''
-    
-    suggestions.forEach((suggestion, index) => {
-      const suggestionElement = document.createElement('div')
-      suggestionElement.className = 'p-2 bg-purple-50 rounded border cursor-pointer hover:bg-purple-100 transition-colors text-sm mb-2'
-      suggestionElement.innerHTML = `
-        <p class="text-gray-700 mb-2">${suggestion}</p>
-        <button class="text-xs text-purple-600 hover:text-purple-800 font-medium" 
-                data-action="click->ai-sidebar#applySuggestion" 
-                data-suggestion="${suggestion}">
-          このコメントを使用
-        </button>
-      `
-      this.commentSuggestionsTarget.appendChild(suggestionElement)
-    })
-  }
 
-  renderFallbackContent() {
-    const fallbackSuggestions = [
-      "とても興味深い投稿ですね。特に画像投稿として魅力的だと思います。",
-      "この作品の表現力に感銘を受けました。今後の作品も楽しみにしています。",
-      "素晴らしい投稿をありがとうございます。参考になりました。"
-    ]
-    
-    this.renderSuggestions(fallbackSuggestions)
-    
-    if (this.hasSummaryTarget) {
-      this.summaryTarget.innerHTML = `
-        <p class="mb-1">• 投稿の目的や意図を考えてみる</p>
-        <p class="mb-1">• 使用されている技法や手法に注目する</p>
-        <p class="mb-1">• 感情や印象を言葉にしてみる</p>
-        <p class="mb-1">• 改善点や発展の可能性を考える</p>
-      `
+  renderVocabularies(vocabularies) {
+    if (this.hasVocabulariesTarget) {
+      this.vocabulariesTarget.innerHTML = ''
+      
+      // フォールバック語彙がない場合のデフォルト
+      const vocabsToShow = vocabularies.length > 0 ? vocabularies.slice(0, 8) : [
+        '美しい', '印象的', '繊細', '力強い', 
+        '調和', '表現力', '創造性', '独創的'
+      ]
+      
+      vocabsToShow.forEach(vocab => {
+        const vocabButton = document.createElement('button')
+        vocabButton.className = 'px-3 py-2 bg-white border-2 border-emerald-300 rounded-full text-sm font-medium text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 transition-all transform hover:scale-105 cursor-pointer'
+        vocabButton.textContent = vocab
+        vocabButton.addEventListener('click', () => this.insertVocabulary(vocab))
+        this.vocabulariesTarget.appendChild(vocabButton)
+      })
     }
   }
 
-  applySuggestion(event) {
-    const suggestion = event.currentTarget.dataset.suggestion
-    this.insertText(suggestion)
-  }
-
-  insertText(text) {
-    // コメントフォームにテキストを挿入
+  insertVocabulary(vocabulary) {
+    // コメントフォームに語彙を挿入
     const commentForm = document.querySelector('textarea[name="comment[body]"]')
     if (commentForm) {
       const currentText = commentForm.value
-      const newText = currentText ? `${currentText} ${text}` : text
+      const cursorPos = commentForm.selectionStart || currentText.length
+      
+      // カーソル位置に語彙を挿入
+      const newText = currentText.slice(0, cursorPos) + vocabulary + currentText.slice(cursorPos)
       commentForm.value = newText
+      
+      // カーソル位置を調整
+      const newCursorPos = cursorPos + vocabulary.length
+      commentForm.setSelectionRange(newCursorPos, newCursorPos)
+      
+      // フォーカスを戻す
       commentForm.focus()
+      
+      // 成功エフェクト
+      this.showInsertionFeedback(vocabulary)
     }
   }
+
+  showInsertionFeedback(vocabulary) {
+    const feedback = document.createElement('div')
+    feedback.className = 'fixed top-4 right-4 bg-emerald-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform scale-100 opacity-100 transition-all'
+    feedback.textContent = `「${vocabulary}」を挿入しました`
+    document.body.appendChild(feedback)
+    
+    setTimeout(() => {
+      feedback.classList.add('scale-95', 'opacity-0')
+      setTimeout(() => feedback.remove(), 200)
+    }, 2000)
+  }
+
+  showError(message = 'AI分析でエラーが発生しました') {
+    // ローディングを隠す
+    this.loadingTarget.classList.add('hidden')
+    
+    // エラーメッセージを表示
+    this.aiContentTarget.classList.remove('hidden')
+    this.aiContentTarget.innerHTML = `
+      <div class="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+            <span class="text-white text-xs">⚠️</span>
+          </div>
+          <h3 class="text-sm font-bold text-red-800">エラー</h3>
+        </div>
+        <p class="text-sm text-red-700 mb-3">${message}</p>
+        <button 
+          type="button" 
+          data-action="click->ai-sidebar#retryAI"
+          class="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors">
+          再試行
+        </button>
+      </div>
+    `
+    
+    // ボタンの状態を更新
+    this.toggleIconTarget.textContent = '⚠️'
+    this.toggleTextTarget.textContent = 'エラー - 再試行'
+    this.toggleButtonTarget.classList.remove('bg-purple-600', 'hover:bg-purple-700')
+    this.toggleButtonTarget.classList.add('bg-red-600', 'hover:bg-red-700')
+  }
+
+  retryAI() {
+    // AIを再試行
+    this.aiLoaded = false
+    this.startAI()
+  }
+
 
 
 }

@@ -18,11 +18,27 @@
               <span class="text-sm text-gray-600">あなたの投稿</span>
             </div>
           </div>
-          <div class="text-xs text-gray-500">
-            <div>🔍 スクロール: ズーム</div>
-            <div>🖱️ ノードホバー: タイトル表示</div>
-            <div>🎯 ノードクリック: 詳細表示</div>
-            <div>🔗 線にホバー: 接続理由</div>
+          <!-- 表示制御パネル -->
+          <div class="flex flex-col space-y-2 text-xs">
+            <div class="flex items-center space-x-2">
+              <label for="similarity-threshold" class="text-gray-600 font-medium">関連度フィルタ:</label>
+              <select id="similarity-threshold" name="similarity-threshold" class="px-2 py-1 border border-gray-300 rounded text-xs" aria-describedby="threshold-description">
+                <option value="0.1">すべて表示 (10%+)</option>
+                <option value="0.3" selected>標準 (30%+)</option>
+                <option value="0.5">強い関連のみ (50%+)</option>
+                <option value="0.7">非常に強い関連 (70%+)</option>
+              </select>
+            </div>
+            <!-- ズーム情報表示 -->
+            <div class="flex items-center space-x-2">
+              <span class="text-gray-600 font-medium">ズームレベル:</span>
+              <span id="zoom-info" class="px-2 py-1 bg-gray-100 rounded text-xs">俯瞰表示</span>
+            </div>
+            <div id="threshold-description" class="sr-only">投稿間の関連線を表示する類似度の最小値を選択できます</div>
+            <div class="text-gray-500">
+              <div class="hidden md:block">🔍 スクロール: ズーム | 🖱️ ホバー: 詳細 | 🎯 クリック: 投稿表示</div>
+              <div class="block md:hidden">📱 ピンチ: ズーム | 👆 タップ: 投稿表示</div>
+            </div>
           </div>
         </div>
       </div>
@@ -43,6 +59,9 @@
 
 class PostsMapController {
   constructor() {
+    this.currentZoomLevel = 1;  // 初期ズームレベル（代表作品のみ）
+    this.maxZoomLevel = 3;      // 最大ズームレベル（全作品表示）
+    this.isGraphInitialized = false; // グラフ初期化フラグ
     this.initializeMap();
   }
 
@@ -54,6 +73,27 @@ class PostsMapController {
       const data = await response.json();
       console.log('Posts data:', data.posts);
       console.log('Number of posts:', data.posts.length);
+      
+      // 【Phase 2-Light】ユーザー行動データを保存
+      if (data.current_user_behavior) {
+        this.currentUserData = {
+          behavior_data: data.current_user_behavior
+        };
+        console.log('User behavior data loaded:', this.currentUserData.behavior_data);
+      }
+      
+      // 類似度マトリックスを保存
+      if (data.similarity_matrix) {
+        this.similarityMatrix = data.similarity_matrix;
+        console.log('Similarity matrix loaded:', Object.keys(this.similarityMatrix).length, 'pairs');
+      }
+      
+      // 階層的クラスタリングデータを保存
+      if (data.hierarchical_clusters) {
+        this.hierarchicalClusters = data.hierarchical_clusters;
+        console.log('Hierarchical clusters loaded:', this.hierarchicalClusters);
+        console.log('Zoom levels available:', Object.keys(this.hierarchicalClusters));
+      }
       
       if (!data.posts || data.posts.length === 0) {
         console.warn('No posts found, using dummy data');
@@ -70,9 +110,181 @@ class PostsMapController {
         return;
       }
       
-      this.renderNetworkGraph(data.posts);
+      this.allPosts = data.posts;  // 全投稿データを保存
+      
+      // デバッグ: データ構造を確認
+      console.log('Sample post data:', this.allPosts[0]);
+      console.log('Posts with images:', this.allPosts.filter(p => p.image_url).length);
+      console.log('Current user posts:', this.allPosts.filter(p => p.is_current_user).length);
+      
+      this.renderHierarchicalGraph();
+      this.setupZoomControls();
     } catch (error) {
       console.error('マップデータの取得に失敗しました:', error);
+    }
+  }
+
+  // 階層的グラフ表示のメインメソッド
+  renderHierarchicalGraph() {
+    // 初回のみ全データでグラフを構築
+    if (!this.isGraphInitialized) {
+      this.renderNetworkGraph(this.allPosts);
+      this.isGraphInitialized = true;
+    } else {
+      // 2回目以降は表示制御のみ
+      this.updateNodeVisibility();
+    }
+  }
+
+  // 現在のズームレベルに応じた投稿データを取得
+  getPostsForCurrentZoom() {
+    if (!this.hierarchicalClusters) {
+      console.log('No hierarchical clusters, using all posts');
+      return this.allPosts; // フォールバック
+    }
+
+    const zoomKey = `zoom_level_${this.currentZoomLevel}`;
+    const clusters = this.hierarchicalClusters[zoomKey];
+    
+    if (!clusters || clusters.length === 0) {
+      console.log(`No clusters for ${zoomKey}, using all posts`);
+      return this.allPosts;
+    }
+
+    let postsToShow = [];
+    
+    if (this.currentZoomLevel === 1) {
+      // レベル1: 代表作品のみ
+      postsToShow = clusters.map(cluster => cluster.representative_post).filter(post => post);
+    } else if (this.currentZoomLevel === 2) {
+      // レベル2: 代表作品 + 関連作品（一部）
+      clusters.forEach(cluster => {
+        if (cluster.representative_post) {
+          postsToShow.push(cluster.representative_post);
+        }
+        if (cluster.related_posts && cluster.related_posts.length > 0) {
+          postsToShow.push(...cluster.related_posts.slice(0, 3)); // 関連作品は3つまで
+        }
+      });
+    } else {
+      // レベル3: すべての投稿
+      postsToShow = this.allPosts;
+    }
+
+    // 重複を除去（IDベース）
+    const uniquePosts = postsToShow.filter((post, index, self) => 
+      post && post.id && self.findIndex(p => p && p.id === post.id) === index
+    );
+
+    console.log(`Zoom Level ${this.currentZoomLevel}: ${uniquePosts.length} posts to display`);
+    return uniquePosts;
+  }
+
+  // D3ズーム機能の設定
+  setupZoomControls() {
+    const svg = d3.select("#network-map svg");
+    
+    this.zoom = d3.zoom()
+      .scaleExtent([0.5, 5]) // ズーム範囲
+      .on("zoom", (event) => {
+        const transform = event.transform;
+        
+        // ズームレベルをスケールに応じて決定
+        let newZoomLevel;
+        if (transform.k < 1.5) {
+          newZoomLevel = 1; // 俯瞰（代表作品のみ）
+        } else if (transform.k < 3) {
+          newZoomLevel = 2; // 中間（クラスター表示）
+        } else {
+          newZoomLevel = 3; // 詳細（全投稿表示）
+        }
+        
+        // ズームレベルが変わった場合に表示制御のみ
+        if (newZoomLevel !== this.currentZoomLevel) {
+          this.currentZoomLevel = newZoomLevel;
+          this.updateZoomInfo();
+          this.updateNodeVisibility(); // 再描画ではなく表示制御
+        }
+        
+        // 既存の要素にトランスフォーム適用
+        svg.select("g").attr("transform", transform);
+      });
+    
+    svg.call(this.zoom);
+  }
+  
+  // ズーム情報の更新
+  updateZoomInfo() {
+    const zoomInfo = document.getElementById('zoom-info');
+    if (zoomInfo) {
+      const levelTexts = {
+        1: '俯瞰表示（代表作品）',
+        2: '詳細表示（クラスター）',
+        3: '全投稿表示'
+      };
+      zoomInfo.textContent = levelTexts[this.currentZoomLevel] || '俯瞰表示';
+    }
+  }
+
+  // デフォルトのノード半径計算
+  getDefaultRadius(commentsCount = 0) {
+    const baseRadius = 12;
+    const bonusRadius = Math.min(commentsCount * 2, 20); // 最大20px追加
+    return baseRadius + bonusRadius;
+  }
+
+  // ノードの表示/非表示を制御（再描画なし）
+  updateNodeVisibility() {
+    if (!this.svg) return;
+
+    const postsToShow = this.getPostsForCurrentZoom();
+    const visiblePostIds = new Set(postsToShow.map(p => p.id));
+
+    console.log(`Updating visibility: ${visiblePostIds.size} posts visible`);
+
+    // ノードグループの表示制御
+    this.svg.selectAll('.node-group')
+      .style('opacity', d => visiblePostIds.has(d.id) ? 1 : 0.1)
+      .style('pointer-events', d => visiblePostIds.has(d.id) ? 'auto' : 'none');
+
+    // リンクの表示制御
+    this.svg.selectAll('line')
+      .style('opacity', d => {
+        if (!d || !d.source || !d.target) return 0;
+        const sourceVisible = visiblePostIds.has(d.source.id || d.source);
+        const targetVisible = visiblePostIds.has(d.target.id || d.target);
+        return (sourceVisible && targetVisible) ? 0.15 + (d.similarity * 0.25) : 0.02;
+      });
+  }
+
+  // グリッド線の追加（ズーム実感のため）
+  addGridLines(container, width, height) {
+    const gridGroup = container.append("g")
+      .attr("class", "grid-lines")
+      .style("opacity", 0.1);
+    
+    const gridSpacing = 50; // グリッド間隔
+    
+    // 縦線
+    for (let x = -width; x <= width * 2; x += gridSpacing) {
+      gridGroup.append("line")
+        .attr("x1", x)
+        .attr("y1", -height)
+        .attr("x2", x)
+        .attr("y2", height * 2)
+        .attr("stroke", "#666666")
+        .attr("stroke-width", 0.5);
+    }
+    
+    // 横線
+    for (let y = -height; y <= height * 2; y += gridSpacing) {
+      gridGroup.append("line")
+        .attr("x1", -width)
+        .attr("y1", y)
+        .attr("x2", width * 2)
+        .attr("y2", y)
+        .attr("stroke", "#666666")
+        .attr("stroke-width", 0.5);
     }
   }
 
@@ -90,6 +302,17 @@ class PostsMapController {
     const width = container.node().offsetWidth || 800;
     const height = container.node().offsetHeight || 600;
     
+    // モバイルの場合は類似度閾値を自動調整
+    const isMobile = width < 768;
+    const defaultThreshold = isMobile ? 0.5 : 0.3; // モバイルでは高い閾値でスッキリ表示
+    
+    if (isMobile) {
+      const thresholdSelect = document.getElementById('similarity-threshold');
+      if (thresholdSelect && thresholdSelect.value == '0.3') {
+        thresholdSelect.value = '0.5'; // デフォルトを調整
+      }
+    }
+    
     // 高さが小さすぎる場合は強制的に600pxにする
     const actualHeight = height < 100 ? 600 : height;
     
@@ -100,6 +323,9 @@ class PostsMapController {
       .attr("width", width)
       .attr("height", actualHeight)
       .style("background", "white");
+    
+    // SVG参照を保存（表示制御用）
+    this.svg = svg;
     
     console.log('SVG created:', svg.node());
 
@@ -117,6 +343,31 @@ class PostsMapController {
 
     // グラフ要素のコンテナ
     const g = svg.append("g");
+    
+    // グリッド線を追加（ズーム実感のため）
+    this.addGridLines(g, width, actualHeight);
+    
+    // デバッグ用: SVG境界を可視化（開発時のみ） - 一時的にコメントアウト
+    /*
+    svg.append("rect")
+      .attr("x", 0)
+      .attr("y", 0) 
+      .attr("width", width)
+      .attr("height", actualHeight)
+      .attr("fill", "none")
+      .attr("stroke", "#ff0000")
+      .attr("stroke-width", 2)
+      .attr("stroke-dasharray", "5,5")
+      .style("opacity", 0.3);
+    
+    // 中央点を可視化
+    svg.append("circle")
+      .attr("cx", width / 2)
+      .attr("cy", actualHeight / 2)
+      .attr("r", 5)
+      .attr("fill", "#ff0000")
+      .style("opacity", 0.8);
+    */
 
     // ノードとリンクデータの準備（画像がある投稿のみ）
     console.log('All posts:', posts);
@@ -133,12 +384,12 @@ class PostsMapController {
         body: post.body,
         userName: post.user_name,
         userId: post.user_id,
-        isCurrentUser: post.is_current_user,
+        isCurrentUser: post.is_current_user || false,
         commentsCount: post.comments_count,
-        tags: post.tags,
+        tags: post.tags || [],
         imageUrl: post.image_url,
-        sentiments: post.comment_sentiments,
-        radius: this.calculateNodeRadius(post.comments_count)
+        sentiments: post.comment_sentiments || {},
+        radius: this.getDefaultRadius(post.comments_count || 0)
       }));
 
     // 初期位置を設定
@@ -155,8 +406,9 @@ class PostsMapController {
       return;
     }
     
-    const links = this.calculateSimilarityLinks(nodes);
+    const links = this.calculateSimilarityLinks(nodes, 0.2); // 適切な閾値に戻す（最小保証機能があるため）
     console.log('Links created:', links.length);
+    console.log('Sample links:', links.slice(0, 3));
     
     // クラスタを検出
     const clusters = this.detectClusters(nodes, links);
@@ -167,16 +419,22 @@ class PostsMapController {
       .force("link", d3.forceLink(links).id(d => d.id).distance(d => this.calculateLinkDistance(d.similarity)))
       .force("charge", d3.forceManyBody().strength(-100))
       .force("center", d3.forceCenter(width / 2, actualHeight / 2))
-      .force("collision", d3.forceCollide().radius(d => d.radius + 10))
-      .force("x", d3.forceX(width / 2).strength(0.05))
-      .force("y", d3.forceY(actualHeight / 2).strength(0.05));
+      .force("collision", d3.forceCollide().radius(d => (d.radius || 12) + 10))
+      .force("x", d3.forceX(width / 2).strength(0.1))  // 強化: 0.05 -> 0.1
+      .force("y", d3.forceY(actualHeight / 2).strength(0.1));  // 強化: 0.05 -> 0.1
+    
+    // デバッグ用: 中央に基準点を表示
+    if (console && console.log) {
+      console.log(`SVG center: (${width/2}, ${actualHeight/2})`);
+      console.log(`Nodes positions:`, nodes.map(n => `${n.title}: (${n.x}, ${n.y})`));
+    }
 
     // クラスタエリアの描画（ノードより先に描画）
     const clusterAreas = g.append("g").attr("class", "cluster-areas");
     
     setTimeout(() => {
       this.drawClusterAreas(clusterAreas, clusters, nodes);
-    }, 2000);
+    }, 1500); // 少し短縮して早めに表示
 
     // オシャレなリンクスタイル
     const link = g.append("g")
@@ -185,20 +443,20 @@ class PostsMapController {
       .enter().append("line")
       .attr("stroke", d => this.getLinkColor(d.similarity))
       .attr("stroke-opacity", d => 0.15 + (d.similarity * 0.25))
-      .attr("stroke-width", d => Math.max(0.5, d.similarity * 2))
+      .attr("stroke-width", d => Math.max(1, d.similarity * 4)) // 線の太さを強化: 最小1px、最大4px
       .attr("stroke-linecap", "round")
       .on("mouseover", (event, d) => {
         d3.select(event.target)
           .transition().duration(200)
           .attr("stroke-opacity", 0.8)
-          .attr("stroke-width", d.similarity * 5);
+          .attr("stroke-width", Math.max(2, d.similarity * 6)); // ホバー時の太さも強化
         this.showLinkDetails(event, d);
       })
       .on("mouseout", (event, d) => {
         d3.select(event.target)
           .transition().duration(200)
           .attr("stroke-opacity", 0.15 + (d.similarity * 0.25))
-          .attr("stroke-width", Math.max(0.5, d.similarity * 2));
+          .attr("stroke-width", Math.max(1, d.similarity * 4)); // 元の太さに戻す時も強化
         this.hideLinkDetails();
       });
 
@@ -207,15 +465,21 @@ class PostsMapController {
       .selectAll("g")
       .data(nodes)
       .enter().append("g")
+      .attr("class", "node-group")
       .attr("cursor", "pointer");
 
     // オシャレなノードスタイル
     const node = nodeGroup.append("circle")
       .attr("r", d => {
-        console.log(`Node ${d.id} radius: ${d.radius}`);
-        return d.radius;
+        const radius = d.radius || 12; // フォールバック値
+        console.log(`Node ${d.id} radius: ${radius}`);
+        return radius;
       })
-      .attr("fill", d => d.isCurrentUser ? "#ef4444" : "#3b82f6")
+      .attr("fill", d => {
+        const color = (d.isCurrentUser === true) ? "#ef4444" : "#3b82f6";
+        console.log(`Node ${d.id} isCurrentUser: ${d.isCurrentUser}, color: ${color}`);
+        return color;
+      })
       .attr("stroke", "#ffffff")
       .attr("stroke-width", 3)
       .style("filter", "drop-shadow(0px 2px 4px rgba(0,0,0,0.2))");
@@ -223,14 +487,20 @@ class PostsMapController {
     console.log('Node circles created:', node.size());
 
     // 画像がある場合のサムネイル
-    const imageNodes = nodeGroup.filter(d => d.imageUrl);
+    const imageNodes = nodeGroup.filter(d => d.imageUrl && d.imageUrl !== null && d.imageUrl !== "");
+    console.log(`Image nodes count: ${imageNodes.size()} out of ${nodeGroup.size()}`);
+    
+    // デバッグ: 画像URLを確認
+    nodeGroup.each(function(d) {
+      console.log(`Node ${d.id} imageUrl: ${d.imageUrl}`);
+    });
     
     // 画像用のclipPathを定義（既存のdefsを使用）
     imageNodes.each(function(d) {
       defs.append("clipPath")
         .attr("id", `clip-${d.id}`)
         .append("circle")
-        .attr("r", d.radius - 3)
+        .attr("r", (d.radius || 12) - 3)
         .attr("cx", 0)
         .attr("cy", 0);
     });
@@ -238,10 +508,10 @@ class PostsMapController {
     // 画像を追加
     imageNodes.append("image")
       .attr("href", d => d.imageUrl)
-      .attr("x", d => -(d.radius - 3))
-      .attr("y", d => -(d.radius - 3))
-      .attr("width", d => (d.radius - 3) * 2)
-      .attr("height", d => (d.radius - 3) * 2)
+      .attr("x", d => -((d.radius || 12) - 3))
+      .attr("y", d => -((d.radius || 12) - 3))
+      .attr("width", d => ((d.radius || 12) - 3) * 2)
+      .attr("height", d => ((d.radius || 12) - 3) * 2)
       .attr("clip-path", d => `url(#clip-${d.id})`)
       .attr("opacity", 1);
 
@@ -270,33 +540,119 @@ class PostsMapController {
       nodeGroup
         .attr("transform", d => `translate(${d.x},${d.y})`);
     });
+    
+    // SVGを保存してフィルタリングで使用
+    this.svg = svg;
+    this.allLinks = links;
+    
+    // フィルタコントロールのイベントリスナー（シミュレーション開始後に設定）
+    setTimeout(() => {
+      this.setupFilterControls();
+    }, 500);
   }
 
   calculateNodeRadius(commentsCount) {
     return Math.max(18, Math.min(35, 18 + commentsCount * 3));
   }
 
-  calculateSimilarityLinks(nodes) {
+  calculateSimilarityLinks(nodes, threshold = 0.3) {
     const links = [];
-    const threshold = 0.3; // 閾値を0.01から0.3に大幅に上げて網目を減らす
+    const allSimilarities = []; // 全ての類似度を記録
 
+    // すべてのペアの類似度を計算
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         const similarity = this.calculateSimilarity(nodes[i], nodes[j]);
-        if (similarity > threshold) {
-          links.push({
-            source: nodes[i].id,
-            target: nodes[j].id,
-            similarity: similarity
-          });
+        allSimilarities.push({
+          source: nodes[i].id,
+          target: nodes[j].id,
+          similarity: similarity
+        });
+      }
+    }
+
+    // 閾値以上の類似度を持つリンクを追加
+    allSimilarities.forEach(link => {
+      if (link.similarity > threshold) {
+        links.push(link);
+      }
+    });
+
+    // 最低保証: リンクが2本未満の場合、最も類似度の高いペアを強制追加
+    if (links.length < 2 && allSimilarities.length >= 2) {
+      // 類似度順にソート
+      allSimilarities.sort((a, b) => b.similarity - a.similarity);
+      
+      // 既に追加されていないリンクから最高類似度のものを選択
+      const existingLinkIds = new Set(links.map(l => `${l.source}_${l.target}`));
+      
+      for (let i = 0; i < allSimilarities.length && links.length < 2; i++) {
+        const candidate = allSimilarities[i];
+        const linkId = `${candidate.source}_${candidate.target}`;
+        
+        if (!existingLinkIds.has(linkId)) {
+          links.push(candidate);
+          existingLinkIds.add(linkId);
         }
       }
     }
 
+    console.log(`Links created: ${links.length} (minimum guarantee applied: ${links.length < allSimilarities.length ? 'yes' : 'no'})`);
     return links;
+  }
+  
+  // リンクの表示/非表示を動的に制御
+  updateLinksVisibility(threshold) {
+    if (!this.svg) {
+      console.warn('SVG not initialized for updateLinksVisibility');
+      return;
+    }
+    
+    // より具体的にline要素のみを選択
+    const links = this.svg.select('g').selectAll('line');
+    
+    if (links.empty()) {
+      console.warn('No links found for visibility update');
+      return;
+    }
+    
+    console.log(`Updating visibility for ${links.size()} links with threshold ${threshold}`);
+    
+    links.transition()
+      .duration(300)
+      .style('opacity', d => {
+        // d.similarityが未定義の場合のフォールバック
+        const similarity = d && d.similarity !== undefined ? d.similarity : 0;
+        const opacity = similarity >= threshold ? 0.15 + (similarity * 0.25) : 0;
+        console.log(`Link similarity: ${similarity}, threshold: ${threshold}, opacity: ${opacity}`);
+        return opacity;
+      })
+      .style('pointer-events', d => {
+        const similarity = d && d.similarity !== undefined ? d.similarity : 0;
+        return similarity >= threshold ? 'auto' : 'none';
+      });
+    
+    // 統計情報を更新（安全なフィルタリング）
+    const linkData = links.data();
+    const visibleLinksCount = linkData.filter(d => d && d.similarity !== undefined && d.similarity >= threshold).length;
+    this.updateStatsDisplay(visibleLinksCount, linkData.length);
   }
 
   calculateSimilarity(node1, node2) {
+    // サーバー側の類似度マトリックスを優先使用
+    if (this.similarityMatrix) {
+      const key1 = `${node1.id}_${node2.id}`;
+      const key2 = `${node2.id}_${node1.id}`;
+      
+      if (this.similarityMatrix[key1] !== undefined) {
+        return this.similarityMatrix[key1];
+      }
+      if (this.similarityMatrix[key2] !== undefined) {
+        return this.similarityMatrix[key2];
+      }
+    }
+    
+    // フォールバック：クライアント側計算
     let similarity = 0;
     let factors = 0;
 
@@ -304,8 +660,15 @@ class PostsMapController {
     const commonTags = node1.tags.filter(tag => node2.tags.includes(tag));
     const totalTags = new Set([...node1.tags, ...node2.tags]).size;
     if (totalTags > 0) {
-      similarity += (commonTags.length / totalTags) * 0.5;
-      factors += 0.5;
+      similarity += (commonTags.length / totalTags) * 0.4;  // 0.5 -> 0.4 に調整
+      factors += 0.4;
+    }
+    
+    // 【新機能】ユーザー行動ボーナス（10%の重み）
+    const userBehaviorBonus = this.calculateUserBehaviorBonus(node1, node2);
+    if (userBehaviorBonus > 0) {
+      similarity += userBehaviorBonus * 0.1;
+      factors += 0.1;
     }
 
     // タグのカテゴリー類似度（新規追加）
@@ -353,6 +716,69 @@ class PostsMapController {
     }
 
     return factors > 0 ? similarity / factors : 0.02;
+  }
+  
+  // 【Phase 2-Light】ユーザー行動に基づくボーナス計算
+  calculateUserBehaviorBonus(node1, node2) {
+    // 現在のユーザーの行動データが利用可能な場合のみ
+    if (!this.currentUserData || !this.currentUserData.behavior_data) {
+      return 0;
+    }
+    
+    const behaviorData = this.currentUserData.behavior_data;
+    let bonus = 0;
+    
+    // いいねした投稿との類似性ボーナス
+    if (behaviorData.liked_tags && behaviorData.liked_tags.length > 0) {
+      const likedTags = behaviorData.liked_tags;
+      
+      // node1, node2のタグがいいねしたタグと重複する度合い
+      const node1LikeMatch = this.calculateTagOverlap(node1.tags, likedTags);
+      const node2LikeMatch = this.calculateTagOverlap(node2.tags, likedTags);
+      
+      // 両方の投稿が好みのタグを含む場合、ボーナス
+      if (node1LikeMatch > 0 && node2LikeMatch > 0) {
+        bonus += Math.min(node1LikeMatch, node2LikeMatch) * 0.5;
+      }
+    }
+    
+    // コメントした投稿との類似性ボーナス  
+    if (behaviorData.commented_tags && behaviorData.commented_tags.length > 0) {
+      const commentedTags = behaviorData.commented_tags;
+      
+      const node1CommentMatch = this.calculateTagOverlap(node1.tags, commentedTags);
+      const node2CommentMatch = this.calculateTagOverlap(node2.tags, commentedTags);
+      
+      if (node1CommentMatch > 0 && node2CommentMatch > 0) {
+        bonus += Math.min(node1CommentMatch, node2CommentMatch) * 0.3;
+      }
+    }
+    
+    // 嫌いな投稿との類似性ペナルティ
+    if (behaviorData.disliked_tags && behaviorData.disliked_tags.length > 0) {
+      const dislikedTags = behaviorData.disliked_tags;
+      
+      const node1DislikeMatch = this.calculateTagOverlap(node1.tags, dislikedTags);
+      const node2DislikeMatch = this.calculateTagOverlap(node2.tags, dislikedTags);
+      
+      if (node1DislikeMatch > 0 || node2DislikeMatch > 0) {
+        bonus -= Math.max(node1DislikeMatch, node2DislikeMatch) * 0.2;
+      }
+    }
+    
+    return Math.max(0, Math.min(1, bonus)); // 0-1の範囲に制限
+  }
+  
+  // タグの重複度計算
+  calculateTagOverlap(tags1, tags2) {
+    if (!tags1 || !tags2 || tags1.length === 0 || tags2.length === 0) {
+      return 0;
+    }
+    
+    const intersection = tags1.filter(tag => tags2.includes(tag)).length;
+    const union = new Set([...tags1, ...tags2]).size;
+    
+    return union > 0 ? intersection / union : 0;
   }
 
   calculateLinkDistance(similarity) {
@@ -480,39 +906,69 @@ class PostsMapController {
   drawClusterAreas(container, clusters, nodes) {
     clusters.forEach(cluster => {
       const positions = cluster.nodes.map(node => ({ x: node.x, y: node.y }));
-      const hull = d3.polygonHull(positions);
       
-      if (hull && hull.length > 2) {
-        const line = d3.line()
-          .x(d => d[0])
-          .y(d => d[1])
-          .curve(d3.curveBasisClosed);
-
-        // エリアを少し広げる
-        const expandedHull = this.expandHull(hull, 30);
-
-        container.append("path")
-          .datum(expandedHull)
-          .attr("d", line)
-          .attr("fill", "rgba(99, 102, 241, 0.1)")
-          .attr("stroke", "rgba(99, 102, 241, 0.3)")
-          .attr("stroke-width", 2)
-          .attr("stroke-dasharray", "5,5");
-
-        // クラスタラベル
-        const centroid = d3.polygonCentroid(hull);
-        const labelText = this.getClusterLabel(cluster);
+      if (positions.length >= 2) {
+        // クラスタの中心と半径を計算
+        const centroidX = positions.reduce((sum, p) => sum + p.x, 0) / positions.length;
+        const centroidY = positions.reduce((sum, p) => sum + p.y, 0) / positions.length;
         
-        container.append("text")
-          .attr("x", centroid[0])
-          .attr("y", centroid[1] - 35)
-          .attr("text-anchor", "middle")
-          .attr("font-size", "12px")
-          .attr("font-weight", "bold")
-          .attr("fill", "rgba(99, 102, 241, 0.8)")
-          .text(labelText);
+        // 最も遠い点への距離を半径として使用（少し余裕をもたせて）
+        const maxDistance = Math.max(...positions.map(p => 
+          Math.sqrt(Math.pow(p.x - centroidX, 2) + Math.pow(p.y - centroidY, 2))
+        )) + 40; // 40px のパディング
+        
+        // 薄い円の背景を描画
+        container.append("circle")
+          .attr("cx", centroidX)
+          .attr("cy", centroidY)
+          .attr("r", maxDistance)
+          .attr("fill", "rgba(59, 130, 246, 0.08)") // 非常に薄い青
+          .attr("stroke", "rgba(59, 130, 246, 0.2)") // 薄い青の境界線
+          .attr("stroke-width", 1)
+          .attr("stroke-dasharray", "3,3")
+          .attr("opacity", 0.7);
+        
+        // 複数のノードがある場合のみラベルを表示
+        if (cluster.nodes.length > 1) {
+          const labelText = this.getClusterLabel(cluster);
+          
+          container.append("text")
+            .attr("x", centroidX)
+            .attr("y", centroidY - maxDistance - 10)
+            .attr("text-anchor", "middle")
+            .attr("font-size", "11px")
+            .attr("font-weight", "500")
+            .attr("fill", "rgba(59, 130, 246, 0.8)")
+            .attr("opacity", 0.8)
+            .text(labelText);
+        }
       }
     });
+  }
+
+  setupFilterControls() {
+    const thresholdSelect = document.getElementById('similarity-threshold');
+    if (thresholdSelect) {
+      thresholdSelect.addEventListener('change', (e) => {
+        const threshold = parseFloat(e.target.value);
+        this.updateLinksVisibility(threshold);
+      });
+    }
+  }
+  
+  updateStatsDisplay(visibleCount, totalCount) {
+    let statsElement = document.getElementById('network-stats');
+    if (!statsElement) {
+      // 統計表示エリアを動的に作成
+      const networkMap = document.getElementById('network-map');
+      statsElement = document.createElement('div');
+      statsElement.id = 'network-stats';
+      statsElement.className = 'absolute top-2 left-2 bg-white bg-opacity-90 px-2 py-1 rounded text-xs text-gray-600 pointer-events-none';
+      networkMap.parentElement.style.position = 'relative';
+      networkMap.parentElement.appendChild(statsElement);
+    }
+    
+    statsElement.textContent = `表示中の関連線: ${visibleCount}/${totalCount}`;
   }
 
   expandHull(hull, padding) {
@@ -532,11 +988,11 @@ class PostsMapController {
   getClusterLabel(cluster) {
     const parts = [];
     
-    if (cluster.commonTags.length > 0) {
+    if (cluster.commonTags && cluster.commonTags.length > 0) {
       parts.push(cluster.commonTags.join(' × '));
     }
     
-    if (cluster.dominantSentiment.length > 0) {
+    if (cluster.dominantSentiment && cluster.dominantSentiment.length > 0) {
       parts.push(`${cluster.dominantSentiment.join(' × ')}な作品`);
     }
     
@@ -579,14 +1035,16 @@ class PostsMapController {
     const reasons = [];
     
     // 共通タグをチェック
-    const commonTags = node1.tags.filter(tag => node2.tags.includes(tag));
+    const tags1 = node1.tags || [];
+    const tags2 = node2.tags || [];
+    const commonTags = tags1.filter(tag => tags2.includes(tag));
     if (commonTags.length > 0) {
       reasons.push(`共通タグ: ${commonTags.join(', ')}`);
     }
     
     // 類似したセンチメントをチェック
-    const sentiments1 = node1.sentiments;
-    const sentiments2 = node2.sentiments;
+    const sentiments1 = node1.sentiments || {};
+    const sentiments2 = node2.sentiments || {};
     const commonSentiments = [];
     
     Object.keys(sentiments1).forEach(sentiment => {
@@ -638,7 +1096,9 @@ class PostsMapController {
     const detailsDiv = document.getElementById('post-details');
     const contentDiv = document.getElementById('post-content');
     
-    const sentimentText = Object.entries(post.sentiments)
+    // post.sentimentsの安全な処理
+    const sentiments = post.sentiments || {};
+    const sentimentText = Object.entries(sentiments)
       .filter(([_, count]) => count > 0)
       .map(([sentiment, count]) => {
         const labels = {
@@ -656,7 +1116,7 @@ class PostsMapController {
         <h5 class="font-medium">${post.title}</h5>
         <p class="text-sm text-gray-600">作者: ${post.userName}</p>
         <p class="text-sm text-gray-600">コメント数: ${post.commentsCount}</p>
-        <p class="text-sm text-gray-600">タグ: ${post.tags.join(', ') || 'なし'}</p>
+        <p class="text-sm text-gray-600">タグ: ${(post.tags && post.tags.length > 0) ? post.tags.join(', ') : 'なし'}</p>
         <p class="text-sm text-gray-600">コメント傾向: ${sentimentText || 'なし'}</p>
         ${post.body ? `<p class="text-sm mt-2">${post.body.substring(0, 100)}${post.body.length > 100 ? '...' : ''}</p>` : ''}
       </div>
@@ -705,3 +1165,84 @@ document.addEventListener('DOMContentLoaded', () => {
   new PostsMapController();
 });
 </script>
+
+<style>
+  /* アクセシビリティ対応 */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* レスポンシブ対応の強化 */
+  @media (max-width: 768px) {
+    #network-map {
+      height: 500px !important; /* 400px から 500px に増加 */
+    }
+    
+    .max-w-7xl {
+      max-width: 100%;
+      padding: 0 1rem;
+    }
+    
+    /* モバイル用の表示制御パネル最適化 */
+    .flex.flex-col.lg\\:flex-row.items-start.lg\\:items-center {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+    }
+    
+    #similarity-threshold {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 14px;
+    }
+    
+    /* タッチ操作を改善 */
+    select, button {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* ツールチップをモバイル対応 */
+    .node-tooltip, .link-tooltip {
+      max-width: 280px !important;
+      font-size: 12px !important;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    #network-map {
+      height: 400px !important;
+    }
+    
+    /* 非常に小さな画面では簡素化 */
+    .text-xs {
+      font-size: 0.7rem;
+    }
+    
+    /* 操作説明を簡素化 */
+    .hide-on-small-mobile {
+      display: none;
+    }
+  }
+  
+  /* タッチデバイス用の改善 */
+  @media (hover: none) and (pointer: coarse) {
+    /* ホバー効果を無効化し、タッチ用に調整 */
+    .node-tooltip {
+      display: none; /* モバイルではツールチップを無効化 */
+    }
+    
+    /* ノードを少し大きく */
+    circle {
+      r: calc(var(--radius) * 1.2) !important;
+    }
+  }
+</style>

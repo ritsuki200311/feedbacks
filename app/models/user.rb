@@ -62,15 +62,28 @@ class User < ApplicationRecord
 
   # フォロー関連のメソッド
   def following?(other_user)
-    following.include?(other_user)
+    return false unless other_user
+    begin
+      following.include?(other_user)
+    rescue ActiveRecord::StatementInvalid
+      false
+    end
   end
 
   def followers_count
-    followers.count
+    begin
+      followers.count
+    rescue ActiveRecord::StatementInvalid
+      0
+    end
   end
 
   def following_count
-    following.count
+    begin
+      following.count
+    rescue ActiveRecord::StatementInvalid
+      0
+    end
   end
 
   # バリデーション

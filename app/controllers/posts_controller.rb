@@ -106,6 +106,15 @@ class PostsController < ApplicationController
     respond_to do |format|
       format.html
       format.json do
+        # 新しいサービス層を使用
+        post_similarity_service = PostSimilarityService.new(current_user)
+        
+        # 階層的クラスタリングを生成
+        hierarchical_clusters = post_similarity_service.generate_hierarchical_clusters(@posts)
+        
+        # 従来の類似度マトリックス（後方互換性のため）
+        similarity_matrix = post_similarity_service.calculate_similarity_matrix(@posts)
+        
         render json: {
           posts: @posts.map do |post|
             {
@@ -121,7 +130,13 @@ class PostsController < ApplicationController
               image_url: post.images.attached? ? url_for(post.images.first) : nil,
               comment_sentiments: analyze_comment_sentiments(post.comments)
             }
-          end
+          end,
+          # 階層的クラスタリング情報
+          hierarchical_clusters: hierarchical_clusters,
+          # 類似度マトリックス（後方互換性）
+          similarity_matrix: similarity_matrix,
+          # ユーザー行動データ
+          current_user_behavior: current_user ? UserBehaviorService.new(current_user).get_behavior_profile : {}
         }
       end
     end
@@ -270,6 +285,7 @@ class PostsController < ApplicationController
   end
 
   private
+
 
   def extract_tags(tag_string)
     return [] if tag_string.blank?

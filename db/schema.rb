@@ -13,7 +13,6 @@
 ActiveRecord::Schema[8.0].define(version: 2025_09_07_091939) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
-  enable_extension "pg_stat_statements"
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -45,8 +44,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_091939) do
 
   create_table "comments", force: :cascade do |t|
     t.text "body"
-    t.integer "post_id", null: false
-    t.integer "user_id", null: false
+    t.bigint "post_id", null: false
+    t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
@@ -77,8 +76,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_091939) do
   end
 
   create_table "entries", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.integer "room_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "room_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["room_id"], name: "index_entries_on_room_id"
@@ -93,11 +92,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_091939) do
     t.index ["followed_id"], name: "index_follows_on_followed_id"
     t.index ["follower_id", "followed_id"], name: "index_follows_on_follower_id_and_followed_id", unique: true
     t.index ["follower_id"], name: "index_follows_on_follower_id"
+    t.check_constraint "follower_id <> followed_id", name: "no_self_follow"
   end
 
   create_table "messages", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.integer "room_id", null: false
+    t.bigint "user_id", null: false
+    t.bigint "room_id", null: false
     t.text "body"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -125,20 +125,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_091939) do
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.text "tag"
-    t.integer "received_user_id"
-    t.text "recipient_standing"
-    t.text "recipient_support_styles"
     t.integer "creation_type"
     t.string "request_tag"
     t.bigint "community_id"
     t.boolean "is_private", default: false, null: false
     t.text "feedback_requests"
     t.index ["community_id"], name: "index_posts_on_community_id"
-    t.index ["received_user_id"], name: "index_posts_on_received_user_id"
+    t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
   create_table "preferences", force: :cascade do |t|
-    t.integer "user_id", null: false
+    t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "genre"
@@ -149,26 +146,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_091939) do
     t.index ["user_id"], name: "index_preferences_on_user_id"
   end
 
-  create_table "received_videos", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.integer "sender_id", null: false
-    t.integer "post_id", null: false
-    t.string "title"
-    t.string "thumbnail_url"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["post_id"], name: "index_received_videos_on_post_id"
-    t.index ["sender_id"], name: "index_received_videos_on_sender_id"
-    t.index ["user_id"], name: "index_received_videos_on_user_id"
-  end
-
   create_table "rooms", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
 
   create_table "supporter_profiles", force: :cascade do |t|
-    t.integer "user_id", null: false
+    t.bigint "user_id", null: false
     t.string "creation_experience"
     t.text "favorite_artists"
     t.string "age_group"
@@ -192,7 +176,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_091939) do
     t.datetime "updated_at", null: false
     t.string "name"
     t.integer "coins", default: 1, null: false
-    t.integer "rank_point", default: 0, null: false
     t.integer "rank_points", default: 0
     t.string "confirmation_token"
     t.datetime "confirmed_at"
@@ -204,9 +187,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_091939) do
   end
 
   create_table "votes", force: :cascade do |t|
-    t.integer "user_id", null: false
+    t.bigint "user_id", null: false
     t.string "votable_type", null: false
-    t.integer "votable_id", null: false
+    t.bigint "votable_id", null: false
     t.integer "value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -233,9 +216,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_07_091939) do
   add_foreign_key "post_recipients", "users"
   add_foreign_key "posts", "communities"
   add_foreign_key "preferences", "users"
-  add_foreign_key "received_videos", "posts"
-  add_foreign_key "received_videos", "users"
-  add_foreign_key "received_videos", "users", column: "sender_id"
   add_foreign_key "supporter_profiles", "users"
   add_foreign_key "votes", "users"
 end

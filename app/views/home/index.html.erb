@@ -39,41 +39,50 @@
 <% if @posts.any? %>
   <% @posts.each do |post| %>
     <div class="<%= post_card_class(post) %>">
-      <p class="text-gray-500 mb-2 text-lg">
+      <p class="text-gray-500 mb-1 text-sm">
         👤 <%= link_to post.user.name, user_path(post.user), class: "text-indigo-600 hover:underline" %>
       </p>
 
-      <h3 class="text-xl font-bold text-indigo-700 mb-2 flex items-center gap-2">
+      <h3 class="text-lg font-bold text-indigo-700 mb-1 flex items-center gap-2">
         <%= link_to post.title, post_path(post) %>
         <% if post.is_private? %>
-          <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">🔒 プライベート</span>
+          <span class="bg-red-100 text-red-800 text-xs px-1.5 py-0.5 rounded-full font-medium">🔒</span>
           <% if user_signed_in? && post.user != current_user %>
-            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">📨 受信済み</span>
+            <span class="bg-green-100 text-green-800 text-xs px-1.5 py-0.5 rounded-full font-medium">📨</span>
           <% end %>
         <% end %>
       </h3>
 
       <% if post.request_tag.present? %>
-        <p class="text-sm text-gray-600 mb-2">
-          <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full"><%= post.request_tag %></span>
+        <p class="text-xs text-gray-600 mb-1">
+          <span class="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full text-xs"><%= post.request_tag %></span>
         </p>
       <% end %>
 
-      <p class="mb-4 ml-4"><%= truncate(post.body, length: 100) %></p>
+      <p class="mb-2 ml-2 text-sm"><%= truncate(post.body, length: 80) %></p>
 
       <% if post.tag.present? %>
-        <div class="flex flex-wrap gap-2">
-          <% post.tag_list.each do |tag| %>
-            <span class="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-medium"><%= tag %></span>
+        <div class="flex flex-wrap gap-1 mb-2">
+          <% post.tag_list.first(3).each do |tag| %>
+            <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium"><%= tag %></span>
+          <% end %>
+          <% if post.tag_list.length > 3 %>
+            <span class="text-xs text-gray-400">+<%= post.tag_list.length - 3 %></span>
           <% end %>
         </div>
       <% end %>
 
       <% if post.images.attached? %>
-        <div class="flex flex-col items-center">
-          <% post.images.each_with_index do |image, index| %>
-            <div class="relative inline-block mb-4" data-controller="image-comments" data-image-comments-post-id-value="<%= post.id %>" data-image-comments-read-only-value="true">
-              <%= image_tag image, class: "w-full max-w-sm mx-auto rounded shadow", data: { "image-comments-target": "image" } %>
+        <div class="flex flex-col items-center mb-2">
+          <% post.images.first(1).each_with_index do |image, index| %>
+            <div class="relative inline-block mb-2" data-controller="image-comments" data-image-comments-post-id-value="<%= post.id %>" data-image-comments-read-only-value="true">
+              <%= image_tag image, class: "w-full max-w-xs mx-auto rounded shadow", data: { "image-comments-target": "image" } %>
+              
+              <% if post.images.count > 1 %>
+                <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                  +<%= post.images.count - 1 %>
+                </div>
+              <% end %>
               
               <!-- 画像上のコメントマーカー表示エリア -->
               <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
@@ -88,30 +97,35 @@
       <% end %>
 
       <% if post.videos.attached? %>
-        <div class="mt-4">
-          <% post.videos.each_with_index do |video, index| %>
-            <div class="bg-gray-900 rounded-xl overflow-hidden shadow-lg mb-4 max-w-md mx-auto">
+        <div class="mb-2">
+          <% post.videos.first(1).each_with_index do |video, index| %>
+            <div class="bg-gray-900 rounded-lg overflow-hidden shadow mb-2 max-w-xs mx-auto">
               <video class="custom-video no-context-menu w-full" 
                      controls 
-                     controlsList="nodownload noremoteplayback"
+                     controlsList="nodownload noremoteplaybook"
                      oncontextmenu="return false;"
                      preload="metadata"
-                     style="outline: none;">
+                     style="outline: none; height: 200px;">
                 <source src="<%= url_for(video) %>" type="video/mp4">
                 お使いのブラウザは video タグをサポートしていません。
               </video>
+              <% if post.videos.count > 1 %>
+                <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                  +<%= post.videos.count - 1 %>
+                </div>
+              <% end %>
             </div>
           <% end %>
         </div>
       <% end %>
 
       <% if post.audios.attached? %>
-        <div class="mt-4 max-w-md mx-auto">
-          <% post.audios.each_with_index do |audio, index| %>
-            <div class="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-3 mb-3 border border-purple-200">
+        <div class="mb-2 max-w-xs mx-auto">
+          <% post.audios.first(1).each_with_index do |audio, index| %>
+            <div class="bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg p-2 mb-2 border border-purple-200">
               <audio class="custom-audio no-context-menu w-full" 
                      controls 
-                     controlsList="nodownload noremoteplayback"
+                     controlsList="nodownload noremoteplaybook"
                      oncontextmenu="return false;"
                      preload="metadata"
                      style="outline: none;">
@@ -120,6 +134,9 @@
                 <source src="<%= url_for(audio) %>" type="audio/ogg">
                 お使いのブラウザは audio タグをサポートしていません。
               </audio>
+              <% if post.audios.count > 1 %>
+                <div class="text-center text-xs text-purple-600 mt-1">+<%= post.audios.count - 1 %>件</div>
+              <% end %>
             </div>
           <% end %>
         </div>
@@ -132,7 +149,7 @@
       <% total_votes = up_count + down_count %>
       
       <!-- 投票システム（投稿詳細と同じスタイル） -->
-      <div class="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-gray-100">
+      <div class="flex items-center justify-center gap-4 mt-2 pt-2 border-t border-gray-100">
         <!-- プラス投票アイコン（表示のみ） -->
         <div class="<%= user_vote == 1 ? 'text-green-600 bg-green-100 rounded px-1 py-1 font-bold' : 'text-gray-400' %>">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

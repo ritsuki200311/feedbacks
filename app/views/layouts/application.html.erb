@@ -1367,6 +1367,38 @@
           this.aiLoaded = false
           this.startAI()
         }
+
+
+        insertCommentIntoForm(comment) {
+          // メインのコメントフォームを検索
+          let commentForm = document.querySelector('textarea[data-comment-form-target="textarea"]')
+          
+          if (!commentForm) {
+            const allTextareas = document.querySelectorAll('textarea[name="comment[body]"]')
+            let mainTextarea = null
+            let maxSize = 0
+            
+            allTextareas.forEach(textarea => {
+              const rows = parseInt(textarea.getAttribute('rows') || '1')
+              const isMainForm = textarea.classList.contains('w-full') || textarea.getAttribute('data-comment-form-target')
+              const size = isMainForm ? rows + 100 : rows
+              
+              if (size > maxSize) {
+                maxSize = size
+                mainTextarea = textarea
+              }
+            })
+            
+            commentForm = mainTextarea
+          }
+          
+          if (commentForm) {
+            commentForm.value = comment
+            commentForm.focus()
+            commentForm.dispatchEvent(new Event('input', { bubbles: true }))
+            commentForm.dispatchEvent(new Event('change', { bubbles: true }))
+          }
+        }
       }
 
       // Vote Controller (AJAX)

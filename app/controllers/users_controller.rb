@@ -9,7 +9,7 @@ class UsersController < ApplicationController
       redirect_to mypage_path
       return
     end
-    @posts = @user.posts.where(is_private: false).order(created_at: :desc)
+    @posts = @user.posts.where(is_private: false).includes(:votes, :comments, images_attachments: :blob).order(created_at: :desc)
     @supporter_profile = @user.supporter_profile
   end
 
@@ -33,7 +33,7 @@ class UsersController < ApplicationController
     
     all_post_ids = (own_posts.pluck(:id) + received_posts.pluck(:id) + message_based_posts.pluck(:id)).uniq
     @posts = Post.where(id: all_post_ids)
-                 .includes(:user, images_attachments: :blob)
+                 .includes(:user, :votes, :comments, images_attachments: :blob)
                  .order(created_at: :desc)
     
     @supporter_profile = @user.supporter_profile

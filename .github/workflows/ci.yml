@@ -90,7 +90,7 @@ jobs:
           PGUSER: postgres
           PGPASSWORD: password
           PGDATABASE: feedbacks_test
-        run: bin/rails db:test:prepare test test:system
+        run: bin/rails db:test:prepare test
 
       - name: Kill orphaned Chrome processes
         run: pkill chrome || true

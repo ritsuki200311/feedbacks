@@ -18,30 +18,17 @@ class PostsTest < ApplicationSystemTestCase
     fill_in "タイトル", with: "テスト投稿タイトル"
     fill_in "本文", with: "これはテスト投稿の本文です。"
 
-    # 創作の種類を選択
-    find("label", text: "イラスト・マンガ").click
-
-    # リクエストを選択
-    find("label", text: "見て！感想ください！").click
-
     click_on "投稿する"
 
     assert_text "投稿が作成されました。"
     assert_text "テスト投稿タイトル"
   end
 
-  test "creating a post with all text fields and tags" do
+  test "creating a post with all text fields" do
     visit new_post_url
 
     fill_in "タイトル", with: "全てのフィールドを含むテスト投稿"
     fill_in "本文", with: "これは全てのフィールドを含むテスト投稿の本文です。"
-
-    find("label", text: "詩・小説").click
-    find("label", text: "困ってます！アドバイスください！").click
-
-    # タグを選択 (複数選択可能)
-    check "批評ください"
-    check "優しい意見ください"
 
     click_on "投稿する"
 

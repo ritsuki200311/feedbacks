@@ -1,7 +1,7 @@
 class CommunitiesController < ApplicationController
   helper :posts
-  before_action :authenticate_user!, except: [:index, :show]
-  before_action :set_community, only: [:show, :edit, :update, :destroy, :join, :leave]
+  before_action :authenticate_user!, except: [ :index, :show ]
+  before_action :set_community, only: [ :show, :edit, :update, :destroy, :join, :leave ]
 
   def index
     @communities = Community.where(is_public: true)

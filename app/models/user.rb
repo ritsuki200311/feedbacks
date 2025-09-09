@@ -26,11 +26,11 @@ class User < ApplicationRecord
   # コミュニティ関連
   has_many :community_users, dependent: :destroy
   has_many :communities, through: :community_users
-  has_many :created_communities, class_name: 'Community', foreign_key: 'user_id', dependent: :destroy
+  has_many :created_communities, class_name: "Community", foreign_key: "user_id", dependent: :destroy
 
   # フォロー機能
-  has_many :active_follows, class_name: 'Follow', foreign_key: 'follower_id', dependent: :destroy
-  has_many :passive_follows, class_name: 'Follow', foreign_key: 'followed_id', dependent: :destroy
+  has_many :active_follows, class_name: "Follow", foreign_key: "follower_id", dependent: :destroy
+  has_many :passive_follows, class_name: "Follow", foreign_key: "followed_id", dependent: :destroy
   has_many :following, through: :active_follows, source: :followed
   has_many :followers, through: :passive_follows, source: :follower
 
@@ -47,7 +47,7 @@ class User < ApplicationRecord
   def add_coins(amount)
     return false unless amount.is_a?(Integer) && amount > 0
     return false if coins + amount > 999999 # 上限設定
-    
+
     self.coins += amount
     save
   end
@@ -55,7 +55,7 @@ class User < ApplicationRecord
   def remove_coins(amount)
     return false unless amount.is_a?(Integer) && amount > 0
     return false if coins - amount < 0 # マイナス防止
-    
+
     self.coins -= amount
     save
   end

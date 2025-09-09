@@ -26,7 +26,7 @@ Rails.application.routes.draw do
   get "search", to: "posts#search", as: :search
   get "search_simple", to: "posts#search_simple", as: :search_simple
   get "search_debug", to: "posts#search", as: :search_debug
-  
+
   # 作品マップ（postsリソースの前に配置）
   get "posts/map", to: "posts#map", as: :posts_map
 
@@ -34,11 +34,11 @@ Rails.application.routes.draw do
   resources :posts, only: [ :new, :create, :show, :destroy ] do
     resources :comments, only: [ :index, :create ]
     # AI comment assistant
-    post 'ai_comment_assistant/analyze', to: 'ai_comment_assistant#analyze_post'
+    post "ai_comment_assistant/analyze", to: "ai_comment_assistant#analyze_post"
     # ユーザー選択画面
-    get 'select_recipient', to: 'posts#select_recipient'
-    post 'send_to_user', to: 'posts#send_to_user'
-    get 'match_users', to: 'posts#match_users'
+    get "select_recipient", to: "posts#select_recipient"
+    post "send_to_user", to: "posts#send_to_user"
+    get "match_users", to: "posts#match_users"
   end
 
   # 投票機能

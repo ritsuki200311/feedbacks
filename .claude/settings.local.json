@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(git push:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(bundle exec rubocop:*)"
     ],
     "deny": []
   }

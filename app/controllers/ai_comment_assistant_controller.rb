@@ -1,14 +1,14 @@
 class AiCommentAssistantController < ApplicationController
   before_action :authenticate_user!
-  skip_before_action :verify_authenticity_token, only: [:analyze_post]
+  skip_before_action :verify_authenticity_token, only: [ :analyze_post ]
 
   def analyze_post
     @post = Post.find(params[:post_id])
-    
+
     begin
       # Gemini APIにリクエストを送信
       response = call_gemini_api(@post)
-      
+
       render json: {
         success: true,
         comment_examples: response[:comment_examples],
@@ -29,39 +29,39 @@ class AiCommentAssistantController < ApplicationController
 
 
   def call_gemini_api(post)
-    require 'net/http'
-    require 'json'
-    require 'uri'
-    require 'base64'
+    require "net/http"
+    require "json"
+    require "uri"
+    require "base64"
 
     # Gemini API endpoint
-    api_key = ENV['GOOGLE_GEMINI_API_KEY'] || Rails.application.credentials.dig(:google, :gemini_api_key) || 'AIzaSyBPrMWaLrF2OacBXokFMTXdXyP0D5gIOx8'
-    project_id = ENV['GOOGLE_PROJECT_ID']
-    
+    api_key = ENV["GOOGLE_GEMINI_API_KEY"] || Rails.application.credentials.dig(:google, :gemini_api_key) || "AIzaSyBPrMWaLrF2OacBXokFMTXdXyP0D5gIOx8"
+    project_id = ENV["GOOGLE_PROJECT_ID"]
+
     if api_key.blank?
       raise "Google Gemini API key is not configured. Please set GOOGLE_GEMINI_API_KEY in your .env file."
     end
 
     # 画像がある場合はVision対応モデルを使用
-    model = post.images.attached? ? 'gemini-1.5-flash' : 'gemini-1.5-flash'
+    model = post.images.attached? ? "gemini-1.5-flash" : "gemini-1.5-flash"
     url = URI("https://generativelanguage.googleapis.com/v1/models/#{model}:generateContent?key=#{api_key}")
-    
+
     http = Net::HTTP.new(url.host, url.port)
     http.use_ssl = true
-    
+
     request = Net::HTTP::Post.new(url)
-    request['Content-Type'] = 'application/json'
-    
+    request["Content-Type"] = "application/json"
+
     # プロンプトを構築
     prompt = build_prompt(post)
-    
+
     # リクエストボディにプロンプト＋画像を含める
-    parts = [{ text: prompt }]
-    
+    parts = [ { text: prompt } ]
+
     # 画像がある場合は画像データを追加
     if post.images.attached?
       Rails.logger.info "Processing #{post.images.count} images for AI analysis"
-      
+
       post.images.each_with_index do |image, index|
         begin
           # 画像サイズをチェック（5MB制限）
@@ -69,37 +69,37 @@ class AiCommentAssistantController < ApplicationController
             Rails.logger.warn "Image #{index + 1} too large (#{image.byte_size} bytes), skipping"
             next
           end
-          
+
           # 対応フォーマットをチェック
           unless %w[image/jpeg image/png image/gif image/webp].include?(image.content_type)
             Rails.logger.warn "Image #{index + 1} format not supported (#{image.content_type}), skipping"
             next
           end
-          
+
           # 画像データを取得してBase64エンコード
           image_data = image.download
           mime_type = image.content_type
           base64_data = Base64.strict_encode64(image_data)
-          
+
           parts << {
             inline_data: {
               mime_type: mime_type,
               data: base64_data
             }
           }
-          
+
           Rails.logger.info "Successfully processed image #{index + 1} (#{mime_type}, #{image.byte_size} bytes)"
-          
+
         rescue => e
           Rails.logger.error "Error processing image #{index + 1}: #{e.message}"
           Rails.logger.error e.backtrace.join("\n")
           # 画像処理エラーは無視して続行
         end
       end
-      
+
       Rails.logger.info "Total #{parts.count - 1} images added to AI request"
     end
-    
+
     request.body = {
       contents: [
         {
@@ -113,15 +113,15 @@ class AiCommentAssistantController < ApplicationController
         maxOutputTokens: 2048
       }
     }.to_json
-    
+
     response = http.request(request)
-    
-    if response.code == '200'
+
+    if response.code == "200"
       result = JSON.parse(response.body)
-      content = result.dig('candidates', 0, 'content', 'parts', 0, 'text')
-      
+      content = result.dig("candidates", 0, "content", "parts", 0, "text")
+
       Rails.logger.info "Gemini API response content: #{content}"
-      
+
       if content
         parsed_result = parse_gemini_response(content)
         Rails.logger.info "Parsed result: #{parsed_result}"
@@ -136,7 +136,7 @@ class AiCommentAssistantController < ApplicationController
 
   def build_prompt(post)
     content_type = determine_content_type(post)
-    
+
     base_prompt = <<~PROMPT
       あなたは投稿に対するコメントを支援するAIです。
 
@@ -151,7 +151,7 @@ class AiCommentAssistantController < ApplicationController
     # 画像がある場合は画像分析を含むプロンプト
     if post.images.attached?
       image_prompt = <<~IMAGE_PROMPT
-        
+
         添付された画像を詳細に分析して、以下の点について具体的に言及してください：
         - 色彩、構図、技法などの視覚的要素
         - 表現されている内容やテーマ
@@ -205,7 +205,7 @@ class AiCommentAssistantController < ApplicationController
         - [ポイント4]
         - [ポイント5]
       IMAGE_PROMPT
-      
+
       base_prompt + image_prompt
     else
       # 画像がない場合は従来のプロンプト
@@ -255,7 +255,7 @@ class AiCommentAssistantController < ApplicationController
         - [ポイント3]
         - [ポイント4]
       TEXT_PROMPT
-      
+
       base_prompt + text_prompt
     end
   end
@@ -280,13 +280,13 @@ class AiCommentAssistantController < ApplicationController
     comment_examples = []
     vocabularies = []
     observation_points = []
-    
+
     current_section = nil
-    
+
     content.split("\n").each do |line|
       line = line.strip
       next if line.empty?
-      
+
       if line.include?("【コメント例】") || line.include?("コメント例")
         current_section = :comments
         next
@@ -297,7 +297,7 @@ class AiCommentAssistantController < ApplicationController
         current_section = :observations
         next
       end
-      
+
       case current_section
       when :comments
         if match = line.match(/^\d+\.\s*(.+)$/)
@@ -319,7 +319,7 @@ class AiCommentAssistantController < ApplicationController
         end
       end
     end
-    
+
     # フォールバック: パースに失敗した場合のデフォルト
     if comment_examples.empty?
       comment_examples = [
@@ -328,7 +328,7 @@ class AiCommentAssistantController < ApplicationController
         "素晴らしい投稿をありがとうございます。参考になりました。"
       ]
     end
-    
+
     if observation_points.empty?
       observation_points = [
         "投稿の目的や意図を考えてみる",
@@ -337,7 +337,7 @@ class AiCommentAssistantController < ApplicationController
         "改善点や発展の可能性を考える"
       ]
     end
-    
+
     {
       comment_examples: comment_examples,
       vocabularies: vocabularies,

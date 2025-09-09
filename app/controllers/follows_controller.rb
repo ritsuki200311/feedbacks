@@ -14,7 +14,7 @@ class FollowsController < ApplicationController
     end
 
     @follow = current_user.active_follows.build(followed: @user)
-    
+
     if @follow.save
       redirect_back_or_to(user_path(@user), notice: "#{@user.name}をフォローしました")
     else
@@ -24,7 +24,7 @@ class FollowsController < ApplicationController
 
   def destroy
     @follow = current_user.active_follows.find_by(followed: @user)
-    
+
     if @follow
       @follow.destroy
       redirect_back_or_to(user_path(@user), notice: "#{@user.name}のフォローを解除しました")

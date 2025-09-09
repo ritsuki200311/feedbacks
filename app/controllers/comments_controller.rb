@@ -4,10 +4,10 @@ class CommentsController < ApplicationController
 
   def index
     @comments = @post.comments.includes(:user).order(:created_at)
-    
+
     respond_to do |format|
-      format.json { 
-        render json: @comments.map { |comment| 
+      format.json {
+        render json: @comments.map { |comment|
           {
             id: comment.id,
             body: comment.body,
@@ -24,13 +24,13 @@ class CommentsController < ApplicationController
   def create
     @comment = @post.comments.build(comment_params)
     @comment.user = current_user
-    
+
     respond_to do |format|
       if @comment.save
         CoinService.reward_for_comment(@comment)
-        
+
         format.html { redirect_to post_path(@post), notice: "コメントを投稿しました。" }
-        format.json { 
+        format.json {
           render json: {
             id: @comment.id,
             body: @comment.body,

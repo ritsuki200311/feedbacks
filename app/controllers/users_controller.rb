@@ -16,11 +16,11 @@ class UsersController < ApplicationController
 
   def mypage
     @user = current_user
-    
+
     # 自分の投稿と自分宛に送られた投稿を合わせて表示
     own_posts = current_user.posts
     received_posts = current_user.received_posts
-    
+
     # 後方互換性のため、古いメッセージベースでも受信投稿を取得
     message_based_post_ids = Message.joins(room: :entries)
                                    .where(entries: { user_id: current_user.id })
@@ -28,14 +28,14 @@ class UsersController < ApplicationController
                                    .where.not(post_id: nil)
                                    .pluck(:post_id)
                                    .uniq
-    
+
     message_based_posts = Post.where(id: message_based_post_ids, is_private: true)
-    
+
     all_post_ids = (own_posts.pluck(:id) + received_posts.pluck(:id) + message_based_posts.pluck(:id)).uniq
     @posts = Post.where(id: all_post_ids)
                  .includes(:user, :votes, :comments, images_attachments: :blob)
                  .order(created_at: :desc)
-    
+
     @supporter_profile = @user.supporter_profile
 
     # 自分が参加しているルームの中で未読メッセージがあるもの
@@ -54,11 +54,11 @@ class UsersController < ApplicationController
 
   def update
     @user = current_user
-    
+
     if @user.update(user_params)
-      redirect_to mypage_path, notice: 'ユーザーネームが更新されました。'
+      redirect_to mypage_path, notice: "ユーザーネームが更新されました。"
     else
-      redirect_to mypage_path, alert: @user.errors.full_messages.join(', ')
+      redirect_to mypage_path, alert: @user.errors.full_messages.join(", ")
     end
   end
 

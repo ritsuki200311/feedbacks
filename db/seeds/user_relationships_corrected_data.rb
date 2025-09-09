@@ -212,7 +212,7 @@ end
 # 正しいプロフィール構造でテストユーザーを作成
 corrected_test_profiles.each_with_index do |profile_data, index|
   puts "Creating user #{index + 1}/#{corrected_test_profiles.length}: #{profile_data[:name]}"
-  
+
   # ユーザーを作成
   user = User.create!(
     name: profile_data[:name],
@@ -220,7 +220,7 @@ corrected_test_profiles.each_with_index do |profile_data, index|
     password: "password123",
     password_confirmation: "password123"
   )
-  
+
   # 実際の属性に基づいてプロフィールを作成
   user.create_supporter_profile!(
     standing: profile_data[:standing],
@@ -232,7 +232,7 @@ corrected_test_profiles.each_with_index do |profile_data, index|
     support_styles: profile_data[:support_styles],
     personality_traits: profile_data[:personality_traits]
   )
-  
+
   puts "  ✅ Created #{user.name} with correct profile structure"
 end
 

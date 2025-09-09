@@ -5,7 +5,7 @@ class HomeController < ApplicationController
       public_posts = Post.where(is_private: false).includes(:user, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
       own_posts = current_user.posts.where(is_private: true).includes(:user, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
       received_posts = current_user.received_posts.where(is_private: true).includes(:user, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
-      
+
       # 後方互換性のため、古いメッセージベースでも受信投稿を取得
       message_based_post_ids = Message.joins(room: :entries)
                                      .where(entries: { user_id: current_user.id })
@@ -13,15 +13,15 @@ class HomeController < ApplicationController
                                      .where.not(post_id: nil)
                                      .pluck(:post_id)
                                      .uniq
-      
+
       message_based_posts = Post.where(id: message_based_post_ids, is_private: true).includes(:user, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
-      
+
       all_post_ids = (public_posts.pluck(:id) + own_posts.pluck(:id) + received_posts.pluck(:id) + message_based_posts.pluck(:id)).uniq
       base_query = Post.where(id: all_post_ids)
-      
+
       if params[:creation_type].present?
         filtered_posts = base_query.where(creation_type: params[:creation_type]).includes(:comments, :user, :votes, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
-      elsif params[:filter] == 'following'
+      elsif params[:filter] == "following"
         # フォロー中のユーザーの投稿のみを表示
         begin
           following_user_ids = current_user.following.pluck(:id)
@@ -43,7 +43,7 @@ class HomeController < ApplicationController
         max_same_creator: 3,
         quality_over_popularity: true
       })
-      
+
       # 推奨された投稿のIDを取得し、画像付きで再クエリ
       recommended_post_ids = recommended_posts.map(&:id)
       if recommended_post_ids.any?
@@ -61,20 +61,20 @@ class HomeController < ApplicationController
         @posts = Post.where(is_private: false).includes(:comments, :user, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob).order(created_at: :desc)
       end
     end
-    
+
     # 右サイドバー用のデータを取得
     @recent_comments = Comment.includes(:user, :post)
                              .order(created_at: :desc)
                              .limit(5)
-    
+
     # おすすめユーザーを取得（投稿数順）
     user_post_counts = Post.group(:user_id).count
     recommended_user_ids = user_post_counts.sort_by { |user_id, count| -count }.first(5).map(&:first)
-    
+
     if current_user
       recommended_user_ids = recommended_user_ids.reject { |id| id == current_user.id }
     end
-    
+
     @recommended_users = User.where(id: recommended_user_ids)
                             .includes(:posts)
                             .index_by(&:id)

@@ -101,7 +101,7 @@ class RecommendationService
     when 7..30
       0.6 - ((days_old - 7) * 0.01)  # 1ヶ月まではそれなりの評価
     else
-      [0.3, 0.4 - ((days_old - 30) * 0.005)].max  # 古い良作も発見される機会
+      [ 0.3, 0.4 - ((days_old - 30) * 0.005) ].max  # 古い良作も発見される機会
     end
   end
 
@@ -114,15 +114,15 @@ class RecommendationService
   def detect_viral_pattern(post)
     # 短期間での異常な拡散パターンを検出
     recent_hours = 6
-    recent_engagement = post.votes.where('created_at > ?', recent_hours.hours.ago).count
-    recent_comments = post.comments.where('created_at > ?', recent_hours.hours.ago).count
+    recent_engagement = post.votes.where("created_at > ?", recent_hours.hours.ago).count
+    recent_comments = post.comments.where("created_at > ?", recent_hours.hours.ago).count
 
     # 6時間以内のエンゲージメント密度
     engagement_density = (recent_engagement + recent_comments * 1.5) / recent_hours
 
     # 密度が高すぎる場合はバイラル判定
     if engagement_density > 10
-      penalty = [engagement_density / 50.0, 0.7].min
+      penalty = [ engagement_density / 50.0, 0.7 ].min
     else
       0.0
     end
@@ -144,7 +144,7 @@ class RecommendationService
 
   def limit_posts_per_creator(scored_posts, max_per_creator)
     creator_counts = Hash.new(0)
-    
+
     # スコア順にソートしてから制限適用
     scored_posts.sort_by { |item| -item[:score] }.select do |item|
       creator_id = item[:post].user_id
@@ -171,21 +171,21 @@ class RecommendationService
     # タイトル・本文の充実度
     title_length = post.title&.length || 0
     body_length = post.body&.length || 0
-    
+
     # 適度な長さを評価（長すぎても良くない）
-    title_score = title_length > 5 ? [1.0, title_length / 30.0].min : 0.3
-    body_score = body_length > 10 ? [1.0, body_length / 200.0].min : 0.5
-    
+    title_score = title_length > 5 ? [ 1.0, title_length / 30.0 ].min : 0.3
+    body_score = body_length > 10 ? [ 1.0, body_length / 200.0 ].min : 0.5
+
     (title_score + body_score) / 2.0
   end
 
   def calculate_creator_consistency(user)
     # 作者の継続性（投稿頻度の一貫性）
-    recent_posts = user.posts.where('created_at > ?', 30.days.ago)
+    recent_posts = user.posts.where("created_at > ?", 30.days.ago)
     total_posts = user.posts.count
 
     if total_posts >= 5 && recent_posts.count >= 1
-      [1.0, Math.log(total_posts) * 0.2].min
+      [ 1.0, Math.log(total_posts) * 0.2 ].min
     else
       0.4  # 新規ユーザーに対する基本スコア
     end
@@ -198,6 +198,6 @@ class RecommendationService
     thoughtful_comments = comments.select { |c| c.body&.length.to_i > 15 }
     thoughtfulness_ratio = thoughtful_comments.count.to_f / comments.count
 
-    [0.3, 0.5 + (thoughtfulness_ratio * 0.5)].min
+    [ 0.3, 0.5 + (thoughtfulness_ratio * 0.5) ].min
   end
 end

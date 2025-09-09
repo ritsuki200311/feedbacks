@@ -49,7 +49,7 @@ class UserBehaviorService
     interest_score += time_preference_bonus * 0.1
 
     # 0.0〜1.0の範囲に正規化
-    [[0.0, interest_score].max, 1.0].min
+    [ [ 0.0, interest_score ].max, 1.0 ].min
   end
 
   private
@@ -61,7 +61,7 @@ class UserBehaviorService
       # いいねした投稿のタグを分析（最近50件）
       liked_posts = @user.votes
                          .joins(:votable)
-                         .where(value: 1, votable_type: 'Post')
+                         .where(value: 1, votable_type: "Post")
                          .includes(votable: :user)
                          .limit(50)
                          .order(created_at: :desc)
@@ -88,7 +88,7 @@ class UserBehaviorService
       # 嫌いな投稿のタグを分析（最近20件）
       disliked_posts = @user.votes
                             .joins(:votable)
-                            .where(value: -1, votable_type: 'Post')
+                            .where(value: -1, votable_type: "Post")
                             .includes(votable: :user)
                             .limit(20)
                             .order(created_at: :desc)
@@ -121,8 +121,8 @@ class UserBehaviorService
     # いいねからの分析
     liked_creation_types = @user.votes
                                 .joins(:votable)
-                                .where(value: 1, votable_type: 'Post')
-                                .group('votable.creation_type')
+                                .where(value: 1, votable_type: "Post")
+                                .group("votable.creation_type")
                                 .count
 
     liked_creation_types.each { |type, count| creation_type_counts[type] += count * 2 }
@@ -130,7 +130,7 @@ class UserBehaviorService
     # コメントからの分析
     commented_creation_types = @user.comments
                                     .joins(:post)
-                                    .group('posts.creation_type')
+                                    .group("posts.creation_type")
                                     .count
 
     commented_creation_types.each { |type, count| creation_type_counts[type] += count }
@@ -168,7 +168,7 @@ class UserBehaviorService
 
   def extract_tags(tag_string)
     return [] if tag_string.blank?
-    tag_string.split(',').map(&:strip).reject(&:blank?)
+    tag_string.split(",").map(&:strip).reject(&:blank?)
   end
 
   def calculate_tag_overlap(tags1, tags2)

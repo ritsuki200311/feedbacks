@@ -6,7 +6,7 @@ class SupporterProfile < ApplicationRecord
     define_method attr do
       value = read_attribute(attr)
       return [] if value.blank?
-      
+
       case value
       when Array
         value
@@ -14,7 +14,7 @@ class SupporterProfile < ApplicationRecord
         begin
           JSON.parse(value)
         rescue JSON::ParserError
-          value.split(',').map(&:strip)
+          value.split(",").map(&:strip)
         end
       else
         []
@@ -26,7 +26,7 @@ class SupporterProfile < ApplicationRecord
       when Array
         write_attribute(attr, value)
       when String
-        write_attribute(attr, value.split(',').map(&:strip))
+        write_attribute(attr, value.split(",").map(&:strip))
       else
         write_attribute(attr, [])
       end

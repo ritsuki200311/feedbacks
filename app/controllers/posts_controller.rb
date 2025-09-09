@@ -11,7 +11,7 @@ class PostsController < ApplicationController
   def create
     @post = Post.new(post_params.except(:files))
     @post.user = current_user
-    
+
     # ボタンのcommitパラメータによって動作を変える
     if params[:commit] == "投稿する"
       @post.is_private = false  # 公開投稿として保存
@@ -22,7 +22,7 @@ class PostsController < ApplicationController
     respond_to do |format|
       if @post.valid?
         @post.save
-        
+
         # filesパラメータを適切なアタッチメントに振り分け
         if params[:post][:files].present?
           Rails.logger.debug "Files parameter: #{params[:post][:files].inspect}"
@@ -32,7 +32,7 @@ class PostsController < ApplicationController
           end
           attach_files_to_post(@post, params[:post][:files])
         end
-        
+
         if params[:commit] == "投稿する"
           format.html { redirect_to root_path, notice: "投稿を公開しました。" }
         else
@@ -118,13 +118,13 @@ class PostsController < ApplicationController
       format.json do
         # 新しいサービス層を使用
         post_similarity_service = PostSimilarityService.new(current_user)
-        
+
         # 階層的クラスタリングを生成
         hierarchical_clusters = post_similarity_service.generate_hierarchical_clusters(@posts)
-        
+
         # 従来の類似度マトリックス（後方互換性のため）
         similarity_matrix = post_similarity_service.calculate_similarity_matrix(@posts)
-        
+
         render json: {
           posts: @posts.map do |post|
             {
@@ -174,9 +174,8 @@ class PostsController < ApplicationController
     @post = Post.find(params[:post_id])
     unless @post.user == current_user
       redirect_to root_path, alert: "権限がありません。"
-      return
+      nil
     end
-    
   end
 
   def send_to_user
@@ -193,12 +192,12 @@ class PostsController < ApplicationController
     end
 
     # カンマ区切りのIDを配列に変換
-    user_ids = selected_user_ids.split(',').map(&:strip).reject(&:blank?)
+    user_ids = selected_user_ids.split(",").map(&:strip).reject(&:blank?)
     if user_ids.empty?
       redirect_to post_select_recipient_path(@post), alert: "送信先ユーザーを選択してください。"
       return
     end
-    
+
     # 5人制限チェック
     if user_ids.length > 5
       redirect_to post_select_recipient_path(@post), alert: "送信相手は最大5人まで選択できます。"
@@ -217,14 +216,14 @@ class PostsController < ApplicationController
     user_ids.each do |user_id|
       begin
         recipient = User.find(user_id)
-        
+
         # PostRecipientレコードを作成して送信関係を記録
         PostRecipient.create!(
           post: @post,
           user: recipient,
           sent_at: Time.current
         )
-        
+
         # DM room を作成または取得
         room = Room.find_existing_room_for_users(current_user, recipient)
         unless room
@@ -236,7 +235,7 @@ class PostsController < ApplicationController
         # 投稿リンクをメッセージとして送信
         post_url = Rails.application.routes.url_helpers.post_url(@post, host: request.host_with_port)
         message_body = "新しい作品を共有します：#{@post.title}"
-        
+
         Message.create!(
           user: current_user,
           room: room,
@@ -244,7 +243,7 @@ class PostsController < ApplicationController
           post: @post,
           is_read: false
         )
-        
+
         sent_users << recipient.name
       rescue ActiveRecord::RecordNotFound
         errors << "ユーザーID #{user_id} が見つかりません"
@@ -276,7 +275,7 @@ class PostsController < ApplicationController
 
     # シンプルなマッチング実装
     matched_users = User.where.not(id: current_user.id).limit(5)
-    
+
     # 実際のマッチング結果を生成（フィードバック希望に基づく）
     user_data = matched_users.map do |user|
       score = calculate_match_score_by_feedback(user, feedback_requests)
@@ -300,9 +299,9 @@ class PostsController < ApplicationController
     files.each do |file|
       # ファイルオブジェクトかどうかを確認
       next unless file.respond_to?(:content_type) && file.respond_to?(:original_filename)
-      
+
       Rails.logger.debug "Attaching file: #{file.original_filename} (#{file.content_type})"
-      
+
       case file.content_type
       when /^image\//
         post.images.attach(file)
@@ -318,21 +317,21 @@ class PostsController < ApplicationController
 
   def extract_tags(tag_string)
     return [] if tag_string.blank?
-    tag_string.split(',').map(&:strip).reject(&:blank?)
+    tag_string.split(",").map(&:strip).reject(&:blank?)
   end
 
   def analyze_comment_sentiments(comments)
     return {} if comments.empty?
-    
+
     sentiment_words = {
-      positive: ['きれい', '美しい', 'すてき', '素敵', '良い', 'いい', '好き', '素晴らしい', '感動', '癒される'],
-      strong: ['力強い', '迫力', 'すごい', '凄い', 'パワフル', '強烈', 'インパクト', '圧倒'],
-      unique: ['独特', 'ユニーク', '面白い', 'おもしろい', '個性的', '斬新', '新しい', '珍しい'],
-      gentle: ['やさしい', '優しい', 'ほっこり', '温かい', 'あたたかい', '穏やか', 'ソフト', '柔らか']
+      positive: [ "きれい", "美しい", "すてき", "素敵", "良い", "いい", "好き", "素晴らしい", "感動", "癒される" ],
+      strong: [ "力強い", "迫力", "すごい", "凄い", "パワフル", "強烈", "インパクト", "圧倒" ],
+      unique: [ "独特", "ユニーク", "面白い", "おもしろい", "個性的", "斬新", "新しい", "珍しい" ],
+      gentle: [ "やさしい", "優しい", "ほっこり", "温かい", "あたたかい", "穏やか", "ソフト", "柔らか" ]
     }
-    
+
     sentiment_counts = { positive: 0, strong: 0, unique: 0, gentle: 0 }
-    
+
     comments.each do |comment|
       content = comment.body.to_s.downcase
       sentiment_words.each do |sentiment, words|
@@ -341,7 +340,7 @@ class PostsController < ApplicationController
         end
       end
     end
-    
+
     sentiment_counts
   end
   private
@@ -376,7 +375,7 @@ class PostsController < ApplicationController
     @creation_types = Post::CREATION_TYPES.keys
     @tag_options = tag_options
     @request_tags = request_tag_options
-    
+
     @results = Post.where(is_private: false).includes(:user, images_attachments: :blob)
     # テキスト検索（タイトル・本文）
     if @query.present?
@@ -428,24 +427,24 @@ class PostsController < ApplicationController
 
   def calculate_match_score(user, feedback_type, experience_level, field_preference)
     score = 50  # ベーススコア
-    
+
     # ユーザーの投稿数に基づくスコア調整
     post_count = user.posts.count
     score += post_count * 2 if post_count > 0
-    
+
     # ランダム要素を追加（実際の実装では別のロジックを使用）
     score += rand(1..30)
-    
+
     score
   end
 
   def calculate_match_score_by_feedback(user, feedback_requests)
     score = 50  # ベーススコア
-    
+
     # ユーザーの投稿数に基づくスコア調整
     post_count = user.posts.count
     score += post_count * 2 if post_count > 0
-    
+
     # フィードバック希望に基づくスコア調整
     if feedback_requests.present?
       feedback_requests.each do |request|
@@ -459,16 +458,16 @@ class PostsController < ApplicationController
         end
       end
     end
-    
+
     # ランダム要素を追加
     score += rand(1..20)
-    
+
     score
   end
 
   def generate_user_description_by_feedback(user, feedback_requests)
     descriptions = []
-    
+
     if feedback_requests.present?
       feedback_requests.each do |request|
         case request
@@ -487,7 +486,7 @@ class PostsController < ApplicationController
         end
       end
     end
-    
+
     post_count = user.posts.count
     if post_count > 10
       descriptions << "活発に投稿活動中（#{post_count}件の投稿）"
@@ -496,13 +495,13 @@ class PostsController < ApplicationController
     else
       descriptions << "フィードバック専門ユーザー"
     end
-    
+
     descriptions.uniq.join(" • ")
   end
 
   def generate_user_description(user, feedback_type, experience_level)
     descriptions = []
-    
+
     case feedback_type
     when "技術的なアドバイス"
       descriptions << "技術的な観点からのアドバイスが得意"
@@ -513,7 +512,7 @@ class PostsController < ApplicationController
     when "励ましのコメント"
       descriptions << "励ましとモチベーション向上が得意"
     end
-    
+
     case experience_level
     when "初心者"
       descriptions << "初心者に優しいフィードバック"
@@ -524,7 +523,7 @@ class PostsController < ApplicationController
     when "プロフェッショナル"
       descriptions << "プロフェッショナルレベルの詳細な分析"
     end
-    
+
     # ユーザーの投稿数情報も追加
     post_count = user.posts.count
     if post_count > 10
@@ -534,27 +533,26 @@ class PostsController < ApplicationController
     else
       descriptions << "新しいメンバー"
     end
-    
+
     descriptions.join("、")
   end
 
   def can_access_private_post?(post)
     return false unless user_signed_in?
-    
+
     # 投稿者本人は常にアクセス可能
     return true if post.user == current_user
-    
+
     # PostRecipientテーブルで送信されたユーザーかチェック
     return true if post.post_recipients.exists?(user: current_user)
-    
+
     # 後方互換性のため、古いメッセージベースのチェックも行う
     # この投稿を含むメッセージが送信されたルームに現在のユーザーが参加しているかチェック
     message_rooms = Room.joins(:messages, :entries)
                        .where(messages: { post_id: post.id })
                        .where(entries: { user_id: current_user.id })
                        .distinct
-    
+
     message_rooms.exists?
   end
-
 end

@@ -16,8 +16,7 @@ development:
 test:
   <<: *default
   database: feedbacks_test
-  username: postgres
-  password: password
+  username: akimotoritsuki
 
 
 production:

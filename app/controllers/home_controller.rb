@@ -61,5 +61,24 @@ class HomeController < ApplicationController
         @posts = Post.where(is_private: false).includes(:comments, :user, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob).order(created_at: :desc)
       end
     end
+    
+    # 右サイドバー用のデータを取得
+    @recent_comments = Comment.includes(:user, :post)
+                             .order(created_at: :desc)
+                             .limit(5)
+    
+    # おすすめユーザーを取得（投稿数順）
+    user_post_counts = Post.group(:user_id).count
+    recommended_user_ids = user_post_counts.sort_by { |user_id, count| -count }.first(5).map(&:first)
+    
+    if current_user
+      recommended_user_ids = recommended_user_ids.reject { |id| id == current_user.id }
+    end
+    
+    @recommended_users = User.where(id: recommended_user_ids)
+                            .includes(:posts)
+                            .index_by(&:id)
+                            .values_at(*recommended_user_ids)
+                            .compact
   end
 end

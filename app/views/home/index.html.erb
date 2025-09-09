@@ -1,4 +1,7 @@
-<div class="w-full px-4 py-8 space-y-8">
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="flex gap-4">
+    <!-- メインコンテンツエリア -->
+    <div class="flex-1 max-w-4xl mx-auto space-y-8">
 
   <!-- ヘッダー -->
 
@@ -229,5 +232,11 @@
   </div>
 <% end %>
 
+    </div> <!-- メインコンテンツエリア終了 -->
 
-</div> <!-- ← 最初の .max-w-5xl の閉じタグ -->
+    <!-- 右サイドバー（常時表示） -->
+    <div class="block sticky top-4 h-fit">
+      <%= render 'layouts/right_sidebar' %>
+    </div>
+  </div> <!-- flex コンテナ終了 -->
+</div> <!-- メインコンテナ終了 -->

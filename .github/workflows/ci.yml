@@ -103,24 +103,24 @@ jobs:
           path: ${{ github.workspace }}/tmp/screenshots
           if-no-files-found: ignore
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: test # testジョブが成功した場合にのみ実行
-    if: github.ref == 'refs/heads/main' # mainブランチへのpush時のみデプロイ
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: test # testジョブが成功した場合にのみ実行
+  #   if: github.ref == 'refs/heads/main' # mainブランチへのpush時のみデプロイ
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Install Heroku CLI
-        run: curl https://cli-assets.heroku.com/install.sh | sh
+  #     - name: Install Heroku CLI
+  #       run: curl https://cli-assets.heroku.com/install.sh | sh
 
-      - name: Deploy to Heroku
-        uses: akhileshns/heroku-deploy@v3.12.12 # Herokuデプロイ用Action
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
-          heroku_email: abesora553@gmail.com # あなたのHerokuアカウントのメールアドレスに置き換えてください
-          branch: main # デプロイするブランチ
-          usedocker: false # Dockerを使用しない場合
-          # Removed invalid 'buildpacks' input
+  #     - name: Deploy to Heroku
+  #       uses: akhileshns/heroku-deploy@v3.12.12 # Herokuデプロイ用Action
+  #       with:
+  #         heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+  #         heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+  #         heroku_email: abesora553@gmail.com # あなたのHerokuアカウントのメールアドレスに置き換えてください
+  #         branch: main # デプロイするブランチ
+  #         usedocker: false # Dockerを使用しない場合
+  #         # Removed invalid 'buildpacks' input

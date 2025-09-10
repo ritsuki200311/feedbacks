@@ -273,25 +273,40 @@ class PostsController < ApplicationController
       return
     end
 
-    # パラメータからフィードバック希望を取得
-    feedback_requests = params[:feedback_requests] || []
+    # パラメータから絞り込み条件を取得
+    age_group = params[:age_group]
+    creation_experience = params[:creation_experience]
+    support_genres = params[:support_genres] || []
+    interests = params[:interests] || []
 
-    # シンプルなマッチング実装
-    matched_users = User.where.not(id: current_user.id).limit(5)
+    # ユーザーを絞り込み
+    users = User.joins(:supporter_profile).where.not(id: current_user.id)
+    
+    users = users.where(supporter_profiles: { age_group: age_group }) if age_group.present?
+    users = users.where(supporter_profiles: { creation_experience: creation_experience }) if creation_experience.present?
+    
+    if support_genres.present?
+      users = users.where("supporter_profiles.support_genres @> ?", support_genres.to_json)
+    end
+    if interests.present?
+      users = users.where("supporter_profiles.interests @> ?", interests.to_json)
+    end
 
-    # 実際のマッチング結果を生成（フィードバック希望に基づく）
+    # 上限を設定
+    matched_users = users.limit(10)
+
+    # 実際のマッチング結果を生成
     user_data = matched_users.map do |user|
-      score = calculate_match_score_by_feedback(user, feedback_requests)
       {
         id: user.id,
         name: user.name,
-        description: generate_user_description_by_feedback(user, feedback_requests),
-        score: score
+        description: generate_user_description_from_profile(user.supporter_profile),
+        score: calculate_match_score_from_profile(user.supporter_profile)
       }
     end
 
     # スコア順でソート
-    user_data = user_data.sort_by { |u| -u[:score] }.first(3)
+    user_data = user_data.sort_by { |u| -u[:score] }.first(5)
 
     render json: { users: user_data }
   end
@@ -428,78 +443,23 @@ class PostsController < ApplicationController
     redirect_to root_path, alert: "権限がありません。" and return
   end
 
-  def calculate_match_score(user, feedback_type, experience_level, field_preference)
-    score = 50  # ベーススコア
-
-    # ユーザーの投稿数に基づくスコア調整
-    post_count = user.posts.count
-    score += post_count * 2 if post_count > 0
-
-    # ランダム要素を追加（実際の実装では別のロジックを使用）
-    score += rand(1..30)
-
-    score
+  def calculate_match_score_from_profile(profile)
+    # プロフィール情報に基づいてスコアを計算する (簡易的な例)
+    score = 50
+    score += 10 if ['1-3年', '4-6年', '7-10年', '10年以上'].include?(profile.creation_experience)
+    score += 10 if profile.support_genres.length > 2
+    score += 10 if profile.interests.length > 2
+    score += rand(1..20) # ランダム要素
+    [score, 100].min # 最大100点
   end
 
-  def calculate_match_score_by_feedback(user, feedback_requests)
-    score = 50  # ベーススコア
-
-    # ユーザーの投稿数に基づくスコア調整
-    post_count = user.posts.count
-    score += post_count * 2 if post_count > 0
-
-    # フィードバック希望に基づくスコア調整
-    if feedback_requests.present?
-      feedback_requests.each do |request|
-        case request
-        when "批評ください", "厳しい意見お待ちしています"
-          score += 10 if post_count > 5  # 経験豊富なユーザーに高スコア
-        when "優しい意見ください", "感想ください！"
-          score += 8  # 全般的に適性あり
-        when "困ってます！", "アドバイスください！"
-          score += 12 if post_count > 3  # アドバイス経験者に高スコア
-        end
-      end
-    end
-
-    # ランダム要素を追加
-    score += rand(1..20)
-
-    score
-  end
-
-  def generate_user_description_by_feedback(user, feedback_requests)
-    descriptions = []
-
-    if feedback_requests.present?
-      feedback_requests.each do |request|
-        case request
-        when "批評ください"
-          descriptions << "作品の批評・分析が得意"
-        when "優しい意見ください"
-          descriptions << "優しく建設的なフィードバックが得意"
-        when "厳しい意見お待ちしています"
-          descriptions << "率直で具体的なアドバイスを提供"
-        when "感想ください！"
-          descriptions << "作品への感想・印象を丁寧に伝える"
-        when "アドバイスください！"
-          descriptions << "実践的なアドバイス・指導が得意"
-        when "困ってます！"
-          descriptions << "問題解決・サポートが得意"
-        end
-      end
-    end
-
-    post_count = user.posts.count
-    if post_count > 10
-      descriptions << "活発に投稿活動中（#{post_count}件の投稿）"
-    elsif post_count > 0
-      descriptions << "投稿経験あり（#{post_count}件）"
-    else
-      descriptions << "フィードバック専門ユーザー"
-    end
-
-    descriptions.uniq.join(" • ")
+  def generate_user_description_from_profile(profile)
+    # プロフィール情報に基づいて説明文を生成する
+    parts = []
+    parts << "経験: #{profile.creation_experience}" if profile.creation_experience.present?
+    parts << "創作: #{profile.support_genres.join(', ')}" if profile.support_genres.present?
+    parts << "興味: #{profile.interests.join(', ')}" if profile.interests.present?
+    parts.join(' / ')
   end
 
   def generate_user_description(user, feedback_type, experience_level)

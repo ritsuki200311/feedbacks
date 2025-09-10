@@ -15,16 +15,50 @@
 
     <%= form_with url: post_send_to_user_path(@post), method: :post, local: true, class: "space-y-8" do |form| %>
       
-      <!-- フィードバック希望選択セクション -->
-      <div class="space-y-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">どのようなフィードバックを希望しますか？</h2>
-        <%= render 'posts/checkbox_options', title: "フィードバックの希望（複数選択可）", field_name: "feedback_request_list[]", options: feedback_request_options, selected: [] %>
+      <!-- プロフィールフィルターセクション -->
+      <div class="space-y-6" id="recipient-filters">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">送信相手のプロフィールで絞り込む</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="age_group" class="block text-sm font-medium text-gray-700 mb-1">年齢層</label>
+            <%= select_tag :age_group, options_for_select(recipient_age_group_options), prompt: "指定しない", class: "w-full p-2 border border-gray-300 rounded-lg" %>
+          </div>
+          <div>
+            <label for="creation_experience" class="block text-sm font-medium text-gray-700 mb-1">創作経験</label>
+            <%= select_tag :creation_experience, options_for_select(recipient_creation_experience_options), prompt: "指定しない", class: "w-full p-2 border border-gray-300 rounded-lg" %>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">創作ジャンル</h3>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <% recipient_support_genres_options.each do |option| %>
+              <label class="flex items-center">
+                <input type="checkbox" name="support_genres[]" value="<%= option %>" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                <span class="ml-2 text-sm text-gray-700"><%= option %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">精通しているジャンル</h3>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <% recipient_interests_options.each do |option| %>
+              <label class="flex items-center">
+                <input type="checkbox" name="interests[]" value="<%= option %>" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                <span class="ml-2 text-sm text-gray-700"><%= option %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
       </div>
 
       <!-- マッチング結果表示エリア -->
       <div id="matching-results" class="hidden">
         <h2 class="text-xl font-bold text-gray-800 mb-4">おすすめのユーザー</h2>
-        <p class="text-gray-600 mb-4">あなたのフィードバック希望に基づいて、おすすめのユーザーを表示しています。</p>
+        <p class="text-gray-600 mb-4">絞り込み条件に合致するユーザーを表示しています。</p>
         <div id="user-list" class="space-y-3">
           <!-- JavaScriptで動的に挿入 -->
         </div>
@@ -51,8 +85,6 @@
         <h3 class="font-semibold text-green-800 mb-2">送信先ユーザー</h3>
         <div id="selected-users-list" class="space-y-2"></div>
         <%= form.hidden_field :selected_user_ids, id: "selected_user_ids" %>
-        <!-- フィードバック希望の隠しフィールド -->
-        <input type="hidden" name="feedback_requests" id="feedback_requests" value="">
       </div>
 
       <!-- 送信ボタン -->
@@ -67,23 +99,30 @@
 </div>
 
 <script>
-// マッチング機能
+// フィルター変更時にマッチング結果を更新
+document.addEventListener('DOMContentLoaded', function() {
+  const filters = document.getElementById('recipient-filters');
+  
+  filters.addEventListener('change', () => {
+    showMatchingUsers();
+  });
+
+  // 初期表示時にも実行
+  showMatchingUsers();
+});
+
 async function showMatchingUsers() {
   try {
-    // フィードバック希望を取得
-    const feedbackRequests = Array.from(document.querySelectorAll('input[name="feedback_request_list[]"]:checked'))
-                                   .map(checkbox => checkbox.value);
-    
-    if (feedbackRequests.length === 0) {
-      document.getElementById('matching-results').classList.add('hidden');
-      return;
-    }
-    
-    // APIを呼び出してマッチング結果を取得
+    const ageGroup = document.getElementById('age_group').value;
+    const creationExperience = document.getElementById('creation_experience').value;
+    const supportGenres = Array.from(document.querySelectorAll('input[name="support_genres[]"]:checked')).map(cb => cb.value);
+    const interests = Array.from(document.querySelectorAll('input[name="interests[]"]:checked')).map(cb => cb.value);
+
     const params = new URLSearchParams();
-    feedbackRequests.forEach(request => {
-      params.append('feedback_requests[]', request);
-    });
+    if (ageGroup) params.append('age_group', ageGroup);
+    if (creationExperience) params.append('creation_experience', creationExperience);
+    supportGenres.forEach(g => params.append('support_genres[]', g));
+    interests.forEach(i => params.append('interests[]', i));
     
     const response = await fetch(`<%= post_match_users_path(@post) %>?${params.toString()}`);
     const data = await response.json();
@@ -96,45 +135,35 @@ async function showMatchingUsers() {
     const userListDiv = document.getElementById('user-list');
     
     userListDiv.innerHTML = '';
-    data.users.forEach(user => {
-      const userDiv = document.createElement('div');
-      userDiv.className = 'p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer';
-      userDiv.innerHTML = `
-        <div class="flex justify-between items-center">
-          <div>
-            <h4 class="font-semibold">${user.name}</h4>
-            <p class="text-sm text-gray-600">${user.description}</p>
-            <p class="text-xs text-indigo-600 mt-1">マッチ度: ${user.score}%</p>
+    if (data.users.length > 0) {
+      data.users.forEach(user => {
+        const userDiv = document.createElement('div');
+        userDiv.className = 'p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer';
+        userDiv.innerHTML = `
+          <div class="flex justify-between items-center">
+            <div>
+              <h4 class="font-semibold">${user.name}</h4>
+              <p class="text-sm text-gray-600">${user.description}</p>
+              <p class="text-xs text-indigo-600 mt-1">マッチ度: ${user.score}%</p>
+            </div>
+            <button type="button" onclick="selectUser(${user.id}, '${user.name}')" 
+                    class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                    id="select-btn-${user.id}">
+              選択
+            </button>
           </div>
-          <button type="button" onclick="selectUser(${user.id}, '${user.name}')" 
-                  class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                  id="select-btn-${user.id}">
-            選択
-          </button>
-        </div>
-      `;
-      userListDiv.appendChild(userDiv);
-    });
-    
+        `;
+        userListDiv.appendChild(userDiv);
+      });
+    } else {
+      userListDiv.innerHTML = '<p class="text-gray-500">条件に合うユーザーが見つかりませんでした。</p>';
+    }
     document.getElementById('matching-results').classList.remove('hidden');
-    
-    // フィードバック希望を隠しフィールドに設定
-    document.getElementById('feedback_requests').value = feedbackRequests.join(',');
     
   } catch (error) {
     console.error('Matching API error:', error);
   }
 }
-
-// フィードバック希望の変更を監視
-document.addEventListener('DOMContentLoaded', function() {
-  // チェックボックス変更時にマッチング結果を更新
-  document.querySelectorAll('input[name="feedback_request_list[]"]').forEach(checkbox => {
-    checkbox.addEventListener('change', () => {
-      showMatchingUsers();
-    });
-  });
-});
 
 // ユーザー検索機能
 document.getElementById('search-btn').addEventListener('click', async () => {
@@ -150,12 +179,10 @@ document.getElementById('search-btn').addEventListener('click', async () => {
     const resultsDiv = document.getElementById('search-results');
     resultsDiv.innerHTML = '';
     
-    // 検索結果を表示（簡易版）
-    const users = doc.querySelectorAll('.user-card'); // 適切なセレクタに調整が必要
+    const users = doc.querySelectorAll('.user-card');
     if (users.length === 0) {
       resultsDiv.innerHTML = '<p class="text-gray-500">ユーザーが見つかりませんでした</p>';
     } else {
-      // 検索結果の処理（実際の実装に応じて調整）
       resultsDiv.innerHTML = '<p class="text-green-600">検索機能は実装中です</p>';
     }
   } catch (error) {

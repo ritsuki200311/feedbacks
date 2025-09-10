@@ -58,6 +58,9 @@ class PostsController < ApplicationController
     end
     @comment = @post.comments.build  # コメント投稿フォーム用
     @is_private_view = @post.is_private?
+    
+    # 投票コメントも取得
+    @vote_comments = @post.votes.includes(:user).where.not(comment: [nil, ""])
   end
 
   def edit

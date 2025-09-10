@@ -411,7 +411,7 @@
       </p>
 
       <!-- コメント入力フォーム -->
-      <%= form_with url: vote_path, method: :post, local: true, id: "voteForm", class: "space-y-4", onsubmit: "document.body.style.overflow = ''" do |f| %>
+      <%= form_with url: vote_path, method: :post, local: true, id: "voteForm", class: "space-y-4", onsubmit: "document.body.style.overflow = ''; const commentFormBar = document.getElementById('comment-form-bar'); if (commentFormBar) commentFormBar.style.display = 'block';" do |f| %>
         <%= f.hidden_field :votable_type, value: "Post" %>
         <%= f.hidden_field :votable_id, value: @post.id %>
         <%= f.hidden_field :value, id: "voteValue" %>
@@ -478,6 +478,12 @@
       // 背景スクロールを無効化
       document.body.style.overflow = 'hidden'
       
+      // 固定コメントフォームを非表示
+      const commentFormBar = document.getElementById('comment-form-bar')
+      if (commentFormBar) {
+        commentFormBar.style.display = 'none'
+      }
+      
       // モーダルを表示
       modal.classList.remove('hidden')
       
@@ -506,6 +512,12 @@
       // モーダル背景色はそのまま
       // 背景スクロールを再有効化
       document.body.style.overflow = ''
+      
+      // 固定コメントフォームを再表示
+      const commentFormBar = document.getElementById('comment-form-bar')
+      if (commentFormBar) {
+        commentFormBar.style.display = 'block'
+      }
     }
   }
 
@@ -517,6 +529,12 @@
     
     // 背景スクロールを再有効化
     document.body.style.overflow = ''
+    
+    // 固定コメントフォームを再表示
+    const commentFormBar = document.getElementById('comment-form-bar')
+    if (commentFormBar) {
+      commentFormBar.style.display = 'block'
+    }
     
     // フォームを送信
     const form = document.getElementById('voteForm')
@@ -735,49 +753,78 @@
           <span>💬</span>
           コメント
         </h4>
-        <span class="text-sm text-gray-500"><%= @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).count %>件</span>
+        <span class="text-sm text-gray-500"><%= @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).count + @vote_comments.count %>件</span>
       </div>
       
       <% if user_can_view_comments?(current_user, @post) %>
         <div class="space-y-4 max-h-96 overflow-y-auto">
-          <% @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).order(:created_at).each do |comment| %>
-            <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4">
-              <div class="flex items-start justify-between mb-3">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                    <span class="text-sm font-medium text-gray-600">
-                      <%= (comment.user&.name || "匿名")[0] %>
-                    </span>
+          <% 
+            # 通常のコメントと投票コメントを時系列でまとめる（新しい順）
+            regular_comments = @post.comments.where(parent_id: nil, x_position: nil, y_position: nil)
+            all_comments = (regular_comments + @vote_comments).sort_by(&:created_at).reverse
+          %>
+          <% all_comments.each do |item| %>
+            <% if item.is_a?(Comment) %>
+              <!-- 通常のコメント -->
+              <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span class="text-sm font-medium text-gray-600">
+                        <%= (item.user&.name || "匿名")[0] %>
+                      </span>
+                    </div>
+                    <div>
+                      <span class="font-medium text-gray-900"><%= item.user&.name || "匿名" %></span>
+                      <span class="text-xs text-gray-500 ml-2"><%= time_ago_in_words(item.created_at) %>前</span>
+                    </div>
                   </div>
-                  <div>
-                    <span class="font-medium text-gray-900"><%= comment.user&.name || "匿名" %></span>
-                    <span class="text-xs text-gray-500 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
+                  
+                  <!-- 投票ボタン -->
+                  <div class="flex items-center gap-2">
+                    <%= button_to vote_path(votable_type: 'Comment', votable_id: item.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500 transition-colors" do %>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 5v14"/>
+                        <path d="M5 12h14"/>
+                      </svg>
+                    <% end %>
+                    <span class="text-xs text-gray-600 min-w-[20px] text-center">
+                      <%= item.votes.where(value: 1).count - item.votes.where(value: -1).count %>
+                    </span>
+                    <%= button_to vote_path(votable_type: 'Comment', votable_id: item.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500 transition-colors" do %>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"/>
+                      </svg>
+                    <% end %>
                   </div>
                 </div>
-              
-              <!-- 投票ボタン -->
-              <div class="flex items-center gap-2">
-                <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500 transition-colors" do %>
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 5v14"/>
-                    <path d="M5 12h14"/>
-                  </svg>
-                <% end %>
-                <span class="text-xs text-gray-600 min-w-[20px] text-center">
-                  <%= comment.votes.where(value: 1).count - comment.votes.where(value: -1).count %>
-                </span>
-                <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500 transition-colors" do %>
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12h14"/>
-                  </svg>
-                <% end %>
+                <p class="text-gray-700 leading-relaxed"><%= item.body %></p>
               </div>
-            </div>
-              <p class="text-gray-700 leading-relaxed"><%= comment.body %></p>
-            </div>
+            <% else %>
+              <!-- 投票コメント -->
+              <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span class="text-sm font-medium text-blue-600">
+                        <%= (item.user&.name || "匿名")[0] %>
+                      </span>
+                    </div>
+                    <div>
+                      <span class="font-medium text-gray-900"><%= item.user&.name || "匿名" %></span>
+                      <span class="text-xs text-gray-500 ml-2"><%= time_ago_in_words(item.created_at) %>前</span>
+                      <span class="ml-2 px-2 py-1 text-xs rounded-full <%= item.value == 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                        <%= item.value == 1 ? '👍 評価' : '👎 評価' %>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p class="text-gray-700 leading-relaxed"><%= item.comment %></p>
+              </div>
+            <% end %>
           <% end %>
           
-          <% if @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).empty? %>
+          <% if all_comments.empty? %>
             <div class="text-center py-8 text-gray-500">
               <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span class="text-xl">💬</span>

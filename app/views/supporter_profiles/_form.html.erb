@@ -10,13 +10,14 @@
     </div>
   <% end %>
 
+  <div>
+    <label class="block text-lg font-semibold text-gray-800 mb-3">年齢層を入力してください</label>
+    <%= f.select :age_group, ['～15歳', '16～18歳', '19～22歳', '23～29歳', '30代', '40代以上'], { prompt: "選択してください" }, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" %>
+  </div>
+
   <%# 質問項目をセクションごとにまとめる %>
   <% sections = [
-    { title: "1. 現在の立場", field: "standing", options: ['学生', '社会人', 'フリーランス', 'アーティスト / クリエイター志望', 'その他'] },
-    { title: "3. 趣味・関心ジャンル", field: "interests", options: ['音楽', '映像・映画・アニメ', 'イラスト・漫画', 'ゲーム・実況', '小説・エッセイ', 'ファッション・アート', 'その他'] },
-    { title: "6. 支援したいジャンル", field: "support_genres", options: ['音楽', '映像・動画', 'イラスト・マンガ', '小説・文章', 'ゲーム・実況', 'ファッション・アート', '舞台・パフォーマンス', 'その他'] },
-    { title: "7. 応援スタイル", field: "support_styles", options: ['金銭的支援をしたい', '感想コメントを書きたい', 'SNSで広めたい', 'コラボ・アドバイスしたい', '見守りたい', 'イベントに参加したい'] },
-    { title: "8. 性格傾向・関わり方の好み", field: "personality_traits", options: ['熱く語りたいタイプ', '静かに応援したい', '質問したい・話しかけたい', '遠くからそっと見ていたい'] }
+    { title: "実際に創作をしていますか（またはしていましたか？）", field: "support_genres", options: ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他', 'していない'] }
   ] %>
 
   <%# チェックボックスセクションの描画 %>
@@ -34,20 +35,29 @@
     </div>
   <% end %>
 
+  <div>
+    <label class="block text-lg font-semibold text-gray-800 mb-3">創作経験を入力してください</label>
+    <%= f.select :creation_experience, ['1年未満', '1-3年', '4-6年', '7-10年', '10年以上', '経験なし'], { prompt: "選択してください" }, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" %>
+  </div>
+
+  <%# 精通してるジャンルの質問 %>
+  <div>
+    <label class="block text-lg font-semibold text-gray-800 mb-3">精通してるジャンルはありますか？</label>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <% ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他'].each do |option| %>
+        <label class="flex items-center p-3 rounded-lg border cursor-pointer transition-colors hover:bg-gray-50">
+          <%= check_box_tag "supporter_profile[interests][]", option, @supporter_profile.interests.include?(option), class: "h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" %>
+          <span class="ml-3 text-gray-700"><%= option %></span>
+        </label>
+      <% end %>
+    </div>
+  </div>
+
   <%# SelectとTextAreaのセクション %>
   <div>
-    <label class="block text-lg font-semibold text-gray-800 mb-3">2. 創作歴</label>
-    <%= f.select :creation_experience, ['自分も創作している', '未経験だが興味がある', '興味なし'], { prompt: "選択してください" }, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" %>
-  </div>
-
-  <div>
-    <label class="block text-lg font-semibold text-gray-800 mb-3">4. 好きなアーティスト・作品</label>
-    <%= f.text_area :favorite_artists, rows: 3, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "#YOASOBI, #細田守 など" %>
-  </div>
-
-  <div>
-    <label class="block text-lg font-semibold text-gray-800 mb-3">5. 年齢層</label>
-    <%= f.select :age_group, ['～15歳', '16～18歳', '19～22歳', '23～29歳', '30代', '40代以上'], { prompt: "選択してください" }, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" %>
+    <label class="block text-lg font-semibold text-gray-800 mb-3">自分が多少詳しいことを詳細に教えてください</label>
+    <p class="text-sm text-gray-600 mb-3">※ここに書いた内容に関するコメント依頼が届く可能性があります</p>
+    <%= f.text_area :favorite_artists, rows: 4, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "例：デジタルイラストのレイヤー構成、小説の三人称視点の書き方、DTMでのミックス技法、動画編集のカット割り、写真の構図理論など...具体的なスキルや知識を教えてください" %>
   </div>
 
   <!-- 保存ボタン -->

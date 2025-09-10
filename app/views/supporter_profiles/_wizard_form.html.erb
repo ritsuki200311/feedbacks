@@ -1,13 +1,13 @@
-<div class="max-w-4xl mx-auto p-6" data-controller="profile-wizard" data-profile-wizard-total-steps-value="8">
+<div class="max-w-4xl mx-auto p-6" data-controller="profile-wizard" data-profile-wizard-total-steps-value="5">
   <!-- 進捗バー -->
   <div class="mb-8">
     <div class="flex items-center justify-between mb-2">
       <span class="text-sm text-gray-600">プロフィール設定</span>
-      <span class="text-sm text-gray-600" data-profile-wizard-target="stepIndicator">1 / 8</span>
+      <span class="text-sm text-gray-600" data-profile-wizard-target="stepIndicator">1 / 5</span>
     </div>
     <div class="w-full bg-gray-200 rounded-full h-2">
       <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
-           data-profile-wizard-target="progressBar" style="width: 12.5%"></div>
+           data-profile-wizard-target="progressBar" style="width: 20%"></div>
     </div>
   </div>
 
@@ -26,84 +26,10 @@
       </div>
     <% end %>
 
-    <!-- ステップ1: 現在の立場 -->
+    <!-- ステップ1: 年齢 -->
     <div class="step-content" data-profile-wizard-target="step" data-step="1">
       <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-gray-800 mb-2">あなたの現在の立場は？</h2>
-        <p class="text-gray-600">該当するものを選択してください</p>
-      </div>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-        <% ['学生', '社会人', 'フリーランス', 'アーティスト / クリエイター志望', 'その他'].each do |option| %>
-          <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="standing" data-value="<%= option %>">
-            <input type="checkbox" name="supporter_profile[standing][]" value="<%= option %>" 
-                   <%= 'checked' if @supporter_profile.standing.include?(option) %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
-              <span class="text-lg text-gray-700"><%= option %></span>
-            </div>
-          </label>
-        <% end %>
-      </div>
-    </div>
-
-    <!-- ステップ2: 創作歴 -->
-    <div class="step-content hidden" data-profile-wizard-target="step" data-step="2">
-      <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-gray-800 mb-2">創作歴はありますか？</h2>
-        <p class="text-gray-600">あなたの創作経験を教えてください</p>
-      </div>
-      
-      <div class="grid grid-cols-1 gap-4 max-w-lg mx-auto">
-        <% ['自分も創作している', '未経験だが興味がある', '興味なし'].each do |option| %>
-          <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectSingle" data-field="creation_experience" data-value="<%= option %>">
-            <input type="radio" name="supporter_profile[creation_experience]" value="<%= option %>" 
-                   <%= 'checked' if @supporter_profile.creation_experience == option %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
-              <span class="text-lg text-gray-700"><%= option %></span>
-            </div>
-          </label>
-        <% end %>
-      </div>
-    </div>
-
-    <!-- ステップ3: 趣味・関心ジャンル -->
-    <div class="step-content hidden" data-profile-wizard-target="step" data-step="3">
-      <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-gray-800 mb-2">興味のあるジャンルは？</h2>
-        <p class="text-gray-600">当てはまるものをすべて選択してください</p>
-      </div>
-      
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-        <% ['音楽', '映像・映画・アニメ', 'イラスト・漫画', 'ゲーム・実況', '小説・エッセイ', 'ファッション・アート', 'その他'].each do |option| %>
-          <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="interests" data-value="<%= option %>">
-            <input type="checkbox" name="supporter_profile[interests][]" value="<%= option %>" 
-                   <%= 'checked' if @supporter_profile.interests.include?(option) %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
-              <span class="text-base text-gray-700"><%= option %></span>
-            </div>
-          </label>
-        <% end %>
-      </div>
-    </div>
-
-    <!-- ステップ4: 好きなアーティスト・作品 -->
-    <div class="step-content hidden" data-profile-wizard-target="step" data-step="4">
-      <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-gray-800 mb-2">好きなアーティスト・作品は？</h2>
-        <p class="text-gray-600">#YOASOBI, #細田守 などご自由にご記入ください</p>
-      </div>
-      
-      <div class="max-w-2xl mx-auto">
-        <%= f.text_area :favorite_artists, rows: 6, 
-            class: "w-full p-4 border-2 border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-lg",
-            placeholder: "例：\n#YOASOBI\n#細田守\n#新海誠\n#あいみょん" %>
-      </div>
-    </div>
-
-    <!-- ステップ5: 年齢層 -->
-    <div class="step-content hidden" data-profile-wizard-target="step" data-step="5">
-      <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-gray-800 mb-2">年齢層を教えてください</h2>
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">年齢を入力してください</h2>
         <p class="text-gray-600">該当する年齢層を選択してください</p>
       </div>
       
@@ -120,15 +46,15 @@
       </div>
     </div>
 
-    <!-- ステップ6: 支援したいジャンル -->
-    <div class="step-content hidden" data-profile-wizard-target="step" data-step="6">
+    <!-- ステップ2: 実際に創作をしていますか -->
+    <div class="step-content hidden" data-profile-wizard-target="step" data-step="2">
       <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-gray-800 mb-2">どんなジャンルを支援したいですか？</h2>
-        <p class="text-gray-600">支援したいジャンルをすべて選択してください</p>
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">実際に創作をしていますか</h2>
+        <p class="text-gray-600">当てはまるものをすべて選択してください</p>
       </div>
       
       <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-        <% ['音楽', '映像・動画', 'イラスト・マンガ', '小説・文章', 'ゲーム・実況', 'ファッション・アート', '舞台・パフォーマンス', 'その他'].each do |option| %>
+        <% ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他', 'していない'].each do |option| %>
           <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="support_genres" data-value="<%= option %>">
             <input type="checkbox" name="supporter_profile[support_genres][]" value="<%= option %>" 
                    <%= 'checked' if @supporter_profile.support_genres.include?(option) %> class="hidden">
@@ -140,18 +66,38 @@
       </div>
     </div>
 
-    <!-- ステップ7: 応援スタイル -->
-    <div class="step-content hidden" data-profile-wizard-target="step" data-step="7">
+    <!-- ステップ3: 創作経験 -->
+    <div class="step-content hidden" data-profile-wizard-target="step" data-step="3">
       <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-gray-800 mb-2">どんな応援スタイル？</h2>
-        <p class="text-gray-600">あなたの支援方法をすべて選択してください</p>
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">創作経験を教えてください</h2>
+        <p class="text-gray-600">該当する経験年数を選択してください</p>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-        <% ['金銭的支援をしたい', '感想コメントを書きたい', 'SNSで広めたい', 'コラボ・アドバイスしたい', '見守りたい', 'イベントに参加したい'].each do |option| %>
-          <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="support_styles" data-value="<%= option %>">
-            <input type="checkbox" name="supporter_profile[support_styles][]" value="<%= option %>" 
-                   <%= 'checked' if @supporter_profile.support_styles.include?(option) %> class="hidden">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+        <% ['1年未満', '1-3年', '4-6年', '7-10年', '10年以上', '経験なし'].each do |option| %>
+          <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectSingle" data-field="creation_experience" data-value="<%= option %>">
+            <input type="radio" name="supporter_profile[creation_experience]" value="<%= option %>" 
+                   <%= 'checked' if @supporter_profile.creation_experience == option %> class="hidden">
+            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
+              <span class="text-lg text-gray-700"><%= option %></span>
+            </div>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- ステップ4: 精通してるジャンル -->
+    <div class="step-content hidden" data-profile-wizard-target="step" data-step="4">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">精通してるジャンルを教えてください</h2>
+        <p class="text-gray-600">当てはまるものをすべて選択してください</p>
+      </div>
+      
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        <% ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他'].each do |option| %>
+          <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="interests" data-value="<%= option %>">
+            <input type="checkbox" name="supporter_profile[interests][]" value="<%= option %>" 
+                   <%= 'checked' if @supporter_profile.interests.include?(option) %> class="hidden">
             <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
               <span class="text-base text-gray-700"><%= option %></span>
             </div>
@@ -160,23 +106,17 @@
       </div>
     </div>
 
-    <!-- ステップ8: 性格傾向 -->
-    <div class="step-content hidden" data-profile-wizard-target="step" data-step="8">
+    <!-- ステップ5: 自分が少し詳しいことを詳細に教えてください -->
+    <div class="step-content hidden" data-profile-wizard-target="step" data-step="5">
       <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-gray-800 mb-2">関わり方の好みは？</h2>
-        <p class="text-gray-600">あなたの性格や関わり方の好みを選択してください</p>
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">自分が少し詳しいことを詳細に教えてください</h2>
+        <p class="text-gray-600">※ここに書いた内容に関するコメント依頼が届く可能性があります</p>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
-        <% ['熱く語りたいタイプ', '静かに応援したい', '質問したい・話しかけたい', '遠くからそっと見ていたい'].each do |option| %>
-          <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="personality_traits" data-value="<%= option %>">
-            <input type="checkbox" name="supporter_profile[personality_traits][]" value="<%= option %>" 
-                   <%= 'checked' if @supporter_profile.personality_traits.include?(option) %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
-              <span class="text-base text-gray-700"><%= option %></span>
-            </div>
-          </label>
-        <% end %>
+      <div class="max-w-2xl mx-auto">
+        <%= f.text_area :favorite_artists, rows: 6, 
+            class: "w-full p-4 border-2 border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-lg",
+            placeholder: "例：デジタルイラストのレイヤー構成、小説の三人称視点の書き方、DTMでのミックス技法、動画編集のカット割り、写真の構図理論など...具体的なスキルや知識を教えてください" %>
       </div>
     </div>
 

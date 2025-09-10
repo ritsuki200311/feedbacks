@@ -49,7 +49,12 @@ class HomeController < ApplicationController
       if recommended_post_ids.any?
         posts_with_preloads = Post.where(id: recommended_post_ids).includes(:user, :comments, :votes, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
         # 推奨順序を保持
-        @posts = recommended_post_ids.map { |id| posts_with_preloads.find { |p| p.id == id } }.compact
+        all_posts = recommended_post_ids.map { |id| posts_with_preloads.find { |p| p.id == id } }.compact
+        
+        # 自分の投稿を上位に移動（新しい順）
+        own_posts = all_posts.select { |post| post.user_id == current_user.id }.sort_by(&:created_at).reverse
+        other_posts = all_posts.reject { |post| post.user_id == current_user.id }
+        @posts = own_posts + other_posts
       else
         @posts = []
       end

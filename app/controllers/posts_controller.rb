@@ -414,7 +414,7 @@ class PostsController < ApplicationController
   private
 
   def post_params
-    params.require(:post).permit(:title, :body, :community_id, images: [], videos: [], audios: [], files: [])
+    params.require(:post).permit(:title, :body, :creation_type, :community_id, images: [], videos: [], audios: [], files: [])
   end
 
 

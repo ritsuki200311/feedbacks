@@ -31,6 +31,62 @@
         <%= form.text_area :body, rows: 4, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "伝えたいことを詳しく書きましょう" %>
       </div>
 
+      <div>
+        <%= form.label :creation_type, "創作ジャンル", class: "block text-lg font-semibold text-gray-800 mb-3" %>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="creation-type-options">
+          <% Post::CREATION_TYPES.each do |type_name, type_value| %>
+            <label class="relative cursor-pointer creation-type-option" data-value="<%= type_value %>">
+              <%= form.radio_button :creation_type, type_value, class: "hidden creation-type-radio" %>
+              <div class="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-blue-400 transition-all option-card">
+                <div class="flex-shrink-0">
+                  <% case type_name.to_s %>
+                  <% when 'イラスト・マンガ' %>
+                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <span class="text-lg">🎨</span>
+                    </div>
+                  <% when '詩・小説' %>
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span class="text-lg">📝</span>
+                    </div>
+                  <% when '音楽' %>
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <span class="text-lg">🎵</span>
+                    </div>
+                  <% end %>
+                </div>
+                <div class="flex-1">
+                  <span class="font-medium text-gray-900"><%= type_name %></span>
+                </div>
+              </div>
+            </label>
+          <% end %>
+        </div>
+      </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const options = document.querySelectorAll('.creation-type-option');
+          
+          options.forEach(option => {
+            option.addEventListener('click', function() {
+              // すべての選択を解除
+              options.forEach(opt => {
+                opt.querySelector('.option-card').classList.remove('border-blue-700', 'bg-blue-100', 'border-indigo-500', 'bg-indigo-50', 'border-4');
+                opt.querySelector('.option-card').classList.add('border-gray-200', 'border-2');
+                opt.querySelector('.creation-type-radio').checked = false;
+              });
+              
+              // クリックされた要素を選択状態に
+              const card = this.querySelector('.option-card');
+              const radio = this.querySelector('.creation-type-radio');
+              
+              card.classList.remove('border-gray-200', 'border-2');
+              card.classList.add('border-blue-700', 'bg-blue-100', 'border-4');
+              radio.checked = true;
+            });
+          });
+        });
+      </script>
 
       <div>
         <%= form.label :files, "ファイル（画像・動画・音声）", class: "block text-lg font-semibold text-gray-800 mb-3" %>

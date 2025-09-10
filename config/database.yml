@@ -15,8 +15,10 @@ development:
 
 test:
   <<: *default
-  database: feedbacks_test
-  username: akimotoritsuki
+  database: <%= ENV.fetch("PGDATABASE") { "feedbacks_test" } %>
+  username: <%= ENV.fetch("PGUSER") { "akimotoritsuki" } %>
+  password: <%= ENV["PGPASSWORD"] %>
+  host: <%= ENV.fetch("PGHOST") { "localhost" } %>
 
 
 production:

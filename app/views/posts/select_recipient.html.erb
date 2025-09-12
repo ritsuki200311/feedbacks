@@ -38,28 +38,30 @@
         <!-- ジャンル選択（アドバイザータイプ選択時に表示） -->
         <div id="genre-selection" class="hidden mt-6">
           <h3 class="text-lg font-semibold text-gray-800 mb-3">対象ジャンルを選択</h3>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <p class="text-sm text-gray-600 mb-3">ジャンルを選択すると自動で検索されます</p>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="genre-checkboxes">
             <% ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他'].each do |genre| %>
               <label class="flex items-center p-2 rounded border hover:bg-gray-50">
-                <input type="checkbox" name="target_genres[]" value="<%= genre %>" class="h-4 w-4 text-indigo-600">
+                <input type="checkbox" name="target_genres[]" value="<%= genre %>" class="h-4 w-4 text-indigo-600 genre-checkbox">
                 <span class="ml-2 text-sm"><%= genre %></span>
               </label>
             <% end %>
           </div>
-          
-          <!-- 自動検索ボタン -->
-          <div class="mt-4">
-            <button type="button" id="auto-search-btn" 
-                    class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-              条件に合うユーザーを検索
-            </button>
-          </div>
+        </div>
+      </div>
+
+      <!-- マッチング結果表示エリア -->
+      <div id="matching-results" class="hidden border-t pt-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">おすすめのユーザー</h2>
+        <p class="text-gray-600 mb-4">絞り込み条件に合致するユーザーを表示しています。</p>
+        <div id="user-list" class="space-y-3">
+          <!-- JavaScriptで動的に挿入 -->
         </div>
       </div>
 
       <!-- フリーワード検索セクション -->
-      <div class="space-y-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">フリーワードで検索</h2>
+      <div class="space-y-6 border-t pt-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">または、フリーワードで検索</h2>
         <p class="text-sm text-gray-600 mb-3">
           ユーザー名・フィードバックできること・ジャンル・経験・年齢などで検索できます
         </p>
@@ -73,16 +75,6 @@
         </div>
         <div id="search-results" class="space-y-2">
           <!-- 検索結果がここに表示される -->
-        </div>
-      </div>
-
-
-      <!-- マッチング結果表示エリア -->
-      <div id="matching-results" class="hidden border-t pt-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">おすすめのユーザー</h2>
-        <p class="text-gray-600 mb-4">絞り込み条件に合致するユーザーを表示しています。</p>
-        <div id="user-list" class="space-y-3">
-          <!-- JavaScriptで動的に挿入 -->
         </div>
       </div>
 
@@ -133,10 +125,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // 自動検索ボタンの処理
-  const autoSearchBtn = document.getElementById('auto-search-btn');
-  autoSearchBtn.addEventListener('click', function() {
-    showMatchingUsersWithAdvisorType();
+  // ジャンル選択時の自動検索処理
+  const genreCheckboxes = document.querySelectorAll('.genre-checkbox');
+  genreCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      // チェックボックスの状態が変更されたら自動で検索を実行
+      const advisorType = document.querySelector('input[name="advisor_type"]:checked')?.value;
+      if (advisorType) {
+        showMatchingUsersWithAdvisorType();
+      }
+    });
   });
 
 });

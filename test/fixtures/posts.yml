@@ -1,0 +1,9 @@
+one:
+  user: one
+  title: "My Post"
+  body: "My Body"
+
+two:
+  user: two
+  title: "Another Post"
+  body: "Another Body"

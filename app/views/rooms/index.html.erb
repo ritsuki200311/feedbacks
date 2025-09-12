@@ -38,7 +38,7 @@
                 </div>
                 <% unread_count = room.messages.where(user: other_user, is_read: false).count %>
                 <% if unread_count > 0 %>
-                  <span class="bg-red-500 text-white text-sm font-bold px-3 py-2 rounded-full shadow-lg">
+                  <span class="bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold ml-2">
                     <%= unread_count > 9 ? "9+" : unread_count %>
                   </span>
                 <% end %>

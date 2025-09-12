@@ -53,8 +53,8 @@
         <% if @post.images.attached? %>
           <div class="space-y-4 text-center">
             <% @post.images.each_with_index do |image, index| %>
-              <div class="relative inline-block" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
-                <%= image_tag image, class: "max-w-md rounded-lg shadow", data: { "image-comments-target": "image" } %>
+              <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
+                <%= image_tag image, class: "max-w-md rounded-lg shadow", data: { "image-comments-target": "image" }, onload: "checkImageSizeForComments(this)" %>
                 
                 <!-- 右下の拡大マーク -->
                 <button type="button" 
@@ -69,7 +69,7 @@
                 <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
                 
                 <!-- 画像上コメント用のフォーム（初期は非表示） -->
-                <div class="hidden absolute z-50 bg-white border border-gray-300 rounded p-2 shadow-lg" data-image-comments-target="form">
+                <div class="hidden absolute z-50 bg-white border border-gray-300 rounded p-2 shadow-lg image-comment-form" data-image-comments-target="form">
                   <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
                     <%= f.hidden_field :x_position %>
                     <%= f.hidden_field :y_position %>
@@ -321,7 +321,7 @@
 
 <!-- 投票コメントモーダル -->
 <div id="voteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div id="voteModalContent" class="bg-white rounded-lg p-4 max-w-6xl w-full mx-4 shadow-xl max-h-[95vh] overflow-y-auto">
+  <div id="voteModalContent" class="bg-white rounded-lg p-6 max-w-7xl w-full mx-2 shadow-xl max-h-[98vh] overflow-y-auto">
     <h3 class="text-lg font-semibold mb-4 text-gray-800">評価理由を教えてください</h3>
     
     <!-- 2カラムレイアウト（動的に変更） -->
@@ -469,7 +469,26 @@
 <!-- 画像拡大表示モーダル -->
 <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden p-4">
   <div class="relative w-full h-full flex items-center justify-center">
-    <img id="modalImage" src="" alt="拡大画像" class="max-w-full max-h-full object-contain rounded shadow-xl">
+    <div class="relative">
+      <img id="modalImage" src="" alt="拡大画像" class="max-w-full max-h-full object-contain rounded shadow-xl">
+      
+      <!-- 画像上のコメントマーカー表示エリア -->
+      <div class="absolute inset-0 pointer-events-none" id="modalMarkersContainer"></div>
+      
+      <!-- 画像上コメント用のフォーム（初期は非表示） -->
+      <div class="hidden absolute z-50 bg-white border border-gray-300 rounded p-2 shadow-lg" id="modalCommentForm">
+        <%= form_with model: [@post, Comment.new], local: false, id: "modal-comment-form" do |f| %>
+          <%= f.hidden_field :x_position, id: "modal_x_position" %>
+          <%= f.hidden_field :y_position, id: "modal_y_position" %>
+          <%= f.text_area :body, rows: 2, placeholder: "コメントを入力...", class: "w-40 p-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500", required: true %>
+          <div class="mt-1 flex gap-1">
+            <%= f.submit "コメント", class: "bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs" %>
+            <button type="button" onclick="hideModalCommentForm()" class="bg-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-400 text-xs">×</button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    
     <button type="button" onclick="hideImageModal()" class="absolute top-4 right-4 text-white hover:text-gray-300 text-2xl leading-none bg-black bg-opacity-60 rounded-full w-12 h-12 flex items-center justify-center transition-colors">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -624,7 +643,7 @@
       document.body.style.overflow = 'hidden'
       modal.classList.remove('hidden')
       
-      // 画像が読み込まれた後にサイズを調整
+      // 画像が読み込まれた後にサイズを調整とイベントリスナー設定
       modalImage.onload = function() {
         // 画面サイズに対する余白を確保（パディング + 閉じるボタンの領域）
         const maxWidth = window.innerWidth - 32  // 16px * 2 (padding)
@@ -645,6 +664,9 @@
           this.style.width = imageWidth + 'px'
           this.style.height = imageHeight + 'px'
         }
+        
+        // 画像クリックイベントを設定
+        setupModalImageClick()
       }
     }
   }
@@ -669,6 +691,101 @@
       hideImageModal()
     }
   })
+
+  // 画像サイズをチェックしてコメントフォームの表示制御
+  window.checkImageSizeForComments = function(img) {
+    const container = img.closest('.image-container')
+    if (!container) return
+
+    // 画像の表示サイズが大きい場合（幅300px以上）はピンコメントを無効化
+    if (img.offsetWidth >= 300) {
+      container.classList.add('large-image')
+      // 大きい画像の場合はピンコメントを無効化（Stimulusコントローラーを無効化）
+      const imageElement = container.querySelector('[data-image-comments-target="image"]')
+      if (imageElement) {
+        imageElement.style.pointerEvents = 'none'
+        imageElement.style.cursor = 'default'
+      }
+      
+      // マーカー表示ボタンも非表示
+      const toggleButtonContainer = container.querySelector('.mt-2')
+      if (toggleButtonContainer) {
+        toggleButtonContainer.style.display = 'none'
+      }
+    } else {
+      container.classList.remove('large-image')
+      const imageElement = container.querySelector('[data-image-comments-target="image"]')
+      if (imageElement) {
+        imageElement.style.pointerEvents = 'auto'
+        imageElement.style.cursor = 'crosshair'
+      }
+      
+      // マーカー表示ボタンを表示
+      const toggleButtonContainer = container.querySelector('.mt-2')
+      if (toggleButtonContainer) {
+        toggleButtonContainer.style.display = 'flex'
+      }
+    }
+  }
+
+  // モーダル画像のクリック処理を設定
+  window.setupModalImageClick = function() {
+    const modalImage = document.getElementById('modalImage')
+    
+    if (!modalImage) return
+    
+    // 既存のイベントリスナーを削除
+    modalImage.removeEventListener('click', handleModalImageClick)
+    
+    // 新しいイベントリスナーを追加
+    modalImage.addEventListener('click', handleModalImageClick)
+  }
+
+  function handleModalImageClick(event) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    const modalImage = event.target
+    const form = document.getElementById('modalCommentForm')
+    
+    if (!form) return
+
+    const rect = modalImage.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+
+    // 画像内での相対位置を計算（パーセント）
+    const xPercent = (x / rect.width) * 100
+    const yPercent = (y / rect.height) * 100
+
+    // フォームを表示
+    form.style.left = `${x}px`
+    form.style.top = `${y}px`
+    form.classList.remove('hidden')
+
+    // 隠しフィールドに位置を設定
+    const xPosField = document.getElementById('modal_x_position')
+    const yPosField = document.getElementById('modal_y_position')
+    
+    if (xPosField) xPosField.value = xPercent
+    if (yPosField) yPosField.value = yPercent
+
+    // テキストエリアにフォーカス
+    const textarea = form.querySelector('textarea')
+    if (textarea) {
+      textarea.focus()
+    }
+  }
+
+  // モーダルコメントフォームを非表示にする関数
+  window.hideModalCommentForm = function() {
+    const form = document.getElementById('modalCommentForm')
+    if (form) {
+      form.classList.add('hidden')
+      const textarea = form.querySelector('textarea')
+      if (textarea) textarea.value = ''
+    }
+  }
 
   // AI表示時のレイアウト調整
   window.adjustLayoutForAI = function(showingAI) {

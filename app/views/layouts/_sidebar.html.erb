@@ -6,7 +6,14 @@
     <div class="hidden md:flex md:flex-col md:space-y-2">
       <%= link_to "ホーム", root_path, class: sidebar_link_class(root_path) %>
       <%= link_to "検索", search_path, class: sidebar_link_class(search_path) %>
-      <%= link_to "ダイレクトメッセージ", rooms_path, class: sidebar_link_class(rooms_path) %>
+      <%= link_to rooms_path, class: "#{sidebar_link_class(rooms_path)} flex items-center justify-between" do %>
+        <span>ダイレクトメッセージ</span>
+        <% if user_signed_in? && current_user.unread_messages_count > 0 %>
+          <span class="bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold ml-2">
+            <%= current_user.unread_messages_count > 9 ? "9+" : current_user.unread_messages_count %>
+          </span>
+        <% end %>
+      <% end %>
       <%= link_to "新規投稿", new_post_path, class: sidebar_link_class(new_post_path) %>
       <hr class="my-2">
       <% if user_signed_in? %>

@@ -57,6 +57,7 @@ class RoomsController < ApplicationController
     @message = Message.new
     @other_user = @room.entries.where.not(user_id: current_user.id).first&.user
 
-    Message.mark_as_read_by_room_and_user(@room, @other_user)
+    # 他のユーザーからのメッセージを既読にする
+    @room.messages.where.not(user_id: current_user.id).where(is_read: false).update_all(is_read: true)
   end
 end

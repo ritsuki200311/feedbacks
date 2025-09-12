@@ -86,6 +86,16 @@ class User < ApplicationRecord
     end
   end
 
+  # 未読メッセージ数を取得
+  def unread_messages_count
+    Message.joins(:room)
+           .joins("JOIN entries ON entries.room_id = rooms.id")
+           .where(entries: { user_id: id })
+           .where.not(user_id: id)
+           .where(is_read: false)
+           .count
+  end
+
   # バリデーション
   validates :name, presence: true, length: { maximum: 50 }
   validates :email, presence: true, length: { maximum: 254 }

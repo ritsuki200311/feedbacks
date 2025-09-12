@@ -11,30 +11,6 @@
       💬 トーク・メッセージ
     </h2>
     
-    <% if @unread_rooms.any? %>
-      <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg">
-        <div class="flex items-center">
-          <div class="text-red-400 text-xl mr-3">🔴</div>
-          <div>
-            <h3 class="text-lg font-semibold text-red-800">未読メッセージがあります！</h3>
-            <div class="mt-2 space-y-2">
-              <% @unread_rooms.each do |room| %>
-                <% other_entry = room.entries.where.not(user_id: current_user.id).first %>
-                <% if other_entry %>
-                  <% other_user = other_entry.user %>
-                  <div class="bg-white rounded-lg p-3 shadow-sm">
-                    <%= link_to "📩 #{other_user.name}さんとのチャット", room_path(room), class: "text-red-600 hover:text-red-800 font-medium hover:underline" %>
-                    <span class="ml-2 bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
-                      未読 <%= @unread_counts[room.id] || 0 %> 件
-                    </span>
-                  </div>
-                <% end %>
-              <% end %>
-            </div>
-          </div>
-        </div>
-      </div>
-    <% end %>
 
     <% if @entries.any? %>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -62,8 +38,8 @@
                 </div>
                 <% unread_count = room.messages.where(user: other_user, is_read: false).count %>
                 <% if unread_count > 0 %>
-                  <span class="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
-                    <%= unread_count %>
+                  <span class="bg-red-500 text-white text-sm font-bold px-3 py-2 rounded-full shadow-lg">
+                    <%= unread_count > 9 ? "9+" : unread_count %>
                   </span>
                 <% end %>
               </div>

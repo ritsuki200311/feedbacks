@@ -274,6 +274,8 @@ class PostsController < ApplicationController
     end
 
     # パラメータから絞り込み条件を取得
+    advisor_type = params[:advisor_type]
+    target_genres = params[:target_genres] || []
     age_group = params[:age_group]
     creation_experience = params[:creation_experience]
     support_genres = params[:support_genres] || []
@@ -282,6 +284,31 @@ class PostsController < ApplicationController
     # ユーザーを絞り込み
     users = User.joins(:supporter_profile).where.not(id: current_user.id)
     
+    # アドバイザータイプによる絞り込み
+    if advisor_type == 'creator'
+      # クリエイター: 制作経験がある人（「経験なし」「していない」以外）
+      users = users.where.not(supporter_profiles: { creation_experience: ['経験なし', nil] })
+      users = users.where.not("supporter_profiles.support_genres @> ?", ['していない'].to_json)
+    elsif advisor_type == 'commenter'
+      # コメンター: 制作経験がない、または少ない人
+      users = users.where(supporter_profiles: { creation_experience: ['経験なし', '1年未満', nil] })
+                   .or(users.where("supporter_profiles.support_genres @> ?", ['していない'].to_json))
+    end
+    
+    # 対象ジャンルによる絞り込み
+    if target_genres.present?
+      if advisor_type == 'creator'
+        # クリエイター: support_genres（制作ジャンル）で絞り込み
+        genre_conditions = target_genres.map { |genre| "supporter_profiles.support_genres @> ?" }
+        users = users.where(genre_conditions.join(' OR '), *target_genres.map(&:to_json))
+      elsif advisor_type == 'commenter'  
+        # コメンター: interests（よく見るジャンル）で絞り込み
+        genre_conditions = target_genres.map { |genre| "supporter_profiles.interests @> ?" }
+        users = users.where(genre_conditions.join(' OR '), *target_genres.map(&:to_json))
+      end
+    end
+    
+    # 従来の絞り込み条件も適用
     users = users.where(supporter_profiles: { age_group: age_group }) if age_group.present?
     users = users.where(supporter_profiles: { creation_experience: creation_experience }) if creation_experience.present?
     
@@ -301,7 +328,8 @@ class PostsController < ApplicationController
         id: user.id,
         name: user.name,
         description: generate_user_description_from_profile(user.supporter_profile),
-        score: calculate_match_score_from_profile(user.supporter_profile)
+        score: calculate_match_score_from_profile(user.supporter_profile),
+        advisor_type: determine_advisor_type(user.supporter_profile)
       }
     end
 
@@ -376,10 +404,23 @@ class PostsController < ApplicationController
         @results = user ? [ user ] : []
         Rails.logger.debug "ID search result: #{user&.name || "not found"}"
       else
-        # 文字列の場合はユーザーネームで検索
-        Rails.logger.debug "Searching by name: '%#{@query}%'"
-        @results = User.where("name ILIKE ?", "%#{@query}%").limit(20)
-        Rails.logger.debug "Name search results: #{@results.map(&:name)}"
+        # フリーワード検索 - ユーザー名とプロフィール内容を対象
+        Rails.logger.debug "Free-word search: '%#{@query}%'"
+        search_term = "%#{@query}%"
+        
+        # 統合クエリで検索
+        @results = User.left_joins(:supporter_profile).where(
+          "users.name ILIKE ? OR " \
+          "supporter_profiles.favorite_artists ILIKE ? OR " \
+          "supporter_profiles.interests::text ILIKE ? OR " \
+          "supporter_profiles.support_genres::text ILIKE ? OR " \
+          "supporter_profiles.support_styles::text ILIKE ? OR " \
+          "supporter_profiles.personality_traits::text ILIKE ? OR " \
+          "supporter_profiles.creation_experience ILIKE ? OR " \
+          "supporter_profiles.age_group ILIKE ?",
+          search_term, search_term, search_term, search_term, search_term, search_term, search_term, search_term
+        ).distinct.limit(20)
+        Rails.logger.debug "Free-word search results: #{@results.map(&:name)}"
       end
     else
       @results = []
@@ -460,6 +501,16 @@ class PostsController < ApplicationController
     parts << "創作: #{profile.support_genres.join(', ')}" if profile.support_genres.present?
     parts << "興味: #{profile.interests.join(', ')}" if profile.interests.present?
     parts.join(' / ')
+  end
+
+  def determine_advisor_type(profile)
+    # プロフィールに基づいてアドバイザータイプを判定
+    if profile.creation_experience.in?(['経験なし', nil]) || 
+       profile.support_genres.include?('していない')
+      'コメンター'
+    else
+      'クリエイター'
+    end
   end
 
   def generate_user_description(user, feedback_type, experience_level)

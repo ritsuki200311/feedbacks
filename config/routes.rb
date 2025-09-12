@@ -19,8 +19,8 @@ Rails.application.routes.draw do
 
 
 
-  # プロフィール（作成・編集のみ、表示はマイページで統合）
-  resource :supporter_profile, only: [ :new, :create, :edit, :update ]
+  # プロフィール（作成・編集・一覧・検索）
+  resources :supporter_profiles, only: [ :index, :new, :create, :edit, :update ]
 
   # 検索（postsリソースの前に配置）
   get "search", to: "posts#search", as: :search

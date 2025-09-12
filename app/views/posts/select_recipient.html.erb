@@ -15,60 +15,56 @@
 
     <%= form_with url: post_send_to_user_path(@post), method: :post, local: true, class: "space-y-8" do |form| %>
       
-      <!-- プロフィールフィルターセクション -->
-      <div class="space-y-6" id="recipient-filters">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">送信相手のプロフィールで絞り込む</h2>
+      <!-- アドバイザータイプ選択セクション -->
+      <div class="space-y-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">どのような人からアドバイスをもらいますか？</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors" id="creator-option">
+            <input type="radio" name="advisor_type" value="creator" class="h-4 w-4 text-indigo-600">
+            <div class="ml-3">
+              <div class="text-lg font-semibold text-gray-800">クリエイターからアドバイス</div>
+              <div class="text-sm text-gray-600">実際に制作経験がある人から具体的なアドバイス</div>
+            </div>
+          </label>
+          <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors" id="commenter-option">
+            <input type="radio" name="advisor_type" value="commenter" class="h-4 w-4 text-indigo-600">
+            <div class="ml-3">
+              <div class="text-lg font-semibold text-gray-800">コメンターからアドバイス</div>
+              <div class="text-sm text-gray-600">視聴者・読者の視点から感想やアドバイス</div>
+            </div>
+          </label>
+        </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="age_group" class="block text-sm font-medium text-gray-700 mb-1">年齢層</label>
-            <%= select_tag :age_group, options_for_select(recipient_age_group_options), prompt: "指定しない", class: "w-full p-2 border border-gray-300 rounded-lg" %>
-          </div>
-          <div>
-            <label for="creation_experience" class="block text-sm font-medium text-gray-700 mb-1">創作経験</label>
-            <%= select_tag :creation_experience, options_for_select(recipient_creation_experience_options), prompt: "指定しない", class: "w-full p-2 border border-gray-300 rounded-lg" %>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">創作ジャンル</h3>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-            <% recipient_support_genres_options.each do |option| %>
-              <label class="flex items-center">
-                <input type="checkbox" name="support_genres[]" value="<%= option %>" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                <span class="ml-2 text-sm text-gray-700"><%= option %></span>
+        <!-- ジャンル選択（アドバイザータイプ選択時に表示） -->
+        <div id="genre-selection" class="hidden mt-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">対象ジャンルを選択</h3>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <% ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他'].each do |genre| %>
+              <label class="flex items-center p-2 rounded border hover:bg-gray-50">
+                <input type="checkbox" name="target_genres[]" value="<%= genre %>" class="h-4 w-4 text-indigo-600">
+                <span class="ml-2 text-sm"><%= genre %></span>
               </label>
             <% end %>
           </div>
-        </div>
-
-        <div>
-          <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">精通しているジャンル</h3>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-            <% recipient_interests_options.each do |option| %>
-              <label class="flex items-center">
-                <input type="checkbox" name="interests[]" value="<%= option %>" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                <span class="ml-2 text-sm text-gray-700"><%= option %></span>
-              </label>
-            <% end %>
+          
+          <!-- 自動検索ボタン -->
+          <div class="mt-4">
+            <button type="button" id="auto-search-btn" 
+                    class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+              条件に合うユーザーを検索
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- マッチング結果表示エリア -->
-      <div id="matching-results" class="hidden">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">おすすめのユーザー</h2>
-        <p class="text-gray-600 mb-4">絞り込み条件に合致するユーザーを表示しています。</p>
-        <div id="user-list" class="space-y-3">
-          <!-- JavaScriptで動的に挿入 -->
-        </div>
-      </div>
-
-      <!-- 手動ユーザー検索セクション -->
-      <div class="border-t pt-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">または、ユーザーを検索</h2>
+      <!-- フリーワード検索セクション -->
+      <div class="space-y-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">フリーワードで検索</h2>
+        <p class="text-sm text-gray-600 mb-3">
+          ユーザー名・フィードバックできること・ジャンル・経験・年齢などで検索できます
+        </p>
         <div class="flex gap-4 mb-4">
-          <input type="text" id="user-search" placeholder="ユーザー名で検索..." 
+          <input type="text" id="user-search" placeholder="例：イラスト、DTM、小説、ミックス、20代..." 
                  class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
           <button type="button" id="search-btn" 
                   class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
@@ -77,6 +73,16 @@
         </div>
         <div id="search-results" class="space-y-2">
           <!-- 検索結果がここに表示される -->
+        </div>
+      </div>
+
+
+      <!-- マッチング結果表示エリア -->
+      <div id="matching-results" class="hidden border-t pt-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">おすすめのユーザー</h2>
+        <p class="text-gray-600 mb-4">絞り込み条件に合致するユーザーを表示しています。</p>
+        <div id="user-list" class="space-y-3">
+          <!-- JavaScriptで動的に挿入 -->
         </div>
       </div>
 
@@ -99,30 +105,52 @@
 </div>
 
 <script>
-// フィルター変更時にマッチング結果を更新
+// ページ読み込み時の初期化
 document.addEventListener('DOMContentLoaded', function() {
-  const filters = document.getElementById('recipient-filters');
+
+  // アドバイザータイプ選択時の処理
+  const advisorTypeInputs = document.querySelectorAll('input[name="advisor_type"]');
+  const genreSelection = document.getElementById('genre-selection');
+  const creatorOption = document.getElementById('creator-option');
+  const commenterOption = document.getElementById('commenter-option');
   
-  filters.addEventListener('change', () => {
-    showMatchingUsers();
+  advisorTypeInputs.forEach(input => {
+    input.addEventListener('change', function() {
+      if (this.checked) {
+        // ジャンル選択を表示
+        genreSelection.classList.remove('hidden');
+        
+        // 選択されたオプションのスタイルを変更
+        creatorOption.classList.remove('border-indigo-500', 'bg-indigo-50');
+        commenterOption.classList.remove('border-indigo-500', 'bg-indigo-50');
+        
+        if (this.value === 'creator') {
+          creatorOption.classList.add('border-indigo-500', 'bg-indigo-50');
+        } else if (this.value === 'commenter') {
+          commenterOption.classList.add('border-indigo-500', 'bg-indigo-50');
+        }
+      }
+    });
+  });
+  
+  // 自動検索ボタンの処理
+  const autoSearchBtn = document.getElementById('auto-search-btn');
+  autoSearchBtn.addEventListener('click', function() {
+    showMatchingUsersWithAdvisorType();
   });
 
-  // 初期表示時にも実行
-  showMatchingUsers();
 });
 
-async function showMatchingUsers() {
+// 旧showMatchingUsers関数は削除
+
+async function showMatchingUsersWithAdvisorType() {
   try {
-    const ageGroup = document.getElementById('age_group').value;
-    const creationExperience = document.getElementById('creation_experience').value;
-    const supportGenres = Array.from(document.querySelectorAll('input[name="support_genres[]"]:checked')).map(cb => cb.value);
-    const interests = Array.from(document.querySelectorAll('input[name="interests[]"]:checked')).map(cb => cb.value);
+    const advisorType = document.querySelector('input[name="advisor_type"]:checked')?.value;
+    const targetGenres = Array.from(document.querySelectorAll('input[name="target_genres[]"]:checked')).map(cb => cb.value);
 
     const params = new URLSearchParams();
-    if (ageGroup) params.append('age_group', ageGroup);
-    if (creationExperience) params.append('creation_experience', creationExperience);
-    supportGenres.forEach(g => params.append('support_genres[]', g));
-    interests.forEach(i => params.append('interests[]', i));
+    if (advisorType) params.append('advisor_type', advisorType);
+    targetGenres.forEach(g => params.append('target_genres[]', g));
     
     const response = await fetch(`<%= post_match_users_path(@post) %>?${params.toString()}`);
     const data = await response.json();
@@ -132,63 +160,80 @@ async function showMatchingUsers() {
       return;
     }
     
-    const userListDiv = document.getElementById('user-list');
-    
-    userListDiv.innerHTML = '';
-    if (data.users.length > 0) {
-      data.users.forEach(user => {
-        const userDiv = document.createElement('div');
-        userDiv.className = 'p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer';
-        userDiv.innerHTML = `
-          <div class="flex justify-between items-center">
-            <div>
-              <h4 class="font-semibold">${user.name}</h4>
-              <p class="text-sm text-gray-600">${user.description}</p>
-              <p class="text-xs text-indigo-600 mt-1">マッチ度: ${user.score}%</p>
-            </div>
-            <button type="button" onclick="selectUser(${user.id}, '${user.name}')" 
-                    class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                    id="select-btn-${user.id}">
-              選択
-            </button>
-          </div>
-        `;
-        userListDiv.appendChild(userDiv);
-      });
-    } else {
-      userListDiv.innerHTML = '<p class="text-gray-500">条件に合うユーザーが見つかりませんでした。</p>';
-    }
-    document.getElementById('matching-results').classList.remove('hidden');
+    displayMatchingResults(data.users, advisorType);
     
   } catch (error) {
     console.error('Matching API error:', error);
   }
 }
 
-// ユーザー検索機能
+function displayMatchingResults(users, advisorType = null) {
+  const userListDiv = document.getElementById('user-list');
+  
+  userListDiv.innerHTML = '';
+  if (users.length > 0) {
+    users.forEach(user => {
+      const userDiv = document.createElement('div');
+      userDiv.className = 'p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer';
+      
+      const advisorBadge = advisorType ? `<span class="inline-block px-2 py-1 text-xs rounded ${
+        advisorType === 'creator' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+      }">${advisorType === 'creator' ? 'クリエイター' : 'コメンター'}</span>` : '';
+      
+      userDiv.innerHTML = `
+        <div class="flex justify-between items-center">
+          <div>
+            <h4 class="font-semibold">${user.name} ${advisorBadge}</h4>
+            <p class="text-sm text-gray-600">${user.description}</p>
+            <p class="text-xs text-indigo-600 mt-1">マッチ度: ${user.score}%</p>
+          </div>
+          <button type="button" onclick="selectUser(${user.id}, '${user.name}')" 
+                  class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                  id="select-btn-${user.id}">
+            選択
+          </button>
+        </div>
+      `;
+      userListDiv.appendChild(userDiv);
+    });
+  } else {
+    userListDiv.innerHTML = '<p class="text-gray-500">条件に合うユーザーが見つかりませんでした。</p>';
+  }
+  document.getElementById('matching-results').classList.remove('hidden');
+}
+
+// フリーワード検索機能
 document.getElementById('search-btn').addEventListener('click', async () => {
   const query = document.getElementById('user-search').value.trim();
   if (!query) return;
   
+  const resultsDiv = document.getElementById('search-results');
+  resultsDiv.innerHTML = '<p class="text-gray-500">検索中...</p>';
+  
   try {
     const response = await fetch(`/search_simple?query=${encodeURIComponent(query)}&search_type=users`);
     const html = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
     
-    const resultsDiv = document.getElementById('search-results');
-    resultsDiv.innerHTML = '';
+    // HTMLレスポンスをそのまま挿入
+    resultsDiv.innerHTML = html;
     
-    const users = doc.querySelectorAll('.user-card');
-    if (users.length === 0) {
-      resultsDiv.innerHTML = '<p class="text-gray-500">ユーザーが見つかりませんでした</p>';
-    } else {
-      resultsDiv.innerHTML = '<p class="text-green-600">検索機能は実装中です</p>';
-    }
   } catch (error) {
     console.error('検索エラー:', error);
+    resultsDiv.innerHTML = '<p class="text-red-500">検索中にエラーが発生しました</p>';
   }
 });
+
+// Enterキーでも検索実行
+document.getElementById('user-search').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('search-btn').click();
+  }
+});
+
+// 検索結果から選択する関数
+function selectUserFromSearch(userId, userName) {
+  selectUser(userId, userName);
+}
 
 // 選択済みユーザーを管理する配列
 let selectedUsers = [];

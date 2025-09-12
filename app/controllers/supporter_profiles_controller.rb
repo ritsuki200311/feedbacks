@@ -1,7 +1,27 @@
 class SupporterProfilesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_supporter_profile, only: [ :edit, :update ]
-  before_action :authenticate_user!
+
+  def index
+    @supporter_profiles = SupporterProfile.includes(:user)
+    
+    # フリーワード検索 - 複数のフィールドを対象にした全文検索
+    if params[:search].present?
+      search_term = "%#{params[:search]}%"
+      @supporter_profiles = @supporter_profiles.where(
+        "favorite_artists ILIKE ? OR " \
+        "interests::text ILIKE ? OR " \
+        "support_genres::text ILIKE ? OR " \
+        "support_styles::text ILIKE ? OR " \
+        "personality_traits::text ILIKE ? OR " \
+        "creation_experience ILIKE ? OR " \
+        "age_group ILIKE ?",
+        search_term, search_term, search_term, search_term, search_term, search_term, search_term
+      )
+    end
+    
+    @supporter_profiles = @supporter_profiles.page(params[:page]).per(20)
+  end
 
   def new
     if current_user.supporter_profile

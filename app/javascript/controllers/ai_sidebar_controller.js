@@ -11,6 +11,11 @@ export default class extends Controller {
   connect() {
     console.log("AI Sidebar Controller connected!")
     this.aiLoaded = false
+    this.retryCount = 0
+    this.maxRetries = 2
+    
+    // セッションストレージからキャッシュを確認
+    this.loadFromCache()
   }
 
   toggleAI() {
@@ -123,6 +128,9 @@ export default class extends Controller {
           this.summaryTarget.appendChild(pointDiv)
         })
       }
+      
+      // キャッシュに保存
+      this.saveToCache(data)
       console.log('AI content rendered successfully')
     } catch (error) {
       console.error('Error loading AI content:', error)
@@ -219,9 +227,61 @@ export default class extends Controller {
   }
 
   retryAI() {
+    // 再試行回数制限
+    if (this.retryCount >= this.maxRetries) {
+      this.showError(`再試行回数の上限に達しました (${this.maxRetries}回)。しばらく時間をおいてから再度お試しください。`)
+      return
+    }
+    
+    this.retryCount++
     // AIを再試行
     this.aiLoaded = false
     this.startAI()
+  }
+  
+  loadFromCache() {
+    const cacheKey = `ai_cache_post_${this.postIdValue}`
+    const cached = sessionStorage.getItem(cacheKey)
+    
+    if (cached) {
+      try {
+        const data = JSON.parse(cached)
+        console.log('Loading AI data from cache')
+        
+        // キャッシュからデータを復元
+        this.renderVocabularies(data.vocabularies || [])
+        if (this.hasSummaryTarget && data.observation_points) {
+          this.summaryTarget.innerHTML = ''
+          data.observation_points.slice(0, 4).forEach((point, index) => {
+            const pointDiv = document.createElement('div')
+            pointDiv.className = 'flex items-start gap-3 p-3 bg-white rounded-lg border border-purple-200 shadow-sm'
+            pointDiv.innerHTML = `
+              <div class="w-6 h-6 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="text-white text-xs font-bold">${index + 1}</span>
+              </div>
+              <p class="text-sm text-gray-700 leading-relaxed font-medium">${point}</p>
+            `
+            this.summaryTarget.appendChild(pointDiv)
+          })
+        }
+        
+        this.aiLoaded = true
+        console.log('AI data loaded from cache successfully')
+      } catch (error) {
+        console.error('Failed to load from cache:', error)
+        sessionStorage.removeItem(cacheKey)
+      }
+    }
+  }
+  
+  saveToCache(data) {
+    const cacheKey = `ai_cache_post_${this.postIdValue}`
+    try {
+      sessionStorage.setItem(cacheKey, JSON.stringify(data))
+      console.log('AI data saved to cache')
+    } catch (error) {
+      console.error('Failed to save to cache:', error)
+    }
   }
 
 

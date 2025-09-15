@@ -1,32 +1,54 @@
 class AiCommentAssistantController < ApplicationController
   before_action :authenticate_user!
   skip_before_action :verify_authenticity_token, only: [ :analyze_post ]
+  before_action :check_rate_limit, only: [ :analyze_post ]
 
   def analyze_post
     @post = Post.find(params[:post_id])
 
-    begin
-      # Gemini APIにリクエストを送信
-      response = call_gemini_api(@post)
-
-      render json: {
-        success: true,
-        comment_examples: response[:comment_examples],
-        observation_points: response[:observation_points],
-        vocabularies: response[:vocabularies]
-      }
-    rescue => e
-      Rails.logger.error "Gemini API Error: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        success: false,
-        error: "AI分析中にエラーが発生しました: #{e.message}"
-      }, status: 500
-    end
+    # AI機能を一時的に停止し、フォールバック値を返す
+    Rails.logger.info "AI analysis requested for post #{@post.id} - returning fallback values (API disabled)"
+    
+    result = {
+      success: true,
+      comment_examples: [
+        "とても素晴らしい作品ですね。#{@post.title}の表現が印象的です。",
+        "この作品から#{determine_content_type(@post)}としての魅力を感じました。",
+        "#{@post.user.name}さんの創作への情熱が伝わってきます。"
+      ],
+      observation_points: [
+        "作品の構成や全体のバランスに注目してみましょう",
+        "使用されている技法や表現手法を観察してみましょう", 
+        "作品から受ける感情や印象を言葉にしてみましょう",
+        "改善点や発展の可能性について考えてみましょう"
+      ],
+      vocabularies: [
+        "美しい", "印象的", "繊細", "力強い", 
+        "調和", "表現力", "創造的", "独創的"
+      ]
+    }
+    
+    render json: result
   end
 
   private
 
+  def check_rate_limit
+    # ユーザーごとのレート制限（5分間に3回まで）
+    rate_limit_key = "ai_rate_limit_user_#{current_user.id}"
+    current_count = Rails.cache.read(rate_limit_key) || 0
+    
+    if current_count >= 3
+      render json: {
+        success: false,
+        error: "AI機能の利用制限に達しました。5分後に再度お試しください。"
+      }, status: 429
+      return
+    end
+    
+    # カウントを更新
+    Rails.cache.write(rate_limit_key, current_count + 1, expires_in: 5.minutes)
+  end
 
   def call_gemini_api(post)
     require "net/http"

@@ -595,7 +595,10 @@
     }
   }
 
-  // 投票モーダル用AI機能
+  // 投票モーダル用AI機能（キャッシュ対応）
+  let voteModalAILoaded = false
+  let voteModalAICache = null
+  
   window.toggleVoteModalAI = function() {
     const initialDiv = document.getElementById('voteModalAIInitial')
     const loadingDiv = document.getElementById('voteModalAILoading')
@@ -603,14 +606,49 @@
     const toggleButton = document.getElementById('voteModalAIToggle')
     
     if (contentDiv.classList.contains('hidden')) {
+      // キャッシュから読み込み
+      if (voteModalAILoaded && voteModalAICache) {
+        contentDiv.innerHTML = voteModalAICache
+        initialDiv.classList.add('hidden')
+        contentDiv.classList.remove('hidden')
+        toggleButton.innerHTML = '<span>🤖</span><span>閉じる</span>'
+        adjustLayoutForAI(true)
+        return
+      }
+      
       // AI機能を開始
       initialDiv.classList.add('hidden')
       loadingDiv.classList.remove('hidden')
       toggleButton.innerHTML = '<span>🤖</span><span>分析中...</span>'
       toggleButton.disabled = true
       
-      // モックAI分析（実際のAPIがある場合はここに実装）
+      // モックAI分析（実際のAPIは右サイドバーのみで使用）
       setTimeout(() => {
+        const mockContent = `
+          <div class="space-y-3">
+            <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+              <h4 class="text-sm font-bold text-emerald-800 mb-2">💡 評価のヒント</h4>
+              <div class="text-xs text-emerald-700 space-y-1">
+                <p>• 作品の技術的な側面に注目してみましょう</p>
+                <p>• 感情的な印象を具体的に表現してみましょう</p>
+                <p>• 建設的なフィードバックを心がけましょう</p>
+              </div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-3 border border-purple-200">
+              <h4 class="text-sm font-bold text-purple-800 mb-2">📝 表現例</h4>
+              <div class="flex flex-wrap gap-1">
+                <span class="px-2 py-1 bg-white border border-purple-300 rounded text-xs text-purple-700 cursor-pointer hover:bg-purple-100" onclick="insertToVoteComment('印象的')">印象的</span>
+                <span class="px-2 py-1 bg-white border border-purple-300 rounded text-xs text-purple-700 cursor-pointer hover:bg-purple-100" onclick="insertToVoteComment('丁寧')">丁寧</span>
+                <span class="px-2 py-1 bg-white border border-purple-300 rounded text-xs text-purple-700 cursor-pointer hover:bg-purple-100" onclick="insertToVoteComment('創造的')">創造的</span>
+              </div>
+            </div>
+          </div>
+        `
+        
+        contentDiv.innerHTML = mockContent
+        voteModalAICache = mockContent
+        voteModalAILoaded = true
+        
         loadingDiv.classList.add('hidden')
         contentDiv.classList.remove('hidden')
         toggleButton.innerHTML = '<span>🤖</span><span>閉じる</span>'
@@ -618,7 +656,7 @@
         
         // AI表示時にレイアウトを変更
         adjustLayoutForAI(true)
-      }, 2000)
+      }, 1000) // API呼び出しではないので短時間
     } else {
       // AI機能を閉じる
       contentDiv.classList.add('hidden')
@@ -627,6 +665,18 @@
       
       // レイアウトを元に戻す
       adjustLayoutForAI(false)
+    }
+  }
+  
+  // 投票コメントに語彙を挿入
+  window.insertToVoteComment = function(text) {
+    const textarea = document.getElementById('voteComment')
+    if (textarea) {
+      const cursorPos = textarea.selectionStart || textarea.value.length
+      const newText = textarea.value.slice(0, cursorPos) + text + textarea.value.slice(cursorPos)
+      textarea.value = newText
+      textarea.focus()
+      textarea.setSelectionRange(cursorPos + text.length, cursorPos + text.length)
     }
   }
 

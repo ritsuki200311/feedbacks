@@ -14,9 +14,21 @@
 
   <!-- Header -->
   <div class="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 rounded-2xl p-6 mb-6 shadow-lg">
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-start">
       <div>
         <h1 class="text-4xl font-bold text-black bg-white bg-opacity-90 px-4 py-2 rounded-lg inline-block shadow-md"><%= current_user.name %>さんのマイページ</h1>
+        
+        <!-- フォロー数・フォロワー数 -->
+        <div class="flex gap-4 mt-6">
+          <div class="bg-white bg-opacity-90 px-3 py-1 rounded-lg text-sm shadow-md">
+            <span class="text-xs text-gray-600">フォロワー</span>
+            <span class="font-bold ml-1 text-gray-800"><%= current_user.followers_count %></span>
+          </div>
+          <div class="bg-white bg-opacity-90 px-3 py-1 rounded-lg text-sm shadow-md">
+            <span class="text-xs text-gray-600">フォロー中</span>
+            <span class="font-bold ml-1 text-gray-800"><%= current_user.following_count %></span>
+          </div>
+        </div>
       </div>
       <%= link_to edit_user_password_path, class: "inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white transition font-semibold px-4 py-2 rounded" do %>
         <svg class="inline-block w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

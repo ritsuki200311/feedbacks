@@ -54,7 +54,7 @@
           <div class="space-y-4 text-center">
             <% @post.images.each_with_index do |image, index| %>
               <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
-                <%= image_tag image, class: "max-w-md rounded-lg shadow", data: { "image-comments-target": "image" }, onload: "checkImageSizeForComments(this)" %>
+                <%= image_tag image, class: "max-w-md rounded-lg shadow cursor-crosshair", data: { "image-comments-target": "image" } %>
                 
                 <!-- 右下の拡大マーク -->
                 <button type="button" 
@@ -692,41 +692,6 @@
     }
   })
 
-  // 画像サイズをチェックしてコメントフォームの表示制御
-  window.checkImageSizeForComments = function(img) {
-    const container = img.closest('.image-container')
-    if (!container) return
-
-    // 画像の表示サイズが大きい場合（幅300px以上）はピンコメントを無効化
-    if (img.offsetWidth >= 300) {
-      container.classList.add('large-image')
-      // 大きい画像の場合はピンコメントを無効化（Stimulusコントローラーを無効化）
-      const imageElement = container.querySelector('[data-image-comments-target="image"]')
-      if (imageElement) {
-        imageElement.style.pointerEvents = 'none'
-        imageElement.style.cursor = 'default'
-      }
-      
-      // マーカー表示ボタンも非表示
-      const toggleButtonContainer = container.querySelector('.mt-2')
-      if (toggleButtonContainer) {
-        toggleButtonContainer.style.display = 'none'
-      }
-    } else {
-      container.classList.remove('large-image')
-      const imageElement = container.querySelector('[data-image-comments-target="image"]')
-      if (imageElement) {
-        imageElement.style.pointerEvents = 'auto'
-        imageElement.style.cursor = 'crosshair'
-      }
-      
-      // マーカー表示ボタンを表示
-      const toggleButtonContainer = container.querySelector('.mt-2')
-      if (toggleButtonContainer) {
-        toggleButtonContainer.style.display = 'flex'
-      }
-    }
-  }
 
   // モーダル画像のクリック処理を設定
   window.setupModalImageClick = function() {
@@ -1104,15 +1069,24 @@
         </button>
         
         <!-- 展開されたフォーム -->
-        <div id="comment-form-container" class="">
+        <div id="comment-form-container" class="" data-comment-form-target="form">
           <%= form_with model: [@post, @comment], local: true, class: "flex flex-col gap-3 w-full", data: { controller: "comment-form" } do |f| %>
+            <!-- 隠しフィールド（ピンコメント用） -->
+            <%= f.hidden_field :x_position, data: { "comment-form-target": "xPosition" } %>
+            <%= f.hidden_field :y_position, data: { "comment-form-target": "yPosition" } %>
+            
             <!-- コメント入力エリア -->
             <div>
               <%= f.text_area :body, 
                   rows: 3, 
-                  placeholder: "コメントを入力してください...", 
+                  placeholder: "画像を見ながらコメントを書いてみましょう...", 
                   class: "w-full p-3 text-sm border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-none",
                   data: { "comment-form-target": "textarea" } %>
+            </div>
+            
+            <!-- ピンコメント状態表示 -->
+            <div id="pin-comment-status" class="hidden bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-700">
+              📍 画像の指定位置にコメントを投稿します
             </div>
             
             <!-- ファイル添付と送信ボタン -->
@@ -1173,6 +1147,28 @@
           }
         });
       }
+      
+      // ピンコメント機能のサポート
+      window.updatePinCommentStatus = function(x, y) {
+        const statusDiv = document.getElementById('pin-comment-status');
+        const xField = document.querySelector('[data-comment-form-target="xPosition"]');
+        const yField = document.querySelector('[data-comment-form-target="yPosition"]');
+        
+        if (x && y && statusDiv) {
+          statusDiv.classList.remove('hidden');
+          statusDiv.innerHTML = `📍 画像の位置 (${x}%, ${y}%) にコメントを投稿します`;
+        } else if (statusDiv) {
+          statusDiv.classList.add('hidden');
+        }
+      };
+      
+      // フォームリセット時にピン状態もクリア
+      window.clearPinCommentStatus = function() {
+        const statusDiv = document.getElementById('pin-comment-status');
+        if (statusDiv) {
+          statusDiv.classList.add('hidden');
+        }
+      };
     });
   </script>
 <% end %>

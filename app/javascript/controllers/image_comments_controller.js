@@ -96,6 +96,11 @@ export default class extends Controller {
       // プレースホルダーを変更してピンの位置を示す
       textarea.placeholder = `画像の位置 (${x}%, ${y}%) にコメントを書いてください...`
     }
+    
+    // ピンコメント状態表示を更新
+    if (typeof window.updatePinCommentStatus === 'function') {
+      window.updatePinCommentStatus(x, y)
+    }
   }
 
   clearCommentForm() {
@@ -113,6 +118,11 @@ export default class extends Controller {
     const textarea = commentForm.querySelector("[data-comment-form-target='textarea']")
     if (textarea) {
       textarea.placeholder = "画像を見ながらコメントを書いてみましょう..."
+    }
+    
+    // ピンコメント状態表示をクリア
+    if (typeof window.clearPinCommentStatus === 'function') {
+      window.clearPinCommentStatus()
     }
   }
 

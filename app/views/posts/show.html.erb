@@ -957,40 +957,18 @@
           <% all_comments.each do |item| %>
             <% if item.is_a?(Comment) %>
               <!-- 通常のコメント -->
-              <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4">
-                <div class="flex items-start justify-between mb-3">
-                  <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span class="text-sm font-medium text-gray-600">
-                        <%= (item.user&.name || "匿名")[0] %>
-                      </span>
+              <%= render 'comments/comment', comment: item %>
+
+              <!-- 返信コメント -->
+              <% if item.replies.any? %>
+                <div class="ml-8 mt-3 space-y-3">
+                  <% item.replies.each do |reply| %>
+                    <div class="bg-gray-50 rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-3">
+                      <%= render 'comments/comment', comment: reply %>
                     </div>
-                    <div>
-                      <span class="font-medium text-gray-900"><%= item.user&.name || "匿名" %></span>
-                      <span class="text-xs text-gray-500 ml-2"><%= time_ago_in_words(item.created_at) %>前</span>
-                    </div>
-                  </div>
-                  
-                  <!-- 投票ボタン -->
-                  <div class="flex items-center gap-2">
-                    <%= button_to vote_path(votable_type: 'Comment', votable_id: item.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500 transition-colors" do %>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 5v14"/>
-                        <path d="M5 12h14"/>
-                      </svg>
-                    <% end %>
-                    <span class="text-xs text-gray-600 min-w-[20px] text-center">
-                      <%= item.votes.where(value: 1).count - item.votes.where(value: -1).count %>
-                    </span>
-                    <%= button_to vote_path(votable_type: 'Comment', votable_id: item.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500 transition-colors" do %>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12h14"/>
-                      </svg>
-                    <% end %>
-                  </div>
+                  <% end %>
                 </div>
-                <p class="text-gray-700 leading-relaxed"><%= item.body %></p>
-              </div>
+              <% end %>
             <% else %>
               <!-- 投票コメント -->
               <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4">

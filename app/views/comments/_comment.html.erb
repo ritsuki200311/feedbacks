@@ -1,22 +1,84 @@
-<div class="comment mb-4 p-3 bg-gray-50 rounded-lg">
+<%
+  user_vote = current_user ? comment.votes.find_by(user: current_user)&.value || 0 : 0
+  up_count = comment.votes.where(value: 1).count
+  down_count = comment.votes.where(value: -1).count
+  net_votes = up_count - down_count
+%>
+
+<div class="comment mb-4 p-3 bg-gray-50 rounded-lg"
+     data-controller="comment-vote comment-reply"
+     data-comment-vote-comment-id-value="<%= comment.id %>"
+     data-comment-vote-user-vote-value="<%= user_vote %>"
+     data-comment-vote-up-count-value="<%= up_count %>"
+     data-comment-vote-down-count-value="<%= down_count %>"
+     data-comment-reply-comment-id-value="<%= comment.id %>"
+     data-comment-reply-post-id-value="<%= comment.post.id %>">
   <p class="text-gray-800"><%= comment.body %></p>
   <div class="flex items-center justify-between mt-2">
-    <small class="text-gray-500"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+    <div class="flex items-center gap-2">
+      <small class="text-gray-500"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+      <% if user_signed_in? %>
+        <button data-action="click->comment-reply#toggleReplyForm"
+                data-comment-reply-target="replyButton"
+                class="text-xs text-blue-500 hover:text-blue-700 transition-colors px-2 py-1 rounded hover:bg-blue-50">
+          返信
+        </button>
+      <% end %>
+    </div>
     <div class="flex items-center gap-3">
-      <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: 1), method: :post, class: "text-gray-400 hover:text-green-500" do %>
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <button data-action="click->comment-vote#upvote"
+              data-comment-vote-target="upButton"
+              class="transition-all duration-200 flex items-center justify-center w-8 h-8 rounded-full
+                     <%= user_vote == 1 ? 'text-white bg-green-500 shadow-lg scale-110 border-2 border-green-400' : 'text-gray-400 hover:text-green-500 border border-gray-300' %>">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="<%= user_vote == 1 ? '3' : '2' %>"
+             stroke-linecap="round"
+             stroke-linejoin="round">
           <path d="M12 5v14"/>
           <path d="M5 12h14"/>
         </svg>
-      <% end %>
-      <span class="text-gray-600 font-semibold text-sm">
-        <%= comment.votes.where(value: 1).count - comment.votes.where(value: -1).count %>
+      </button>
+      <span class="text-gray-600 font-semibold text-sm" data-comment-vote-target="voteCount">
+        <%= net_votes >= 0 ? "+#{net_votes}" : net_votes %>
       </span>
-      <%= button_to vote_path(votable_type: 'Comment', votable_id: comment.id, value: -1), method: :post, class: "text-gray-400 hover:text-red-500" do %>
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <button data-action="click->comment-vote#downvote"
+              data-comment-vote-target="downButton"
+              class="transition-all duration-200 flex items-center justify-center w-8 h-8 rounded-full
+                     <%= user_vote == -1 ? 'text-white bg-red-500 shadow-lg scale-110 border-2 border-red-400' : 'text-gray-400 hover:text-red-500 border border-gray-300' %>">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="<%= user_vote == -1 ? '3' : '2' %>"
+             stroke-linecap="round"
+             stroke-linejoin="round">
           <path d="M5 12h14"/>
         </svg>
-      <% end %>
+      </button>
     </div>
+  </div>
+
+  <!-- 返信フォーム（初期は非表示） -->
+  <div data-comment-reply-target="replyForm" class="hidden mt-3 p-3 bg-white border border-gray-200 rounded-lg">
+    <%= form_with model: [comment.post, Comment.new],
+                  local: false,
+                  data: { "comment-reply-target": "form", "action": "submit->comment-reply#submitReply" },
+                  class: "space-y-3" do |f| %>
+      <%= f.hidden_field :parent_id, value: comment.id %>
+      <%= f.text_area :body,
+                      rows: 2,
+                      placeholder: "返信を入力...",
+                      class: "w-full p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500",
+                      data: { "comment-reply-target": "textarea" } %>
+      <div class="flex gap-2">
+        <%= f.submit "返信", class: "bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm" %>
+        <button type="button"
+                data-action="click->comment-reply#hideReplyForm"
+                class="bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400 text-sm">
+          キャンセル
+        </button>
+      </div>
+    <% end %>
   </div>
 </div>

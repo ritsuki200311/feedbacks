@@ -32,10 +32,12 @@ class CommentsController < ApplicationController
         format.html { redirect_to post_path(@post), notice: "コメントを投稿しました。" }
         format.json {
           render json: {
+            success: true,
             id: @comment.id,
             body: @comment.body,
             x_position: @comment.x_position,
             y_position: @comment.y_position,
+            parent_id: @comment.parent_id,
             user_name: @comment.user&.name || "匿名",
             created_at: @comment.created_at.strftime("%Y-%m-%d %H:%M")
           }
@@ -43,7 +45,7 @@ class CommentsController < ApplicationController
       else
         error_messages = @comment.errors.full_messages.join(", ")
         format.html { redirect_to post_path(@post), alert: "コメントの投稿に失敗しました: #{error_messages}" }
-        format.json { render json: { errors: @comment.errors }, status: :unprocessable_entity }
+        format.json { render json: { success: false, errors: @comment.errors }, status: :unprocessable_entity }
       end
     end
   end

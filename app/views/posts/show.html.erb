@@ -54,7 +54,7 @@
           <div class="space-y-4 text-center">
             <% @post.images.each_with_index do |image, index| %>
               <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
-                <%= image_tag image, class: "max-w-md rounded-lg shadow cursor-crosshair", data: { "image-comments-target": "image" } %>
+                <%= image_tag image, class: "max-w-md rounded-lg shadow cursor-crosshair", data: { "image-comments-target": "image" }, onclick: "testClickIndicator(event)" %>
                 
                 <!-- 右下の拡大マーク -->
                 <button type="button" 
@@ -470,7 +470,7 @@
 <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden p-4">
   <div class="relative w-full h-full flex items-center justify-center">
     <div class="relative">
-      <img id="modalImage" src="" alt="拡大画像" class="max-w-full max-h-full object-contain rounded shadow-xl">
+      <img id="modalImage" src="" alt="拡大画像" class="max-w-full max-h-full object-contain rounded shadow-xl cursor-crosshair">
       
       <!-- 画像上のコメントマーカー表示エリア -->
       <div class="absolute inset-0 pointer-events-none" id="modalMarkersContainer"></div>
@@ -742,6 +742,56 @@
     }
   })
 
+  // 現在のクリックインジケーター
+  let currentClickIndicator = null;
+
+  // クリック位置を青い丸で表示する関数
+  function showClickIndicator(clientX, clientY) {
+    console.log('showClickIndicator called at:', clientX, clientY);
+
+    // 既存の青い丸があれば削除
+    if (currentClickIndicator && currentClickIndicator.parentNode) {
+      currentClickIndicator.remove();
+    }
+
+    // 青い丸のインジケーターを作成
+    const indicator = document.createElement('div')
+    indicator.className = 'click-indicator'
+    indicator.style.cssText = `
+      position: fixed;
+      left: ${clientX}px;
+      top: ${clientY}px;
+      width: 24px;
+      height: 24px;
+      background-color: #3b82f6;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+    `
+
+    document.body.appendChild(indicator)
+    currentClickIndicator = indicator;
+    console.log('Blue indicator added to body');
+  }
+
+  // コメント投稿時に青い丸を削除する関数
+  function removeClickIndicator() {
+    if (currentClickIndicator && currentClickIndicator.parentNode) {
+      currentClickIndicator.remove();
+      currentClickIndicator = null;
+      console.log('Blue indicator removed after comment submission');
+    }
+  }
+
+  // グローバルからアクセス可能にする
+  window.removeClickIndicator = removeClickIndicator;
+
+  // テスト用のクリックインジケーター関数
+  function testClickIndicator(event) {
+    console.log('testClickIndicator called at:', event.clientX, event.clientY);
+    showClickIndicator(event.clientX, event.clientY);
+  }
 
   // モーダル画像のクリック処理を設定
   window.setupModalImageClick = function() {
@@ -768,6 +818,9 @@
     const rect = modalImage.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
+
+    // クリック位置を青い丸で表示
+    showClickIndicator(event.clientX, event.clientY)
 
     // 画像内での相対位置を計算（パーセント）
     const xPercent = (x / rect.width) * 100

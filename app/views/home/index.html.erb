@@ -44,7 +44,9 @@
 
 <% if @posts.any? %>
   <% @posts.each do |post| %>
-    <div class="<%= post_card_class(post) %>">
+    <div class="<%= post_card_class(post) %> cursor-pointer post-card"
+         onclick="handlePostCardClick(event, <%= post.id %>)"
+         data-post-id="<%= post.id %>">
       <p class="text-gray-500 mb-1 text-sm">
         👤 <%= link_to post.user.name, user_path(post.user), class: "text-indigo-600 hover:underline" %>
       </p>
@@ -82,7 +84,7 @@
         <div class="flex flex-col items-center mb-2">
           <% post.images.first(1).each_with_index do |image, index| %>
             <div class="relative inline-block mb-2" data-controller="image-comments" data-image-comments-post-id-value="<%= post.id %>" data-image-comments-read-only-value="true">
-              <%= image_tag image, class: "w-full max-w-xs mx-auto rounded shadow", data: { "image-comments-target": "image" } %>
+              <%= image_tag image, class: "w-full max-w-xs mx-auto rounded shadow cursor-crosshair", data: { "image-comments-target": "image" } %>
               
               <% if post.images.count > 1 %>
                 <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
@@ -157,7 +159,7 @@
       <!-- 投票システム（投稿詳細と同じスタイル） -->
       <div class="flex items-center justify-center gap-4 mt-2 pt-2 border-t border-gray-100">
         <!-- プラス投票アイコン（表示のみ） -->
-        <div class="<%= user_vote == 1 ? 'text-green-600 bg-green-100 rounded px-1 py-1 font-bold' : 'text-gray-400' %>">
+        <div class="vote-button <%= user_vote == 1 ? 'text-green-600 bg-green-100 rounded px-1 py-1 font-bold' : 'text-gray-400' %>">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 5v14"/>
             <path d="M5 12h14"/>
@@ -195,7 +197,7 @@
         </div>
         
         <!-- マイナス投票アイコン（表示のみ） -->
-        <div class="<%= user_vote == -1 ? 'text-red-600 bg-red-100 rounded px-1 py-1 font-bold' : 'text-gray-400' %>">
+        <div class="vote-button <%= user_vote == -1 ? 'text-red-600 bg-red-100 rounded px-1 py-1 font-bold' : 'text-gray-400' %>">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 12h14"/>
           </svg>
@@ -216,7 +218,7 @@
 
       <!-- 投稿削除ボタン -->
       <div class="text-right mt-2">
-        <%= button_to "削除", post_path(post), method: :delete, data: { confirm: "本当に削除しますか？" }, class: "text-red-600 hover:underline" %>
+        <%= button_to "削除", post_path(post), method: :delete, data: { confirm: "本当に削除しますか？" }, class: "delete-button text-red-600 hover:underline" %>
       </div>
     </div>
   <% end %>
@@ -224,6 +226,51 @@
 <% else %>
   <p class="text-gray-500">まだ投稿がありません。</p>
 <% end %>
+
+<script>
+function handlePostCardClick(event, postId) {
+  console.log('Card clicked, target:', event.target, 'postId:', postId);
+
+  // リンクやボタンがクリックされた場合は無視
+  if (shouldIgnoreClick(event.target)) {
+    console.log('Click ignored for:', event.target);
+    return;
+  }
+
+  console.log('Navigating to post:', postId);
+  window.location.href = `/posts/${postId}`;
+}
+
+function shouldIgnoreClick(target) {
+  // クリックを無視すべき要素をチェック
+  const ignoredElements = ['A', 'BUTTON', 'INPUT', 'TEXTAREA', 'SELECT'];
+  const ignoredClasses = ['vote-button', 'delete-button'];
+
+  // 要素タイプをチェック
+  if (ignoredElements.includes(target.tagName)) {
+    return true;
+  }
+
+  // クラス名をチェック
+  if (target.classList && ignoredClasses.some(cls => target.classList.contains(cls))) {
+    return true;
+  }
+
+  // 親要素をチェック（SVGアイコンなど）
+  let parent = target.parentElement;
+  while (parent && !parent.classList.contains('post-card')) {
+    if (ignoredElements.includes(parent.tagName)) {
+      return true;
+    }
+    if (parent.classList && ignoredClasses.some(cls => parent.classList.contains(cls))) {
+      return true;
+    }
+    parent = parent.parentElement;
+  }
+
+  return false;
+}
+</script>
 
 <!-- ✅ 開発環境限定：ここが一番下 -->
 <% if Rails.env.development? %>

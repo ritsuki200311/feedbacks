@@ -4,6 +4,51 @@ export default class extends Controller {
   static targets = ["image", "markersContainer", "toggleButton", "toggleIcon", "toggleText", "markerCount"]
   static values = { postId: Number }
 
+  // コメント投稿成功時に青い丸を削除する関数
+  removeClickIndicator() {
+    // グローバル関数を呼び出し
+    if (window.removeClickIndicator) {
+      window.removeClickIndicator();
+    }
+  }
+
+  // コメント送信処理
+  submitComment(event) {
+    event.preventDefault();
+    console.log('Comment form submitted');
+
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Accept': 'application/json'
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        console.log('Comment submitted successfully');
+        // 青い丸を削除
+        this.removeClickIndicator();
+        // フォームを隠す
+        this.clearCommentForm();
+        // コメントをリロード
+        this.loadComments();
+      } else {
+        console.error('Comment submission failed:', data.errors);
+        alert('コメントの投稿に失敗しました。');
+      }
+    })
+    .catch(error => {
+      console.error('Error submitting comment:', error);
+      alert('エラーが発生しました。');
+    });
+  }
+
   connect() {
     console.log("Image Comments Controller connected! [UPDATED VERSION]")
     console.log("Post ID:", this.postIdValue)
@@ -22,6 +67,11 @@ export default class extends Controller {
     
     this.imageTarget.addEventListener("click", (event) => {
       console.log("Image clicked!")
+
+      // クリック位置を青い丸で表示
+      console.log("About to call showClickIndicator with:", event.clientX, event.clientY)
+      this.showClickIndicator(event.clientX, event.clientY)
+
       const rect = this.imageTarget.getBoundingClientRect()
       const x = event.clientX - rect.left
       const y = event.clientY - rect.top
@@ -43,6 +93,29 @@ export default class extends Controller {
       this.createTempPin(relativeX, relativeY)
       this.focusCommentForm(relativeX, relativeY)
     })
+  }
+
+  showClickIndicator(clientX, clientY) {
+    console.log('showClickIndicator called in controller at:', clientX, clientY);
+
+    // 青い丸のインジケーターを作成（既存のものは削除しない）
+    const indicator = document.createElement('div')
+    indicator.className = 'click-indicator'
+    indicator.style.cssText = `
+      position: fixed;
+      left: ${clientX}px;
+      top: ${clientY}px;
+      width: 24px;
+      height: 24px;
+      background-color: #3b82f6;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+    `
+
+    document.body.appendChild(indicator)
+    console.log('Blue indicator added to body by controller');
   }
 
   createTempPin(x, y) {

@@ -80,9 +80,35 @@ class HomeController < ApplicationController
     end
 
     # 右サイドバー用のデータを取得
-    @recent_comments = Comment.includes(:user, :post)
-                             .order(created_at: :desc)
-                             .limit(5)
+    # 最近の高評価コメントを取得
+    begin
+      # 過去7日間のコメントを取得し、Rubyでスコア計算
+      recent_comments = Comment.where('created_at >= ?', 7.days.ago)
+                              .includes(:user, :post, :votes)
+                              .order(created_at: :desc)
+
+      # スコアを計算してソート
+      @recent_comments = recent_comments.select { |comment|
+        comment.votes.sum(:value) > 0  # プラススコアのもののみ
+      }.sort_by { |comment|
+        -comment.votes.sum(:value)  # スコアの降順
+      }.first(5)
+
+    rescue => e
+      Rails.logger.error "高評価コメント取得エラー: #{e.message}"
+      # フォールバック: 最近のコメントを表示
+      @recent_comments = Comment.includes(:user, :post)
+                               .order(created_at: :desc)
+                               .limit(5)
+    end
+
+    # 新しいコメントも取得（高評価コメントと重複しないように）
+    # 高評価コメントのIDを除外
+    highly_rated_ids = @recent_comments.is_a?(Array) ? @recent_comments.map(&:id) : @recent_comments.pluck(:id)
+    @new_comments = Comment.where.not(id: highly_rated_ids)
+                          .includes(:user, :post)
+                          .order(created_at: :desc)
+                          .limit(5)
 
     # おすすめユーザーを取得（投稿数順）
     user_post_counts = Post.group(:user_id).count

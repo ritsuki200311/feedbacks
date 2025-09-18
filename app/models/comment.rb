@@ -17,6 +17,34 @@ class Comment < ApplicationRecord
 
   after_create :increment_user_rank_points
 
+  # 高評価コメントを取得するスコープ
+  scope :highly_rated, -> {
+    joins(:votes)
+      .select('comments.*, COUNT(votes.id) as vote_count, SUM(votes.value) as net_score')
+      .group('comments.id')
+      .having('SUM(votes.value) > 0') # ネットスコアがプラスのもの
+      .order('SUM(votes.value) DESC, COUNT(votes.id) DESC, comments.created_at DESC')
+  }
+
+  scope :recent_highly_rated, -> (limit = 5) {
+    where('comments.created_at >= ?', 7.days.ago)
+      .joins(:votes)
+      .select('comments.*, COUNT(votes.id) as vote_count, SUM(votes.value) as net_score')
+      .group('comments.id')
+      .having('SUM(votes.value) > 0')
+      .order('SUM(votes.value) DESC, COUNT(votes.id) DESC, comments.created_at DESC')
+      .limit(limit)
+  }
+
+  # 評価スコアを計算するメソッド
+  def net_score
+    votes.sum(:value)
+  end
+
+  def vote_count
+    votes.count
+  end
+
   private
 
   def increment_user_rank_points

@@ -21,15 +21,273 @@
         </div>
       <% end %>
 
-      <div>
-        <%= form.label :title, "タイトル", class: "block text-lg font-semibold text-gray-800 mb-3" %>
-        <%= form.text_field :title, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "投稿のタイトルを入力" %>
+      <!-- 画像・メディアアップロードエリア（最上部） -->
+      <div class="drop-zone bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+        <%= form.label :files, "📷 画像を追加", class: "block text-xl font-bold text-blue-600 mb-4 cursor-pointer" %>
+
+        <!-- ドラッグ&ドロップ説明 -->
+        <div class="mb-4">
+          <div class="flex items-center justify-center mb-3">
+            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48" aria-hidden="true">
+              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <p class="text-lg text-gray-600 mb-2">ファイルをドラッグ&ドロップ</p>
+          <p class="text-sm text-gray-500 mb-4">または</p>
+        </div>
+
+        <div class="mb-4">
+          <%= form.file_field :files, multiple: true,
+              class: "block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer",
+              data: {
+                file_preview_target: "allFilesInput",
+                action: "change->file-preview#previewFiles"
+              },
+              accept: "image/*,video/*,audio/*" %>
+          <p class="text-sm text-gray-500 mt-3">
+            <span class="font-medium">JPEG / GIF / PNG / MP4 / MP3</span><br>
+            <span class="text-xs">画像: 32MB以内、動画: 500MB以内、音声: 100MB以内<br>最大200ファイル（合計200MB以内まで）</span>
+          </p>
+        </div>
+        <!-- ファイルプレビューエリア -->
+        <div class="mt-4 flex flex-wrap justify-center" data-file-preview-target="mediaPreview"></div>
       </div>
 
-      <div>
-        <%= form.label :body, "本文", class: "block text-lg font-semibold text-gray-800 mb-3" %>
-        <%= form.text_area :body, rows: 4, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "伝えたいことを詳しく書きましょう" %>
+      <!-- タイトルとキャプション -->
+      <div class="space-y-4 bg-white border border-gray-200 rounded-lg p-6">
+        <div>
+          <%= form.label :title, "タイトル", class: "block text-lg font-semibold text-gray-800 mb-2" %>
+          <div class="relative">
+            <%= form.text_field :title, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-16", placeholder: "タイトルを入力してください", maxlength: 32 %>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+              <span class="text-sm text-gray-400" id="titleCounter">0/32</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <%= form.label :body, "キャプション", class: "block text-lg font-semibold text-gray-800 mb-2" %>
+          <div class="relative">
+            <%= form.text_area :body, rows: 4, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-16", placeholder: "キャプション", maxlength: 3000 %>
+            <div class="absolute bottom-3 right-3">
+              <span class="text-sm text-gray-400" id="bodyCounter">0/3000</span>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          // 文字数カウンター
+          const titleInput = document.querySelector('input[name="post[title]"]');
+          const titleCounter = document.getElementById('titleCounter');
+          const bodyInput = document.querySelector('textarea[name="post[body]"]');
+          const bodyCounter = document.getElementById('bodyCounter');
+
+          function updateCounter(input, counter, max) {
+            const length = input.value.length;
+            counter.textContent = `${length}/${max}`;
+            if (length > max * 0.9) {
+              counter.classList.add('text-red-500');
+              counter.classList.remove('text-gray-400');
+            } else {
+              counter.classList.remove('text-red-500');
+              counter.classList.add('text-gray-400');
+            }
+          }
+
+          if (titleInput && titleCounter) {
+            titleInput.addEventListener('input', function() {
+              updateCounter(this, titleCounter, 32);
+            });
+            updateCounter(titleInput, titleCounter, 32);
+          }
+
+          if (bodyInput && bodyCounter) {
+            bodyInput.addEventListener('input', function() {
+              updateCounter(this, bodyCounter, 3000);
+            });
+            updateCounter(bodyInput, bodyCounter, 3000);
+          }
+
+          // 創作ジャンル選択
+          const options = document.querySelectorAll('.creation-type-option');
+
+          options.forEach(option => {
+            option.addEventListener('click', function() {
+              // すべての選択を解除
+              options.forEach(opt => {
+                opt.querySelector('.option-card').classList.remove('border-blue-700', 'bg-blue-100', 'border-indigo-500', 'bg-indigo-50', 'border-4');
+                opt.querySelector('.option-card').classList.add('border-gray-200', 'border-2');
+                opt.querySelector('.creation-type-radio').checked = false;
+              });
+
+              // クリックされた要素を選択状態に
+              const card = this.querySelector('.option-card');
+              const radio = this.querySelector('.creation-type-radio');
+
+              card.classList.remove('border-gray-200', 'border-2');
+              card.classList.add('border-blue-700', 'bg-blue-100', 'border-4');
+              radio.checked = true;
+            });
+          });
+        });
+      </script>
+
+      <!-- ドラッグ&ドロップのスタイル -->
+      <style>
+        .drop-zone {
+          transition: all 0.3s ease;
+        }
+        .drop-zone.dragover {
+          transform: scale(1.02);
+          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+        }
+        .drop-zone:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+      </style>
+
+      <!-- シンプルなドラッグ&ドロップ機能 -->
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const dropZone = document.querySelector('.drop-zone');
+          const fileInput = document.querySelector('[data-file-preview-target="allFilesInput"]');
+
+          if (!dropZone || !fileInput) {
+            console.log('Drop zone or file input not found');
+            return;
+          }
+
+          console.log('Setting up simple drag and drop');
+
+          // 既存の削除ボタンの設定（ページ読み込み時）
+          setupRemoveButtons();
+
+          // ドラッグ中のデフォルト動作を防ぐ
+          ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+          });
+
+          // ハイライト
+          ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+          });
+
+          ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+          });
+
+          // ドロップ処理
+          dropZone.addEventListener('drop', handleDrop, false);
+
+          function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+
+          function highlight(e) {
+            dropZone.classList.add('border-blue-500', 'bg-blue-50', 'dragover');
+            dropZone.classList.remove('border-gray-300');
+          }
+
+          function unhighlight(e) {
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dragover');
+            dropZone.classList.add('border-gray-300');
+          }
+
+          function handleDrop(e) {
+            console.log('Drop event detected!');
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            console.log('Dropped files:', files.length);
+
+            if (files.length > 0) {
+              // ファイル入力に直接設定
+              fileInput.files = files;
+
+              // change イベントを発火
+              const event = new Event('change', { bubbles: true });
+              fileInput.dispatchEvent(event);
+
+              console.log('Files assigned to input and change event fired');
+
+              // 削除ボタンにイベントリスナーを追加（遅延実行）
+              setTimeout(setupRemoveButtons, 500);
+            }
+          }
+
+          // 削除ボタンの設定
+          function setupRemoveButtons() {
+            console.log('Setting up remove buttons...');
+
+            // より広い範囲で削除ボタンを検索
+            const removeButtons = document.querySelectorAll('button[class*="bg-red-500"], .file-remove-btn');
+            console.log('Found remove buttons:', removeButtons.length);
+
+            removeButtons.forEach((btn, index) => {
+              console.log('Setting up button', index, btn);
+
+              // 既存のイベントリスナーを削除
+              const newBtn = btn.cloneNode(true);
+              btn.parentNode.replaceChild(newBtn, btn);
+
+              // 新しいイベントリスナーを追加
+              newBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Remove button clicked for index:', index);
+                removeFileAtIndex(index);
+              });
+            });
+          }
+
+          // ファイルを削除する関数
+          function removeFileAtIndex(index) {
+            console.log('removeFileAtIndex called with index:', index);
+
+            // Stimulusコントローラーを取得して削除機能を呼び出し
+            const stimulusElement = document.querySelector('[data-controller*="file-preview"]');
+            if (stimulusElement && window.Stimulus) {
+              const app = window.Stimulus;
+              const controller = app.getControllerForElementAndIdentifier(stimulusElement, 'file-preview');
+              if (controller && controller.removeFile) {
+                console.log('Calling controller removeFile');
+                controller.removeFile(index);
+                return;
+              }
+            }
+
+            // フォールバック: 手動でファイル削除
+            console.log('Using fallback removal method');
+            const previewItems = document.querySelectorAll('[data-file-preview-target="mediaPreview"] > div');
+            if (previewItems[index]) {
+              previewItems[index].remove();
+
+              // 手動でファイル入力を更新
+              updateFileInputManually();
+            }
+          }
+
+          // 手動でファイル入力を更新する関数
+          function updateFileInputManually() {
+            const fileInput = document.querySelector('[data-file-preview-target="allFilesInput"]');
+            const previewItems = document.querySelectorAll('[data-file-preview-target="mediaPreview"] > div');
+
+            if (previewItems.length === 0) {
+              // 全てのファイルが削除された場合
+              fileInput.value = '';
+              console.log('All files removed, input cleared');
+            } else {
+              console.log('Some files remain, manual update needed');
+              // 注意: 完全な手動更新は複雑なので、ページ更新を推奨
+            }
+          }
+        });
+      </script>
 
       <div>
         <%= form.label :creation_type, "創作ジャンル", class: "block text-lg font-semibold text-gray-800 mb-3" %>
@@ -61,47 +319,6 @@
             </label>
           <% end %>
         </div>
-      </div>
-
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          const options = document.querySelectorAll('.creation-type-option');
-          
-          options.forEach(option => {
-            option.addEventListener('click', function() {
-              // すべての選択を解除
-              options.forEach(opt => {
-                opt.querySelector('.option-card').classList.remove('border-blue-700', 'bg-blue-100', 'border-indigo-500', 'bg-indigo-50', 'border-4');
-                opt.querySelector('.option-card').classList.add('border-gray-200', 'border-2');
-                opt.querySelector('.creation-type-radio').checked = false;
-              });
-              
-              // クリックされた要素を選択状態に
-              const card = this.querySelector('.option-card');
-              const radio = this.querySelector('.creation-type-radio');
-              
-              card.classList.remove('border-gray-200', 'border-2');
-              card.classList.add('border-blue-700', 'bg-blue-100', 'border-4');
-              radio.checked = true;
-            });
-          });
-        });
-      </script>
-
-      <div>
-        <%= form.label :files, "ファイル（画像・動画・音声）", class: "block text-lg font-semibold text-gray-800 mb-3" %>
-        <div class="mb-4">
-          <%= form.file_field :files, multiple: true, 
-              class: "block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100",
-              data: { 
-                file_preview_target: "allFilesInput",
-                action: "change->file-preview#previewFiles"
-              },
-              accept: "image/*,video/*,audio/*" %>
-          <p class="text-xs text-gray-500 mt-2">画像、動画、音声ファイルを複数選択できます</p>
-        </div>
-        <!-- ファイルプレビューエリア -->
-        <div class="mt-4" data-file-preview-target="mediaPreview"></div>
       </div>
 
       <div class="pt-6 text-center">

@@ -13,21 +13,48 @@
      data-comment-vote-down-count-value="<%= down_count %>"
      data-comment-reply-comment-id-value="<%= comment.id %>"
      data-comment-reply-post-id-value="<%= comment.post.id %>">
+
+  <!-- ユーザー名表示 -->
+  <div class="flex items-center gap-2 mb-2">
+    <span class="font-semibold text-sm <%= current_user == comment.user ? 'text-green-600' : 'text-blue-600' %>">
+      <%= link_to comment.user.name, user_path(comment.user), class: "hover:underline" %>
+    </span>
+    <% if current_user == comment.user %>
+      <span class="bg-green-100 text-green-700 text-xs px-1.5 py-0.5 rounded-full font-medium">あなた</span>
+    <% elsif comment.user == comment.post.user %>
+      <span class="bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded-full font-medium">投稿者</span>
+    <% end %>
+    <span class="text-gray-400 text-xs">•</span>
+    <small class="text-gray-500"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+  </div>
+
   <p class="text-gray-800"><%= comment.body %></p>
   <div class="flex items-center justify-between mt-2">
     <div class="flex items-center gap-2">
-      <small class="text-gray-500"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></small>
       <% if user_signed_in? %>
         <button data-action="click->comment-reply#toggleReplyForm"
                 data-comment-reply-target="replyButton"
                 class="text-xs text-blue-500 hover:text-blue-700 transition-colors px-2 py-1 rounded hover:bg-blue-50">
           返信
         </button>
+
+        <!-- ハートボタン（投稿者のみ、自分のコメント以外に表示） -->
+        <% if current_user == comment.post.user && current_user != comment.user %>
+          <% user_hearted = comment.hearts.exists?(user: current_user) %>
+          <button onclick="toggleHeart(<%= comment.id %>)"
+                  id="heart-btn-<%= comment.id %>"
+                  class="text-xs transition-colors px-2 py-1 rounded hover:bg-pink-50 flex items-center gap-1 <%= user_hearted ? 'text-pink-500' : 'text-gray-400 hover:text-pink-500' %>">
+            <span id="heart-icon-<%= comment.id %>"><%= user_hearted ? '❤️' : '🤍' %></span>
+            <span id="heart-text-<%= comment.id %>"><%= user_hearted ? 'ハート済み' : 'ハート' %></span>
+            <span id="heart-count-<%= comment.id %>" class="ml-1 text-xs">(<%= comment.hearts.count %>)</span>
+          </button>
+        <% end %>
       <% end %>
     </div>
     <div class="flex items-center gap-3">
       <button data-action="click->comment-vote#upvote"
               data-comment-vote-target="upButton"
+              onclick="console.log('🔥 Upvote button clicked directly!', this); testVoteComment(<%= comment.id %>, 1)"
               class="transition-all duration-200 flex items-center justify-center w-8 h-8 rounded-full
                      <%= user_vote == 1 ? 'text-white bg-green-500 shadow-lg scale-110 border-2 border-green-400' : 'text-gray-400 hover:text-green-500 border border-gray-300' %>">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
@@ -45,6 +72,7 @@
       </span>
       <button data-action="click->comment-vote#downvote"
               data-comment-vote-target="downButton"
+              onclick="console.log('🔥 Downvote button clicked directly!', this); testVoteComment(<%= comment.id %>, -1)"
               class="transition-all duration-200 flex items-center justify-center w-8 h-8 rounded-full
                      <%= user_vote == -1 ? 'text-white bg-red-500 shadow-lg scale-110 border-2 border-red-400' : 'text-gray-400 hover:text-red-500 border border-gray-300' %>">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"

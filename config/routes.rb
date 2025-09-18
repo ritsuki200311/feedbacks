@@ -7,15 +7,17 @@ Rails.application.routes.draw do
     registrations: "users/registrations"
   }
 
-  # この順番が大事！
+  # この順番が大事！- Deviseルートを保護するため
   get "users/mypage", to: "users#mypage", as: :mypage
   patch "users/update", to: "users#update", as: :update_user
+  get "users/index"
   # ユーザー関係性の可視化（usersリソースより前に配置）
   get "users/relationships", to: "user_relationships#index", as: :user_relationships
-  resources :users, only: [ :show ] do
-    resource :follows, only: [ :create, :destroy ]
-  end
-  get "users/index"
+
+  # ユーザープロフィール表示（Deviseと競合を避けるため）
+  get "users/:id", to: "users#show", as: :user, constraints: { id: /\d+/ }
+  post "users/:id/follows", to: "follows#create", as: :user_follows
+  delete "users/:id/follows", to: "follows#destroy", as: :destroy_user_follows
 
 
 
@@ -43,6 +45,9 @@ Rails.application.routes.draw do
 
   # 投票機能
   post "vote", to: "votes#vote"
+
+  # ハート機能
+  post "toggle_heart", to: "hearts#toggle"
 
 
   # DM機能

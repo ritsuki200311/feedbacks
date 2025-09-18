@@ -83,14 +83,18 @@ export default class extends Controller {
       console.log(`Clicked at: ${relativeX}%, ${relativeY}%`)
       
       // 既存のマーカーがクリック位置にある場合はスキップ
-      if (this.isMarkerAtPosition(relativeX, relativeY)) {
+      const markerExists = this.isMarkerAtPosition(relativeX, relativeY)
+      console.log("Checking for existing marker at position:", relativeX, relativeY, "exists:", markerExists)
+      if (markerExists) {
         console.log("Marker already exists at this position")
         return
       }
       
       console.log("Creating temp pin and focusing form...")
+      console.log("About to call createTempPin with:", relativeX, relativeY)
       // 仮ピンを表示し、右側のフォームにフォーカス
       this.createTempPin(relativeX, relativeY)
+      console.log("createTempPin called, now calling focusCommentForm")
       this.focusCommentForm(relativeX, relativeY)
     })
   }
@@ -121,23 +125,33 @@ export default class extends Controller {
   createTempPin(x, y) {
     // 既存の仮ピンがあれば削除
     this.removeTempPin()
-    
+
+    console.log('Creating temp pin at:', x, y)
     const tempPin = document.createElement("div")
-    tempPin.className = "absolute w-2 h-2 bg-yellow-400 text-black rounded-full flex items-center justify-center cursor-pointer z-20 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 animate-pulse"
+    tempPin.className = "absolute w-6 h-6 bg-yellow-400 text-black rounded-full flex items-center justify-center cursor-pointer z-20 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 animate-pulse"
     tempPin.style.left = `${x}%`
     tempPin.style.top = `${y}%`
-    tempPin.textContent = "?"
+    tempPin.textContent = "×"
     tempPin.style.pointerEvents = "auto"
+    tempPin.style.fontSize = "14px"
+    tempPin.style.fontWeight = "bold"
     tempPin.dataset.tempPin = "true"
-    
+
     // 仮ピンにクリックで削除機能を追加
     tempPin.addEventListener("click", () => {
       this.removeTempPin()
       this.clearCommentForm()
     })
-    
+
+    console.log('Temp pin created and event listener added')
     this.tempPin = tempPin
-    this.markersContainerTarget.appendChild(tempPin)
+
+    if (this.hasMarkersContainerTarget) {
+      console.log('Adding temp pin to markers container')
+      this.markersContainerTarget.appendChild(tempPin)
+    } else {
+      console.error('markersContainerTarget not found!')
+    }
   }
 
   removeTempPin() {
@@ -200,16 +214,27 @@ export default class extends Controller {
   }
 
   isMarkerAtPosition(x, y, tolerance = 5) {
+    if (!this.hasMarkersContainerTarget) {
+      console.log("No markers container found")
+      return false
+    }
+
     const markers = this.markersContainerTarget.querySelectorAll("[data-comment-id]")
+    console.log("Checking", markers.length, "existing markers")
+
     for (let marker of markers) {
       const markerX = parseFloat(marker.style.left)
       const markerY = parseFloat(marker.style.top)
-      
-      if (Math.abs(markerX - parseFloat(x)) < tolerance && 
+
+      console.log("Marker at:", markerX, markerY, "vs clicked:", parseFloat(x), parseFloat(y))
+
+      if (Math.abs(markerX - parseFloat(x)) < tolerance &&
           Math.abs(markerY - parseFloat(y)) < tolerance) {
+        console.log("Found existing marker within tolerance")
         return true
       }
     }
+    console.log("No existing marker found at this position")
     return false
   }
 

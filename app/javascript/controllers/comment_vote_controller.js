@@ -10,48 +10,93 @@ export default class extends Controller {
   }
 
   connect() {
+    console.log('🔥 Comment Vote Controller connected!', {
+      element: this.element,
+      commentId: this.commentIdValue,
+      userVote: this.userVoteValue,
+      upCount: this.upCountValue,
+      downCount: this.downCountValue,
+      hasUpButton: this.hasUpButtonTarget,
+      hasDownButton: this.hasDownButtonTarget,
+      hasVoteCount: this.hasVoteCountTarget
+    })
     this.updateButtonStyles()
+
+    // テスト用: グローバルからアクセス可能にする
+    window.testCommentVote = this
+
+    // 要素にコントローラーへの参照を保存
+    this.element.commentVoteController = this
   }
 
   upvote(event) {
     event.preventDefault()
+    console.log('🔥 Upvote clicked!', {
+      event: event,
+      currentUserVote: this.userVoteValue,
+      commentId: this.commentIdValue,
+      element: this.element
+    })
 
-    // 既に投票済みの場合は何もしない
-    if (this.userVoteValue !== 0) {
-      return
-    }
-
-    this.submitVote(1)
+    // 既にupvoteしている場合は取り消し、そうでなければupvote
+    const newVote = this.userVoteValue === 1 ? 0 : 1
+    console.log('🔥 New vote value:', newVote)
+    this.submitVote(newVote)
   }
 
   downvote(event) {
     event.preventDefault()
+    console.log('🔥 Downvote clicked!', {
+      event: event,
+      currentUserVote: this.userVoteValue,
+      commentId: this.commentIdValue,
+      element: this.element
+    })
 
-    // 既に投票済みの場合は何もしない
-    if (this.userVoteValue !== 0) {
-      return
-    }
-
-    this.submitVote(-1)
+    // 既にdownvoteしている場合は取り消し、そうでなければdownvote
+    const newVote = this.userVoteValue === -1 ? 0 : -1
+    console.log('🔥 New vote value:', newVote)
+    this.submitVote(newVote)
   }
 
   submitVote(value) {
+    console.log('🔥 submitVote called with value:', value)
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    console.log('🔥 CSRF Token found:', csrfToken ? 'Yes' : 'No')
+
     const formData = new FormData()
     formData.append('votable_type', 'Comment')
     formData.append('votable_id', this.commentIdValue)
     formData.append('value', value)
 
+    console.log('🔥 Sending vote request:', {
+      url: '/vote',
+      votable_type: 'Comment',
+      votable_id: this.commentIdValue,
+      value: value,
+      csrfToken: csrfToken
+    })
+
     fetch('/vote', {
       method: 'POST',
       headers: {
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'X-CSRF-Token': csrfToken,
         'Accept': 'application/json'
       },
       body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+      console.log('🔥 Vote response received:', response.status, response.statusText)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      return response.json()
+    })
     .then(data => {
+      console.log('🔥 Vote response data:', data)
       if (data.success) {
+        console.log('🔥 Vote successful, updating display')
         this.upCountValue = data.up_count
         this.downCountValue = data.down_count
         this.userVoteValue = data.user_vote
@@ -68,7 +113,7 @@ export default class extends Controller {
       }
     })
     .catch(error => {
-      console.error('通信エラー:', error)
+      console.error('🔥 Vote fetch error:', error)
     })
   }
 
@@ -89,13 +134,7 @@ export default class extends Controller {
       this.highlightDownButton()
     }
 
-    // 投票済みの場合はカーソルを無効化
-    if (this.userVoteValue !== 0) {
-      this.upButtonTarget.classList.add('cursor-not-allowed')
-      this.downButtonTarget.classList.add('cursor-not-allowed')
-      this.upButtonTarget.classList.remove('hover:text-green-500')
-      this.downButtonTarget.classList.remove('hover:text-red-500')
-    }
+    // ボタンは常にクリック可能にする（投票の変更・取り消しを許可）
   }
 
   resetButtonStyles() {

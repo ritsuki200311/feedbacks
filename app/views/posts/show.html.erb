@@ -787,6 +787,14 @@
   // グローバルからアクセス可能にする
   window.removeClickIndicator = removeClickIndicator;
 
+  // Escapeキーで青い丸を削除
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && currentClickIndicator) {
+      console.log('Escape pressed, removing blue indicator');
+      removeClickIndicator();
+    }
+  });
+
   // テスト用のクリックインジケーター関数
   function testClickIndicator(event) {
     console.log('testClickIndicator called at:', event.clientX, event.clientY);
@@ -990,6 +998,68 @@
     <h3 class="text-xl font-bold mb-6 text-gray-900">評価・コメント・フィードバック</h3>
     
 
+    <!-- 画像上のピンコメント一覧 -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="text-lg font-semibold text-blue-800 flex items-center gap-2">
+          <span>📍</span>
+          画像上のピンコメント
+        </h4>
+        <% image_comments = @post.comments.where.not(x_position: nil, y_position: nil).order(:created_at) %>
+        <span class="text-sm text-blue-600"><%= image_comments.count %>件</span>
+      </div>
+
+      <% if user_can_view_comments?(current_user, @post) %>
+        <div class="space-y-4 max-h-64 overflow-y-auto border border-blue-200 rounded-lg p-3 bg-blue-50" data-controller="compact-comments">
+          <% if image_comments.any? %>
+            <% image_comments.each_with_index do |comment, index| %>
+              <div class="bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer hover:bg-blue-100"
+                   data-comment-id="<%= comment.id %>"
+                   data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                      <%= index + 1 %>
+                    </div>
+                    <div>
+                      <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
+                      <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
+                    </div>
+                  </div>
+
+                  <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
+                    画像上のコメント
+                  </div>
+                </div>
+                <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-8 text-blue-500">
+              <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span class="text-xl">📍</span>
+              </div>
+              <p class="text-sm">画像上のピンコメントはありません</p>
+              <p class="text-xs text-blue-400">画像をクリックしてコメントを追加できます</p>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <!-- 画像コメントが見れない場合の説明 -->
+        <div class="text-center py-8 text-blue-500 border border-blue-200 rounded-lg bg-blue-50">
+          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+          </div>
+          <h4 class="text-sm font-semibold text-blue-700 mb-2">コメント参加後に表示されます</h4>
+          <p class="text-xs text-blue-500">
+            コメントを投稿するか、投票をするとピンコメント一覧が見れるようになります
+          </p>
+        </div>
+      <% end %>
+    </div>
+
     <!-- 通常のコメント一覧 -->
     <div class="mb-8">
       <div class="flex items-center justify-between mb-4">
@@ -999,10 +1069,10 @@
         </h4>
         <span class="text-sm text-gray-500"><%= @post.comments.where(parent_id: nil, x_position: nil, y_position: nil).count + @vote_comments.count %>件</span>
       </div>
-      
+
       <% if user_can_view_comments?(current_user, @post) %>
-        <div class="space-y-4 max-h-96 overflow-y-auto">
-          <% 
+        <div class="space-y-4">
+          <%
             # 通常のコメントと投票コメントを時系列でまとめる（新しい順）
             regular_comments = @post.comments.where(parent_id: nil, x_position: nil, y_position: nil)
             all_comments = (regular_comments + @vote_comments).sort_by(&:created_at).reverse
@@ -1045,7 +1115,7 @@
               </div>
             <% end %>
           <% end %>
-          
+
           <% if all_comments.empty? %>
             <div class="text-center py-8 text-gray-500">
               <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -1072,68 +1142,6 @@
       <% end %>
     </div>
 
-    <!-- 画像上のピンコメント一覧 -->
-    <div class="mb-8">
-      <div class="flex items-center justify-between mb-4">
-        <h4 class="text-lg font-semibold text-blue-800 flex items-center gap-2">
-          <span>📍</span>
-          画像上のピンコメント
-        </h4>
-        <% image_comments = @post.comments.where.not(x_position: nil, y_position: nil).order(:created_at) %>
-        <span class="text-sm text-blue-600"><%= image_comments.count %>件</span>
-      </div>
-      
-      <% if user_can_view_comments?(current_user, @post) %>
-        <div class="space-y-4 max-h-96 overflow-y-auto" data-controller="compact-comments">
-          <% if image_comments.any? %>
-            <% image_comments.each_with_index do |comment, index| %>
-              <div class="bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer hover:bg-blue-100" 
-                   data-comment-id="<%= comment.id %>"
-                   data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
-                <div class="flex items-start justify-between mb-3">
-                  <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                      <%= index + 1 %>
-                    </div>
-                    <div>
-                      <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
-                      <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
-                    </div>
-                  </div>
-                  
-                  <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
-                    画像上のコメント
-                  </div>
-                </div>
-                <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
-              </div>
-            <% end %>
-          <% else %>
-            <div class="text-center py-8 text-blue-500">
-              <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span class="text-xl">📍</span>
-              </div>
-              <p class="text-sm">画像上のピンコメントはありません</p>
-              <p class="text-xs text-blue-400">画像をクリックしてコメントを追加できます</p>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <!-- 画像コメントが見れない場合の説明 -->
-        <div class="text-center py-8 text-blue-500 border border-blue-200 rounded-lg bg-blue-50">
-          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-            </svg>
-          </div>
-          <h4 class="text-sm font-semibold text-blue-700 mb-2">コメント参加後に表示されます</h4>
-          <p class="text-xs text-blue-500">
-            コメントを投稿するか、投票をするとピンコメント一覧が見れるようになります
-          </p>
-        </div>
-      <% end %>
-    </div>
-
   </div>
 </div>
 
@@ -1143,7 +1151,7 @@
     <div class="px-4 py-3">
       <div class="flex flex-col gap-3">
         <!-- フォーム切り替えボタン -->
-        <button type="button" id="toggle-comment-form" 
+        <button type="button" id="toggle-comment-form"
                 class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 w-full text-sm">
           <span>💬</span>
           <span id="toggle-text">閉じる</span>
@@ -1200,11 +1208,6 @@
       const toggleText = document.getElementById('toggle-text');
       
       if (toggleButton && formContainer && toggleText) {
-        // 初期状態でテキストエリアにフォーカス
-        const textarea = formContainer.querySelector('textarea');
-        if (textarea) {
-          setTimeout(() => textarea.focus(), 100);
-        }
         
         toggleButton.addEventListener('click', function() {
           const isVisible = !formContainer.classList.contains('hidden');
@@ -1251,5 +1254,132 @@
         }
       };
     });
+
+    // テスト用コメント投票機能
+    window.testVoteComment = function(commentId, value) {
+      console.log('🔥 testVoteComment called:', commentId, value);
+
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      console.log('🔥 CSRF Token:', csrfToken);
+
+      const formData = new FormData();
+      formData.append('votable_type', 'Comment');
+      formData.append('votable_id', commentId);
+      formData.append('value', value);
+
+      fetch('/vote', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: formData
+      })
+      .then(response => {
+        console.log('🔥 Test vote response:', response.status, response.statusText);
+        return response.json();
+      })
+      .then(data => {
+        console.log('🔥 Test vote data:', data);
+        if (data.success) {
+          // ページをリロードして結果を確認
+          location.reload();
+        }
+      })
+      .catch(error => {
+        console.error('🔥 Test vote error:', error);
+      });
+    };
+
+    // ハート機能
+    window.toggleHeart = function(commentId) {
+      fetch('/toggle_heart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ comment_id: commentId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const heartIcon = document.getElementById(`heart-icon-${commentId}`);
+          const heartText = document.getElementById(`heart-text-${commentId}`);
+          const heartBtn = document.getElementById(`heart-btn-${commentId}`);
+
+          // ハート表示の更新
+          const heartCount = document.getElementById(`heart-count-${commentId}`);
+
+          if (data.hearted) {
+            heartIcon.textContent = '❤️';
+            heartText.textContent = 'ハート済み';
+            heartBtn.classList.remove('text-gray-400', 'hover:text-pink-500');
+            heartBtn.classList.add('text-pink-500');
+          } else {
+            heartIcon.textContent = '🤍';
+            heartText.textContent = 'ハート';
+            heartBtn.classList.remove('text-pink-500');
+            heartBtn.classList.add('text-gray-400', 'hover:text-pink-500');
+          }
+
+          // ハート数の更新
+          if (heartCount) {
+            heartCount.textContent = `(${data.heart_count})`;
+          }
+
+          // 投票表示の更新（投票が追加または削除された場合）
+          if (data.vote_updated) {
+            // Stimulusコントローラーがある場合は投票表示を更新
+            const commentElement = heartBtn.closest('[data-controller*="comment-vote"]');
+            if (commentElement) {
+              const controller = commentElement.commentVoteController || window.testCommentVote;
+              if (controller && controller.updateDisplay) {
+                controller.upCountValue = data.up_count;
+                controller.downCountValue = data.down_count;
+                controller.userVoteValue = data.user_vote;
+                controller.updateDisplay();
+                controller.updateButtonStyles();
+              }
+            }
+
+            // より直接的な更新方法も試す
+            const voteCountElement = commentElement?.querySelector('[data-comment-vote-target="voteCount"]');
+            if (voteCountElement) {
+              const netVotes = data.up_count - data.down_count;
+              voteCountElement.textContent = netVotes >= 0 ? `+${netVotes}` : netVotes;
+            }
+
+            // 投票ボタンのスタイルも直接更新
+            const upButton = commentElement?.querySelector('[data-comment-vote-target="upButton"]');
+            const downButton = commentElement?.querySelector('[data-comment-vote-target="downButton"]');
+
+            if (upButton && downButton) {
+              // リセット
+              upButton.className = upButton.className.replace(/text-white bg-green-500 shadow-lg scale-110 border-2 border-green-400/, 'text-gray-400 hover:text-green-500 border border-gray-300');
+              downButton.className = downButton.className.replace(/text-white bg-red-500 shadow-lg scale-110 border-2 border-red-400/, 'text-gray-400 hover:text-red-500 border border-gray-300');
+
+              // 現在の投票状態に応じて更新
+              if (data.user_vote === 1) {
+                upButton.className = upButton.className.replace(/text-gray-400 hover:text-green-500 border border-gray-300/, 'text-white bg-green-500 shadow-lg scale-110 border-2 border-green-400');
+              } else if (data.user_vote === -1) {
+                downButton.className = downButton.className.replace(/text-gray-400 hover:text-red-500 border border-gray-300/, 'text-white bg-red-500 shadow-lg scale-110 border-2 border-red-400');
+              }
+            }
+
+            if (data.hearted) {
+              console.log('ハートと同時にプラス投票が追加されました');
+            } else {
+              console.log('ハートと同時に投票が削除されました');
+            }
+          }
+        } else {
+          console.error('ハートの切り替えに失敗:', data.error);
+        }
+      })
+      .catch(error => {
+        console.error('エラー:', error);
+      });
+    };
   </script>
 <% end %>

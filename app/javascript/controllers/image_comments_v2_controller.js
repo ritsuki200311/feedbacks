@@ -53,8 +53,14 @@ export default class extends Controller {
     tempPin.dataset.tempPin = "true"
     
     tempPin.addEventListener("click", () => {
+      console.log('🟢 v2: Temp pin clicked! Removing temp pin, clearing form and removing blue indicator')
       this.removeTempPin()
       this.clearCommentForm()
+      // 青い丸も削除
+      if (window.removeClickIndicator) {
+        console.log('🟢 v2: Calling removeClickIndicator')
+        window.removeClickIndicator()
+      }
     })
     
     this.tempPin = tempPin

@@ -2,8 +2,12 @@
 import { application } from "controllers/application"
 import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
 import PostCardController from "controllers/post_card_controller"
+import CommentVoteController from "controllers/comment_vote_controller"
 
 eagerLoadControllersFrom("controllers", application)
 
-// 手動でpost-cardコントローラーを登録
+// 手動でコントローラーを登録
 application.register("post-card", PostCardController)
+application.register("comment-vote", CommentVoteController)
+
+console.log('Stimulus application started and controllers registered!')

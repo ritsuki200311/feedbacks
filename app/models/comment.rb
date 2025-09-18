@@ -5,6 +5,7 @@ class Comment < ApplicationRecord
   has_many_attached :attachments
 
   has_many :votes, as: :votable, dependent: :destroy
+  has_many :hearts, dependent: :destroy
 
   # 自己結合（コメントの返信用）
   belongs_to :parent, class_name: "Comment", optional: true

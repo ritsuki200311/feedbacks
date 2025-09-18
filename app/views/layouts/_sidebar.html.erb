@@ -35,7 +35,9 @@
           </button>
         </div>
         
-        <%= link_to "ログアウト", destroy_user_session_path, method: :delete, class: "block text-left w-full text-red-500 hover:bg-red-50 px-4 py-2 rounded", data: { turbo_method: :delete, turbo_confirm: "ログアウトしますか？" } %>
+        <%= form_with url: destroy_user_session_path, method: :delete, local: true, class: "w-full" do |f| %>
+          <%= f.submit "ログアウト", class: "block text-left w-full text-red-500 hover:bg-red-50 px-4 py-2 rounded border-0 bg-transparent cursor-pointer", data: { turbo_confirm: "ログアウトしますか？" } %>
+        <% end %>
       <% else %>
         <%= link_to "ログイン", new_user_session_path, class: sidebar_link_class(new_user_session_path) %>
         <%= link_to "新規登録", new_user_registration_path, class: sidebar_link_class(new_user_registration_path) %>
@@ -62,7 +64,9 @@
           </button>
         </div>
         
-        <%= link_to "ログアウト", destroy_user_session_path, method: :delete, class: "block text-left w-full text-red-500 hover:bg-red-50 px-4 py-2 rounded", data: { turbo_method: :delete, turbo_confirm: "ログアウトしますか？" } %>
+        <%= form_with url: destroy_user_session_path, method: :delete, local: true, class: "w-full" do |f| %>
+          <%= f.submit "ログアウト", class: "block text-left w-full text-red-500 hover:bg-red-50 px-4 py-2 rounded border-0 bg-transparent cursor-pointer", data: { turbo_confirm: "ログアウトしますか？" } %>
+        <% end %>
       <% else %>
         <%= link_to "ログイン", new_user_session_path, class: sidebar_link_class(new_user_session_path) %>
         <%= link_to "新規登録", new_user_registration_path, class: sidebar_link_class(new_user_registration_path) %>

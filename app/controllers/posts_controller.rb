@@ -6,6 +6,8 @@ class PostsController < ApplicationController
 
   def new
     @post = Post.new
+    # セッションからファイル情報を復元
+    @submitted_files_info = session[:submitted_files_info]
   end
 
   def create
@@ -33,6 +35,9 @@ class PostsController < ApplicationController
           attach_files_to_post(@post, params[:post][:files])
         end
 
+        # 成功時にセッションをクリア
+        session[:submitted_files_info] = nil
+
         if params[:commit] == "投稿する"
           format.html { redirect_to root_path, notice: "投稿を公開しました。" }
         else
@@ -41,6 +46,7 @@ class PostsController < ApplicationController
         end
       else
         Rails.logger.debug "Post validation failed: #{@post.errors.full_messages.join(', ')}"
+        # エラー時のファイル情報は保持しない（通常のプレビュー機能に任せる）
         format.html { render :new, status: :unprocessable_entity }
         format.turbo_stream { render :new, status: :unprocessable_entity }
       end

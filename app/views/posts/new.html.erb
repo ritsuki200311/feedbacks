@@ -8,7 +8,7 @@
       </div>
     </div>
 
-    <%= form_with model: @post, local: true, class: "space-y-6 bg-white p-6 rounded-lg shadow-md", data: { controller: "file-preview" } do |form| %>
+    <%= form_with model: @post, local: false, class: "space-y-6 bg-white p-6 rounded-lg shadow-md", data: { controller: "file-preview" } do |form| %>
 
       <% if @post.errors.any? %>
         <div class="bg-red-100 text-red-700 p-4 rounded">
@@ -22,36 +22,47 @@
       <% end %>
 
       <!-- 画像・メディアアップロードエリア（最上部） -->
-      <div class="drop-zone bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
-        <%= form.label :files, "📷 画像を追加", class: "block text-xl font-bold text-blue-600 mb-4 cursor-pointer" %>
+      <div class="drop-zone bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-blue-400 transition-colors">
+        <%= form.label :files, "📷 画像を追加", class: "block text-lg font-semibold text-blue-600 mb-2 cursor-pointer" %>
 
         <!-- ドラッグ&ドロップ説明 -->
-        <div class="mb-4">
-          <div class="flex items-center justify-center mb-3">
-            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48" aria-hidden="true">
+        <div class="mb-2">
+          <div class="flex items-center justify-center mb-1">
+            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48" aria-hidden="true">
               <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </div>
-          <p class="text-lg text-gray-600 mb-2">ファイルをドラッグ&ドロップ</p>
-          <p class="text-sm text-gray-500 mb-4">または</p>
+          <p class="text-xs text-gray-600 mb-0">ファイルをドラッグ&ドロップ または</p>
         </div>
 
-        <div class="mb-4">
+        <div class="mb-2">
           <%= form.file_field :files, multiple: true,
-              class: "block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer",
+              class: "block w-full text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer",
               data: {
                 file_preview_target: "allFilesInput",
                 action: "change->file-preview#previewFiles"
               },
               accept: "image/*,video/*,audio/*" %>
-          <p class="text-sm text-gray-500 mt-3">
-            <span class="font-medium">JPEG / GIF / PNG / MP4 / MP3</span><br>
-            <span class="text-xs">画像: 32MB以内、動画: 500MB以内、音声: 100MB以内<br>最大200ファイル（合計200MB以内まで）</span>
+          <p class="text-xs text-gray-500 mt-1">
+            JPEG / GIF / PNG / MP4 / MP3（32MB以内）
           </p>
         </div>
         <!-- ファイルプレビューエリア -->
-        <div class="mt-4 flex flex-wrap justify-center" data-file-preview-target="mediaPreview"></div>
+        <div class="mt-2 flex flex-wrap justify-center" data-file-preview-target="mediaPreview"></div>
       </div>
+
+      <!-- エラー時のファイル情報表示 -->
+      <% if @post.errors.any? %>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+          <div class="flex items-center mb-2">
+            <svg class="w-4 h-4 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="text-yellow-800 font-medium text-sm">ファイル選択状態が保持されています</span>
+          </div>
+          <p class="text-yellow-700 text-xs">上記のエラーを修正後、ファイルを再選択せずに送信できます。</p>
+        </div>
+      <% end %>
 
       <!-- タイトルとキャプション -->
       <div class="space-y-4 bg-white border border-gray-200 rounded-lg p-6">
@@ -149,153 +160,14 @@
         }
       </style>
 
-      <!-- シンプルなドラッグ&ドロップ機能 -->
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          const dropZone = document.querySelector('.drop-zone');
-          const fileInput = document.querySelector('[data-file-preview-target="allFilesInput"]');
-
-          if (!dropZone || !fileInput) {
-            console.log('Drop zone or file input not found');
-            return;
-          }
-
-          console.log('Setting up simple drag and drop');
-
-          // 既存の削除ボタンの設定（ページ読み込み時）
-          setupRemoveButtons();
-
-          // ドラッグ中のデフォルト動作を防ぐ
-          ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
-          });
-
-          // ハイライト
-          ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-          });
-
-          ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-          });
-
-          // ドロップ処理
-          dropZone.addEventListener('drop', handleDrop, false);
-
-          function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-
-          function highlight(e) {
-            dropZone.classList.add('border-blue-500', 'bg-blue-50', 'dragover');
-            dropZone.classList.remove('border-gray-300');
-          }
-
-          function unhighlight(e) {
-            dropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dragover');
-            dropZone.classList.add('border-gray-300');
-          }
-
-          function handleDrop(e) {
-            console.log('Drop event detected!');
-            const dt = e.dataTransfer;
-            const files = dt.files;
-
-            console.log('Dropped files:', files.length);
-
-            if (files.length > 0) {
-              // ファイル入力に直接設定
-              fileInput.files = files;
-
-              // change イベントを発火
-              const event = new Event('change', { bubbles: true });
-              fileInput.dispatchEvent(event);
-
-              console.log('Files assigned to input and change event fired');
-
-              // 削除ボタンにイベントリスナーを追加（遅延実行）
-              setTimeout(setupRemoveButtons, 500);
-            }
-          }
-
-          // 削除ボタンの設定
-          function setupRemoveButtons() {
-            console.log('Setting up remove buttons...');
-
-            // より広い範囲で削除ボタンを検索
-            const removeButtons = document.querySelectorAll('button[class*="bg-red-500"], .file-remove-btn');
-            console.log('Found remove buttons:', removeButtons.length);
-
-            removeButtons.forEach((btn, index) => {
-              console.log('Setting up button', index, btn);
-
-              // 既存のイベントリスナーを削除
-              const newBtn = btn.cloneNode(true);
-              btn.parentNode.replaceChild(newBtn, btn);
-
-              // 新しいイベントリスナーを追加
-              newBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Remove button clicked for index:', index);
-                removeFileAtIndex(index);
-              });
-            });
-          }
-
-          // ファイルを削除する関数
-          function removeFileAtIndex(index) {
-            console.log('removeFileAtIndex called with index:', index);
-
-            // Stimulusコントローラーを取得して削除機能を呼び出し
-            const stimulusElement = document.querySelector('[data-controller*="file-preview"]');
-            if (stimulusElement && window.Stimulus) {
-              const app = window.Stimulus;
-              const controller = app.getControllerForElementAndIdentifier(stimulusElement, 'file-preview');
-              if (controller && controller.removeFile) {
-                console.log('Calling controller removeFile');
-                controller.removeFile(index);
-                return;
-              }
-            }
-
-            // フォールバック: 手動でファイル削除
-            console.log('Using fallback removal method');
-            const previewItems = document.querySelectorAll('[data-file-preview-target="mediaPreview"] > div');
-            if (previewItems[index]) {
-              previewItems[index].remove();
-
-              // 手動でファイル入力を更新
-              updateFileInputManually();
-            }
-          }
-
-          // 手動でファイル入力を更新する関数
-          function updateFileInputManually() {
-            const fileInput = document.querySelector('[data-file-preview-target="allFilesInput"]');
-            const previewItems = document.querySelectorAll('[data-file-preview-target="mediaPreview"] > div');
-
-            if (previewItems.length === 0) {
-              // 全てのファイルが削除された場合
-              fileInput.value = '';
-              console.log('All files removed, input cleared');
-            } else {
-              console.log('Some files remain, manual update needed');
-              // 注意: 完全な手動更新は複雑なので、ページ更新を推奨
-            }
-          }
-        });
-      </script>
 
       <div>
         <%= form.label :creation_type, "創作ジャンル", class: "block text-lg font-semibold text-gray-800 mb-3" %>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="creation-type-options">
           <% Post::CREATION_TYPES.each do |type_name, type_value| %>
             <label class="relative cursor-pointer creation-type-option" data-value="<%= type_value %>">
-              <%= form.radio_button :creation_type, type_value, class: "hidden creation-type-radio" %>
-              <div class="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-blue-400 transition-all option-card">
+              <%= form.radio_button :creation_type, type_value, class: "hidden creation-type-radio", checked: @post.creation_type == type_value %>
+              <div class="flex items-center gap-3 p-4 border-2 <%= @post.creation_type == type_value ? 'border-blue-700 bg-blue-100 border-4' : 'border-gray-200' %> rounded-lg hover:border-blue-400 transition-all option-card">
                 <div class="flex-shrink-0">
                   <% case type_name.to_s %>
                   <% when 'イラスト・マンガ' %>
@@ -329,4 +201,16 @@
       </div>
     <% end %>
 </div>
+
+<script>
+  // 投稿成功時のクリーンアップ
+  document.addEventListener('DOMContentLoaded', function() {
+    // 成功メッセージがある場合はファイル保存をクリア
+    const notice = document.querySelector('.bg-green-50');
+    if (notice) {
+      window.lastSelectedFiles = null;
+      console.log('Cleared saved files due to success');
+    }
+  });
+</script>
 

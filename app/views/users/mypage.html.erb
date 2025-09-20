@@ -1,65 +1,227 @@
-<p>メール: <%= current_user.email %></p>
-<p>保有コイン: <%= current_user.coins %></p>
-<%= link_to "パスワード変更", edit_user_registration_path, class: "btn" %>
+<div class="px-4 mt-6">
+  <!-- Flash Messages -->
+  <% if notice %>
+    <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
+      <%= notice %>
+    </div>
+  <% end %>
+  
+  <% if alert %>
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+      <%= alert %>
+    </div>
+  <% end %>
 
-<% if user_signed_in? %>
-<%= render partial: "profile", locals: { user: current_user, posts: @posts } %>
-<% else %>
-  <p>ログインしていません。</p>
-<% end %>
+  <!-- Header -->
+  <div class="rounded-2xl p-6 mb-6 shadow-lg" style="background: linear-gradient(to right,rgb(107, 180, 198),rgb(90, 170, 184));">
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-4xl font-bold text-black bg-white bg-opacity-90 px-4 py-2 rounded-lg inline-block shadow-md"><%= current_user.name %>さんのマイページ</h1>
+        
+        <!-- フォロー数・フォロワー数 -->
+        <div class="flex gap-4 mt-6">
+          <div class="bg-white bg-opacity-90 px-3 py-1 rounded-lg text-sm shadow-md">
+            <span class="text-xs text-gray-600">フォロワー</span>
+            <span class="font-bold ml-1 text-gray-800"><%= current_user.followers_count %></span>
+          </div>
+          <div class="bg-white bg-opacity-90 px-3 py-1 rounded-lg text-sm shadow-md">
+            <span class="text-xs text-gray-600">フォロー中</span>
+            <span class="font-bold ml-1 text-gray-800"><%= current_user.following_count %></span>
+          </div>
+        </div>
+      </div>
+      <%= link_to edit_user_password_path, class: "inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white transition font-semibold px-4 py-2 rounded" do %>
+        <svg class="inline-block w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 17a2 2 0 002-2 2 2 0 00-4 0 2 2 0 002 2zm6-6V9a6 6 0 00-12 0v2H5v10h14V11h-1z" />
+        </svg>
+        パスワード変更
+      <% end %>
+    </div>
+  </div>
 
-<h2>あなたの好み</h2>
-<% if current_user.preference.present? %>
-  <div class="preference-info">
-    <% if current_user.preference.genre.present? %>
-      <p><strong>ジャンル:</strong> <%= current_user.preference.genre %></p>
-    <% end %>
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <!-- Coins Card -->
+    <div class="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4 text-center">
+      <div class="text-3xl mb-2">💰</div>
+      <h3 class="text-lg font-bold text-yellow-800">保有コイン</h3>
+      <p class="text-2xl font-bold text-yellow-600"><%= current_user.coins %></p>
+    </div>
     
-    <% if current_user.preference.instrument_experience.present? %>
-      <p><strong>楽器経験:</strong> <%= current_user.preference.instrument_experience %></p>
-    <% end %>
+    <!-- Rank Card -->
+    <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 text-center">
+      <div class="text-3xl mb-2">🏆</div>
+      <h3 class="text-lg font-bold text-blue-800">現在のランク</h3>
+      <p class="text-2xl font-bold text-blue-600"><%= current_user.rank %>(<%= current_user.rank_points %>)</p>
+    </div>
     
-    <% if current_user.preference.favorite_artist.present? %>
-      <p><strong>好きなアーティスト:</strong> <%= current_user.preference.favorite_artist %></p>
-    <% end %>
-    
-    <% if current_user.preference.career.present? %>
-      <p><strong>経歴:</strong> <%= current_user.preference.career %></p>
-    <% end %>
+    <!-- Account Edit Card -->
+    <div class="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center">
+      <div class="text-3xl mb-2">⚙️</div>
+      <h3 class="text-lg font-bold text-green-800">アカウント設定</h3>
+      <%= link_to "編集する", "http://localhost:3000/users/edit", class: "inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 mt-2" %>
+    </div>
+  </div>
 
-    <% if current_user.preference.selected_items.present? %>
-      <div class="selected-items">
-        <h3>選択した項目:</h3>
-        <% JSON.parse(current_user.preference.selected_items).each do |item| %>
-          <span class="item-tag"><%= item %></span>
+  <!-- User Info Section -->
+  <div class="bg-white rounded-2xl shadow-lg border border-gray-100 mb-6">
+    <div class="p-6 border-b border-gray-100">
+      <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+        📧 アカウント情報
+      </h2>
+      
+      <!-- ユーザーネーム編集フォーム -->
+      <div class="bg-blue-50 rounded-lg p-4 mb-4 border border-blue-200">
+        <h3 class="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+          👤 ユーザーネーム
+        </h3>
+        <%= form_with model: current_user, url: update_user_path, method: :patch, local: true, class: "flex gap-2 items-end" do |form| %>
+          <div class="flex-1">
+            <%= form.text_field :name, value: current_user.name, 
+                class: "w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500", 
+                placeholder: "ユーザーネームを入力" %>
+            <p class="text-xs text-blue-600 mt-1">※ 他のユーザーに表示される名前です</p>
+          </div>
+          <%= form.submit "更新", class: "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" %>
         <% end %>
       </div>
+      
+      <div class="bg-gray-50 rounded-lg p-4">
+        <p class="text-gray-700"><strong>メールアドレス:</strong> <%= current_user.email %></p>
+      </div>
+    </div>
+
+    <div class="p-6" style="position: static; z-index: auto;">
+    <% if @supporter_profile %>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold flex items-center gap-2">
+          👤 詳細プロフィール
+        </h2>
+        <%= link_to "✏️ プロフィールを編集", edit_supporter_profile_path(@supporter_profile), class: "inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-700 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-purple-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border border-blue-500" %>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <% if @supporter_profile.age_group.present? %>
+          <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+            <h3 class="font-semibold text-indigo-800 mb-2">👥 年齢層</h3>
+            <p class="text-indigo-700"><%= @supporter_profile.age_group %></p>
+          </div>
+        <% end %>
+        <% if @supporter_profile.support_genres.present? %>
+          <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+            <h3 class="font-semibold text-orange-800 mb-2">🎯 創作ジャンル</h3>
+            <p class="text-orange-700">
+              <%= @supporter_profile.support_genres.is_a?(Array) ? @supporter_profile.support_genres.join(", ") : @supporter_profile.support_genres %>
+            </p>
+          </div>
+        <% end %>
+        <% if @supporter_profile.creation_experience.present? %>
+          <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <h3 class="font-semibold text-blue-800 mb-2">📅 創作歴</h3>
+            <p class="text-blue-700"><%= @supporter_profile.creation_experience %></p>
+          </div>
+        <% end %>
+        <% if @supporter_profile.interests.present? %>
+          <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+            <h3 class="font-semibold text-green-800 mb-2">🎨 よく見るジャンル</h3>
+            <p class="text-green-700">
+              <%= @supporter_profile.interests.is_a?(Array) ? @supporter_profile.interests.join(", ") : @supporter_profile.interests %>
+            </p>
+          </div>
+        <% end %>
+        <% if @supporter_profile.favorite_artists.present? %>
+          <div class="bg-pink-50 rounded-lg p-4 border border-pink-200">
+            <h3 class="font-semibold text-pink-800 mb-2">⭐ フィードバックできること</h3>
+            <p class="text-pink-700"><%= @supporter_profile.favorite_artists %></p>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-8">
+        <div class="text-6xl mb-4">👤</div>
+        <p class="text-gray-500 mb-6 text-lg">プロフィールが未登録です</p>
+        <%= link_to "🚀 プロフィールを登録する", new_supporter_profile_path, class: "inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-blue-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border border-green-400" %>
+      </div>
     <% end %>
+
+    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+      💬 トーク・メッセージ
+    </h2>
     
-    <%= link_to "好みを編集", edit_preference_path, class: "btn" %>
-  </div>
-<% else %>
-  <p>好みが設定されていません。</p>
-  <%= link_to "好みを登録", new_preference_path, class: "btn" %>
-<% end %>
-
-<h2>あなたのトーク一覧</h2>
-<% current_user.entries.each do |entry| %>
-  <% room = entry.room %>
-  <% other_user = room.entries.where.not(user_id: current_user.id).first.user %>
-  <%= link_to "#{other_user.name}さんとのチャット", room_path(room) %>
-<% end %>
-
-<% if @unread_rooms.any? %>
-  <h3>未読メッセージのあるチャットルーム</h3>
-  <ul>
-    <% @unread_rooms.each do |room| %>
-      <li>
-        <%= link_to "ルーム #{room.id}", room_path(room) %>
-        （未読 <%= @unread_counts[room.id] || 0 %> 件）
-      </li>
+    <% if @unread_rooms.any? %>
+      <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg">
+        <div class="flex items-center">
+          <div class="text-red-400 text-xl mr-3">🔴</div>
+          <div>
+            <h3 class="text-lg font-semibold text-red-800">未読メッセージがあります！</h3>
+            <div class="mt-2 space-y-2">
+              <% @unread_rooms.each do |room| %>
+                <div class="bg-white rounded-lg p-3 shadow-sm">
+                  <%= link_to "📩 ルーム #{room.id}", room_path(room), class: "text-red-600 hover:text-red-800 font-medium hover:underline" %>
+                  <span class="ml-2 bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
+                    未読 <%= @unread_counts[room.id] || 0 %> 件
+                  </span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
     <% end %>
-  </ul>
-<% else %>
-  <p>未読メッセージはありません。</p>
-<% end %>
+
+    <% if current_user.entries.any? %>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <% current_user.entries.each do |entry| %>
+          <% room = entry.room %>
+          <% other_entry = room.entries.where.not(user_id: current_user.id).first %>
+          <% if other_entry %>
+            <% other_user = other_entry.user %>
+            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 p-4 rounded-xl hover:shadow-md transition-all duration-300 hover:scale-102">
+              <div class="flex items-center gap-3">
+                <div class="text-2xl">👤</div>
+                <div>
+                  <%= link_to "💬 #{other_user.name}さんとのチャット", room_path(room), class: "text-blue-600 hover:text-blue-800 font-semibold hover:underline" %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-8 bg-gray-50 rounded-xl">
+        <div class="text-4xl mb-3">💬</div>
+        <p class="text-gray-500">トーク履歴がありません</p>
+        <p class="text-sm text-gray-400 mt-1">他のユーザーとメッセージを始めてみましょう！</p>
+      </div>
+    <% end %>
+    </div>
+  </div>
+
+  <!-- Posts Section -->
+  <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+    <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+      🎨 あなたの作品コレクション
+    </h2>
+    <% if @posts.any? %>
+      <div class="mb-4 flex justify-between items-center">
+        <p class="text-gray-600">
+          <span class="font-semibold text-lg text-purple-600"><%= @posts.count %></span>件の作品を投稿中
+        </p>
+        <div class="flex gap-2">
+          <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">📊 総投稿数: <%= @posts.count %></span>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% @posts.each do |post| %>
+          <%= render "posts/mypage_post_card", post: post %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-12">
+        <div class="text-6xl mb-6">🚀</div>
+        <h3 class="text-xl font-semibold text-gray-700 mb-3">まだ投稿がありません</h3>
+        <p class="text-gray-500 mb-6">あなたの創作活動を始めてみませんか？</p>
+        <%= link_to "✨ 初投稿をする", new_post_path, class: "inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 border border-purple-500" if defined?(new_post_path) %>
+      </div>
+    <% end %>
+  </div>
+</div>

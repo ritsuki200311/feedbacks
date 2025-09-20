@@ -1,4 +1,112 @@
-<div class="comment">
-  <p><%= comment.body %></p>
-  <small><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+<%
+  user_vote = current_user ? comment.votes.find_by(user: current_user)&.value || 0 : 0
+  up_count = comment.votes.where(value: 1).count
+  down_count = comment.votes.where(value: -1).count
+  net_votes = up_count - down_count
+%>
+
+<div class="comment mb-4 p-3 bg-gray-50 rounded-lg"
+     data-controller="comment-vote comment-reply"
+     data-comment-vote-comment-id-value="<%= comment.id %>"
+     data-comment-vote-user-vote-value="<%= user_vote %>"
+     data-comment-vote-up-count-value="<%= up_count %>"
+     data-comment-vote-down-count-value="<%= down_count %>"
+     data-comment-reply-comment-id-value="<%= comment.id %>"
+     data-comment-reply-post-id-value="<%= comment.post.id %>">
+
+  <!-- ユーザー名表示 -->
+  <div class="flex items-center gap-2 mb-2">
+    <span class="font-semibold text-sm <%= current_user == comment.user ? 'text-green-600' : 'text-blue-600' %>">
+      <%= link_to comment.user.name, user_path(comment.user), class: "hover:underline" %>
+    </span>
+    <% if current_user == comment.user %>
+      <span class="bg-green-100 text-green-700 text-xs px-1.5 py-0.5 rounded-full font-medium">あなた</span>
+    <% elsif comment.user == comment.post.user %>
+      <span class="bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded-full font-medium">投稿者</span>
+    <% end %>
+    <span class="text-gray-400 text-xs">•</span>
+    <small class="text-gray-500"><%= comment.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+  </div>
+
+  <p class="text-gray-800"><%= comment.body %></p>
+  <div class="flex items-center justify-between mt-2">
+    <div class="flex items-center gap-2">
+      <% if user_signed_in? %>
+        <button data-action="click->comment-reply#toggleReplyForm"
+                data-comment-reply-target="replyButton"
+                class="text-xs text-blue-500 hover:text-blue-700 transition-colors px-2 py-1 rounded hover:bg-blue-50">
+          返信
+        </button>
+
+        <!-- ハートボタン（投稿者のみ、自分のコメント以外に表示） -->
+        <% if current_user == comment.post.user && current_user != comment.user %>
+          <% user_hearted = comment.hearts.exists?(user: current_user) %>
+          <button onclick="toggleHeart(<%= comment.id %>)"
+                  id="heart-btn-<%= comment.id %>"
+                  class="text-xs transition-colors px-2 py-1 rounded hover:bg-pink-50 flex items-center gap-1 <%= user_hearted ? 'text-pink-500' : 'text-gray-400 hover:text-pink-500' %>">
+            <span id="heart-icon-<%= comment.id %>"><%= user_hearted ? '❤️' : '🤍' %></span>
+            <span id="heart-text-<%= comment.id %>"><%= user_hearted ? 'ハート済み' : 'ハート' %></span>
+            <span id="heart-count-<%= comment.id %>" class="ml-1 text-xs">(<%= comment.hearts.count %>)</span>
+          </button>
+        <% end %>
+      <% end %>
+    </div>
+    <div class="flex items-center gap-3">
+      <button data-action="click->comment-vote#upvote"
+              data-comment-vote-target="upButton"
+              onclick="console.log('🔥 Upvote button clicked directly!', this); testVoteComment(<%= comment.id %>, 1)"
+              class="transition-all duration-200 flex items-center justify-center w-8 h-8 rounded-full
+                     <%= user_vote == 1 ? 'text-white bg-green-500 shadow-lg scale-110 border-2 border-green-400' : 'text-gray-400 hover:text-green-500 border border-gray-300' %>">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="<%= user_vote == 1 ? '3' : '2' %>"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+          <path d="M12 5v14"/>
+          <path d="M5 12h14"/>
+        </svg>
+      </button>
+      <span class="text-gray-600 font-semibold text-sm" data-comment-vote-target="voteCount">
+        <%= net_votes >= 0 ? "+#{net_votes}" : net_votes %>
+      </span>
+      <button data-action="click->comment-vote#downvote"
+              data-comment-vote-target="downButton"
+              onclick="console.log('🔥 Downvote button clicked directly!', this); testVoteComment(<%= comment.id %>, -1)"
+              class="transition-all duration-200 flex items-center justify-center w-8 h-8 rounded-full
+                     <%= user_vote == -1 ? 'text-white bg-red-500 shadow-lg scale-110 border-2 border-red-400' : 'text-gray-400 hover:text-red-500 border border-gray-300' %>">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="<%= user_vote == -1 ? '3' : '2' %>"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+          <path d="M5 12h14"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 返信フォーム（初期は非表示） -->
+  <div data-comment-reply-target="replyForm" class="hidden mt-3 p-3 bg-white border border-gray-200 rounded-lg">
+    <%= form_with model: [comment.post, Comment.new],
+                  local: false,
+                  data: { "comment-reply-target": "form", "action": "submit->comment-reply#submitReply" },
+                  class: "space-y-3" do |f| %>
+      <%= f.hidden_field :parent_id, value: comment.id %>
+      <%= f.text_area :body,
+                      rows: 2,
+                      placeholder: "返信を入力...",
+                      class: "w-full p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500",
+                      data: { "comment-reply-target": "textarea" } %>
+      <div class="flex gap-2">
+        <%= f.submit "返信", class: "bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm" %>
+        <button type="button"
+                data-action="click->comment-reply#hideReplyForm"
+                class="bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400 text-sm">
+          キャンセル
+        </button>
+      </div>
+    <% end %>
+  </div>
 </div>

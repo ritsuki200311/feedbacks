@@ -1,0 +1,555 @@
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-2 text-gray-900">ユーザー関係性の可視化</h1>
+  <p class="text-gray-600 mb-6">プロフィールの内容を基に、あなたと近い関心を持つユーザーを視覚的に表示します。</p>
+  
+  <!-- デバッグ情報 -->
+  <% if Rails.env.development? %>
+    <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+      <h3 class="font-semibold mb-2">デバッグ情報:</h3>
+      <p>現在のユーザー: <%= current_user.name %> (ID: <%= current_user.id %>)</p>
+      <p>プロフィール作成済みユーザー数: <%= @users_with_profiles&.count || 0 %></p>
+      <p>類似度計算対象: <%= @users_data&.count || 0 %>人</p>
+      <% if @users_data.present? %>
+        <p>ユーザー名: <%= @users_data.map { |u| u[:name] }.join(', ') %></p>
+      <% else %>
+        <p class="text-red-600">@users_dataが空です</p>
+      <% end %>
+    </div>
+  <% end %>
+  
+  <!-- 凡例 -->
+  <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+    <h2 class="text-lg font-semibold mb-3 text-gray-800">アンケート回答の類似度による関係性表示</h2>
+    <div class="flex flex-wrap gap-4 text-sm mb-3">
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-red-500"></div>
+        <span>あなた（中心）</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-green-500"></div>
+        <span>高い類似度（80%以上）</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-blue-500"></div>
+        <span>中程度の類似度（60-80%）</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-orange-500"></div>
+        <span>低い類似度（40-60%）</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-gray-400"></div>
+        <span>低い類似度（40%未満）</span>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-4 text-sm mb-2">
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-4 rounded-full bg-purple-600 border-2 border-yellow-400"></div>
+        <span>投稿者（作品投稿あり）</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-gray-500"></div>
+        <span>視聴者（コメントのみ）</span>
+      </div>
+    </div>
+    <p class="text-xs text-gray-600">プロフィールの「興味・関心」「支援ジャンル」「性格傾向」などの回答内容から類似度を算出し、同心円状に配置しています。</p>
+    <p class="text-xs text-gray-600 mt-1">投稿者は大きな円で、視聴者は小さな円で表示されます。投稿者の上には最新の作品画像が表示され、クリックで作品詳細に移動できます。</p>
+    <p class="text-xs text-gray-600 mt-1">ユーザー円にホバーすると活動情報が表示され、クリックするとそのユーザーのページに移動します。</p>
+    <p class="text-xs text-blue-600 font-semibold mt-2">💡 操作方法: マウスホイールまたはピンチで拡大縮小、ドラッグで移動できます。右上のコントロールからも操作可能です。</p>
+  </div>
+  
+  <!-- 可視化エリア -->
+  <div class="bg-white rounded-lg shadow-lg p-6 relative">
+    <% if @users_data.present? %>
+      <!-- ズームコントロール -->
+      <div class="absolute top-4 right-4 z-10 bg-white rounded-lg shadow-md border border-gray-200 p-2">
+        <div class="flex flex-col items-center gap-2">
+          <button id="zoom-in" class="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center justify-center transition-colors">
+            <span class="text-lg font-bold">+</span>
+          </button>
+          <div class="text-xs font-semibold text-gray-600 px-2 py-1 bg-gray-50 rounded">
+            <span id="zoom-level">100%</span>
+          </div>
+          <button id="zoom-out" class="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center justify-center transition-colors">
+            <span class="text-lg font-bold">−</span>
+          </button>
+          <button id="zoom-reset" class="w-16 h-6 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors">
+            リセット
+          </button>
+        </div>
+      </div>
+      <div id="user-network" class="w-full" style="height: 700px;"></div>
+    <% else %>
+      <div class="text-center py-12">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">表示できるユーザーがいません</h3>
+        <p class="text-gray-600">プロフィールを作成している他のユーザーがまだいないようです。</p>
+        <p class="text-gray-500 text-sm mt-2">他のユーザーがプロフィールを作成すると、ここに関係性が表示されます。</p>
+      </div>
+    <% end %>
+  </div>
+  
+  <!-- ツールチップ -->
+  <div id="user-tooltip" class="fixed bg-gray-800 text-white text-sm rounded-lg p-3 shadow-lg z-50 pointer-events-none opacity-0 transition-opacity duration-200 max-w-sm">
+    <div id="tooltip-content">
+      <!-- ツールチップ内容がここに動的に挿入されます -->
+    </div>
+  </div>
+  
+  <!-- ユーザー詳細モーダル -->
+  <div id="user-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900" id="modal-user-name"></h3>
+          <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div id="modal-user-content" class="space-y-3 text-sm">
+          <!-- ユーザー詳細がここに動的に挿入されます -->
+        </div>
+        <div class="mt-4 text-center">
+          <span class="text-lg font-semibold text-blue-600" id="modal-similarity"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D3.js -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<% if @users_data.present? %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // データの準備
+  const currentUserData = <%= raw @current_user_data.to_json %>;
+  const usersData = <%= raw @users_data.to_json %>;
+  
+  console.log('Raw currentUserData:', currentUserData);
+  console.log('Raw usersData:', usersData);
+  
+  // データの検証
+  if (!currentUserData) {
+    console.error('currentUserData is null or undefined');
+    return;
+  }
+  
+  if (!usersData || !Array.isArray(usersData)) {
+    console.error('usersData is not an array or is null');
+    return;
+  }
+  
+  // 全ユーザーデータ（現在のユーザーを含む）
+  const allUsers = [currentUserData, ...usersData];
+  
+  // SVGの設定
+  const width = document.getElementById('user-network').offsetWidth;
+  const height = 700;
+  
+  const svg = d3.select('#user-network')
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height);
+  
+  // ズーム機能の設定
+  const zoom = d3.zoom()
+    .scaleExtent([0.3, 3]) // 0.3倍から3倍まで拡大縮小可能
+    .on('zoom', function(event) {
+      zoomGroup.attr('transform', event.transform);
+      updateZoomLevel(event.transform.k);
+    });
+  
+  // SVGにズーム機能を適用
+  svg.call(zoom);
+  
+  // ズーム対象のグループを作成
+  const zoomGroup = svg.append('g');
+  
+  // 基本設定
+  const centerX = width / 2;
+  const centerY = height / 2;
+  
+  // デバッグ情報
+  console.log('All Users:', allUsers);
+  console.log('Number of users:', allUsers.length);
+  
+  // ユーザーの色設定（類似度に基づくグラデーション）
+  function getUserColor(user) {
+    if (user.id === currentUserData.id) return '#ef4444'; // 現在のユーザーは赤色
+    
+    // 類似度に基づいて色を決定
+    if (user.similarity >= 0.8) {
+      return '#22c55e'; // 緑色 - 高い類似度
+    } else if (user.similarity >= 0.6) {
+      return '#3b82f6'; // 青色 - 中程度の類似度
+    } else if (user.similarity >= 0.4) {
+      return '#f97316'; // オレンジ色 - 低い類似度
+    } else {
+      return '#9ca3af'; // グレー色 - 非常に低い類似度
+    }
+  }
+  
+  // ユーザーの半径設定（投稿者/視聴者で区別）
+  function getUserRadius(user) {
+    if (user.id === currentUserData.id) return 15;
+    
+    // 投稿者は大きく、視聴者は小さく
+    const isCreator = user.posts_count > 0;
+    const baseRadius = isCreator ? 12 : 8;
+    const similarityBonus = user.similarity * (isCreator ? 8 : 4);
+    
+    return Math.max(isCreator ? 8 : 6, baseRadius + similarityBonus);
+  }
+  
+  // ユーザーのストローク設定（投稿者は金色の枠）
+  function getUserStroke(user) {
+    if (user.id === currentUserData.id) return '#fff';
+    
+    const isCreator = user.posts_count > 0;
+    return isCreator ? '#fbbf24' : '#fff'; // 投稿者は金色、視聴者は白
+  }
+  
+  // ユーザーのストローク幅設定
+  function getUserStrokeWidth(user) {
+    if (user.id === currentUserData.id) return 2;
+    
+    const isCreator = user.posts_count > 0;
+    return isCreator ? 3 : 2; // 投稿者は太い枠
+  }
+  
+  // 同心円の背景を描画（類似度レベルを表す）
+  const maxRadius = Math.min(width, height) * 0.35;
+  const similarityLevels = [
+    { threshold: 0.8, radius: maxRadius * 0.3, color: 'rgba(34, 197, 94, 0.1)', label: '高い類似度(80%以上)' },
+    { threshold: 0.6, radius: maxRadius * 0.5, color: 'rgba(59, 130, 246, 0.1)', label: '中程度の類似度(60-80%)' },
+    { threshold: 0.4, radius: maxRadius * 0.7, color: 'rgba(249, 115, 22, 0.1)', label: '低い類似度(40-60%)' },
+    { threshold: 0.0, radius: maxRadius, color: 'rgba(156, 163, 175, 0.1)', label: '低い類似度(40%未満)' }
+  ];
+
+  similarityLevels.reverse().forEach(level => {
+    zoomGroup.append('circle')
+      .attr('cx', centerX)
+      .attr('cy', centerY)
+      .attr('r', level.radius)
+      .attr('fill', level.color)
+      .attr('stroke', level.color.replace('0.1', '0.3'))
+      .attr('stroke-width', 1)
+      .attr('stroke-dasharray', '3,3');
+  });
+
+  // ユーザーノードを描画
+  console.log('Creating user nodes...');
+  allUsers.forEach((user, index) => {
+    console.log(`Processing user ${index}:`, user);
+    
+    let x, y;
+    
+    if (user.id === currentUserData.id) {
+      // 現在のユーザーは中心に配置
+      x = centerX;
+      y = centerY;
+    } else {
+      // 類似度に基づいて距離を決定
+      let targetRadius;
+      if (user.similarity >= 0.8) {
+        targetRadius = maxRadius * 0.3;
+      } else if (user.similarity >= 0.6) {
+        targetRadius = maxRadius * 0.5;
+      } else if (user.similarity >= 0.4) {
+        targetRadius = maxRadius * 0.7;
+      } else {
+        targetRadius = maxRadius;
+      }
+      
+      // 同じ類似度レベルのユーザー数を考慮して角度を分散
+      const angle = (index / allUsers.length) * 2 * Math.PI + Math.random() * 0.5 - 0.25;
+      const radiusVariation = targetRadius * 0.15; // ±15%の幅でランダム
+      const finalRadius = targetRadius + (Math.random() - 0.5) * radiusVariation;
+      
+      x = centerX + Math.cos(angle) * finalRadius;
+      y = centerY + Math.sin(angle) * finalRadius;
+    }
+    
+    console.log(`User ${user.name}: position (${x}, ${y}), similarity: ${user.similarity}`);
+    
+    // ユーザーの位置情報を保存
+    user.x = x;
+    user.y = y;
+    user.radius = getUserRadius(user);
+    
+    // 円を描画
+    const circle = zoomGroup.append('circle')
+      .attr('cx', x)
+      .attr('cy', y)
+      .attr('r', getUserRadius(user))
+      .attr('fill', getUserColor(user))
+      .attr('stroke', getUserStroke(user))
+      .attr('stroke-width', getUserStrokeWidth(user))
+      .style('cursor', 'pointer')
+      .on('click', function() {
+        // 現在のユーザーの場合はマイページへ、他のユーザーの場合はそのユーザーの詳細ページへ
+        if (user.id === currentUserData.id) {
+          window.location.href = '/users/mypage';
+        } else {
+          window.location.href = `/users/${user.id}`;
+        }
+      })
+      .on('mouseover', function(event) {
+        showTooltip(event, user);
+      })
+      .on('mousemove', function(event) {
+        moveTooltip(event, user);
+      })
+      .on('mouseout', function() {
+        hideTooltip();
+      });
+    
+    // 投稿者の場合、作品画像を表示
+    if (user.posts_count > 0 && user.recent_posts && user.recent_posts.length > 0) {
+      const latestPost = user.recent_posts[0];
+      if (latestPost.image_url) {
+        const imageSize = 60;
+        const imageY = y - getUserRadius(user) - imageSize - 10;
+        
+        // 画像用のclipPathを定義
+        const clipId = `clip-${user.id}`;
+        zoomGroup.append('defs')
+          .append('clipPath')
+          .attr('id', clipId)
+          .append('rect')
+          .attr('x', x - imageSize/2)
+          .attr('y', imageY)
+          .attr('width', imageSize)
+          .attr('height', imageSize)
+          .attr('rx', 4);
+        
+        // 背景（白色の枠）
+        zoomGroup.append('rect')
+          .attr('x', x - imageSize/2 - 2)
+          .attr('y', imageY - 2)
+          .attr('width', imageSize + 4)
+          .attr('height', imageSize + 4)
+          .attr('fill', '#fff')
+          .attr('stroke', '#e5e7eb')
+          .attr('stroke-width', 1)
+          .attr('rx', 6)
+          .style('cursor', 'pointer')
+          .on('click', function() {
+            window.location.href = `/posts/${latestPost.id}`;
+          });
+        
+        // 作品画像
+        zoomGroup.append('image')
+          .attr('x', x - imageSize/2)
+          .attr('y', imageY)
+          .attr('width', imageSize)
+          .attr('height', imageSize)
+          .attr('href', latestPost.image_url)
+          .attr('clip-path', `url(#${clipId})`)
+          .style('cursor', 'pointer')
+          .on('click', function() {
+            window.location.href = `/posts/${latestPost.id}`;
+          })
+          .on('error', function() {
+            // 画像読み込みエラー時のフォールバック
+            d3.select(this).remove();
+            zoomGroup.append('rect')
+              .attr('x', x - imageSize/2)
+              .attr('y', imageY)
+              .attr('width', imageSize)
+              .attr('height', imageSize)
+              .attr('fill', '#f3f4f6')
+              .attr('stroke', '#d1d5db')
+              .attr('stroke-width', 1)
+              .attr('rx', 4)
+              .style('cursor', 'pointer')
+              .on('click', function() {
+                window.location.href = `/posts/${latestPost.id}`;
+              });
+            
+            zoomGroup.append('text')
+              .attr('x', x)
+              .attr('y', imageY + imageSize/2 + 4)
+              .text('📄')
+              .attr('font-size', '16px')
+              .attr('text-anchor', 'middle')
+              .style('fill', '#9ca3af')
+              .style('cursor', 'pointer')
+              .on('click', function() {
+                window.location.href = `/posts/${latestPost.id}`;
+              });
+          });
+      }
+    }
+    
+    // ラベルを描画
+    zoomGroup.append('text')
+      .attr('x', x)
+      .attr('y', y + getUserRadius(user) + 15)
+      .text(user.name)
+      .attr('font-size', '12px')
+      .attr('text-anchor', 'middle')
+      .attr('font-weight', user.id === currentUserData.id ? 'bold' : 'normal')
+      .style('fill', '#374151');
+  });
+  
+  console.log(`Drew ${allUsers.length} users`);
+  
+  // ツールチップ機能
+  function showTooltip(event, userData) {
+    const tooltip = document.getElementById('user-tooltip');
+    const content = document.getElementById('tooltip-content');
+    
+    // データの安全な取得（undefinedやnullをチェック）
+    const postsCount = userData.posts_count || 0;
+    const commentsCount = userData.comments_count || 0;
+    const isCreator = postsCount > 0;
+    const similarity = userData.similarity || 0;
+    
+    let tooltipContent = `
+      <div class="font-semibold text-blue-300 mb-2">${userData.name || 'ユーザー'}</div>
+      <div class="text-xs text-gray-300 mb-2">類似度: ${Math.round(similarity * 100)}%</div>
+    `;
+    
+    if (isCreator) {
+      tooltipContent += `
+        <div class="border-t border-gray-600 pt-2">
+          <div class="text-yellow-300 font-semibold mb-1">📝 投稿者（${postsCount}件の投稿）</div>
+      `;
+      
+      if (userData.recent_posts && userData.recent_posts.length > 0) {
+        tooltipContent += '<div class="text-xs"><strong>最近の投稿:</strong></div>';
+        userData.recent_posts.slice(0, 2).forEach(post => {
+          const date = new Date(post.created_at).toLocaleDateString('ja-JP');
+          tooltipContent += `<div class="text-xs text-gray-300">• ${post.title || '無題'} (${date})</div>`;
+        });
+      } else {
+        tooltipContent += '<div class="text-xs text-gray-400">投稿がありません</div>';
+      }
+      tooltipContent += '</div>';
+    } else {
+      tooltipContent += `
+        <div class="border-t border-gray-600 pt-2">
+          <div class="text-blue-300 font-semibold mb-1">👁️ 視聴者（${commentsCount}件のコメント）</div>
+      `;
+      
+      if (userData.recent_comments && userData.recent_comments.length > 0) {
+        tooltipContent += '<div class="text-xs"><strong>最近のコメント:</strong></div>';
+        userData.recent_comments.slice(0, 2).forEach(comment => {
+          const date = new Date(comment.created_at).toLocaleDateString('ja-JP');
+          tooltipContent += `<div class="text-xs text-gray-300">• ${comment.body || 'コメント'} (${date})</div>`;
+        });
+      } else if (commentsCount === 0) {
+        tooltipContent += '<div class="text-xs text-gray-400">まだ活動がありません</div>';
+      } else {
+        tooltipContent += '<div class="text-xs text-gray-400">コメント履歴を取得中...</div>';
+      }
+      tooltipContent += '</div>';
+    }
+    
+    content.innerHTML = tooltipContent;
+    tooltip.style.opacity = '1';
+    moveTooltip(event, userData);
+  }
+  
+  function moveTooltip(event, userData) {
+    const tooltip = document.getElementById('user-tooltip');
+    const svgElement = document.querySelector('#user-network svg');
+    const svgRect = svgElement.getBoundingClientRect();
+    
+    // ユーザーの円の位置を基準にツールチップを配置
+    const userScreenX = svgRect.left + userData.x;
+    const userScreenY = svgRect.top + userData.y;
+    const userRadius = userData.radius || 10;
+    
+    // ツールチップの配置位置を計算（円の右上に表示）
+    let left = userScreenX + userRadius + 10;
+    let top = userScreenY - userRadius - 10;
+    
+    // ブラウザウィンドウからはみ出ないように調整
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // 右端からはみ出る場合は左側に表示
+    if (left + tooltipRect.width > viewportWidth) {
+      left = userScreenX - userRadius - tooltipRect.width - 10;
+    }
+    
+    // 上端からはみ出る場合は下側に表示
+    if (top < 0) {
+      top = userScreenY + userRadius + 10;
+    }
+    
+    // 下端からはみ出る場合は上側に調整
+    if (top + tooltipRect.height > viewportHeight) {
+      top = viewportHeight - tooltipRect.height - 10;
+    }
+    
+    // 左端からはみ出る場合は右側に調整
+    if (left < 0) {
+      left = 10;
+    }
+    
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+  }
+  
+  function hideTooltip() {
+    const tooltip = document.getElementById('user-tooltip');
+    tooltip.style.opacity = '0';
+  }
+  
+  // ズームレベル表示の更新
+  function updateZoomLevel(scale) {
+    const zoomLevelElement = document.getElementById('zoom-level');
+    if (zoomLevelElement) {
+      zoomLevelElement.textContent = `${Math.round(scale * 100)}%`;
+    }
+  }
+  
+  // ズームコントロールボタンの設定
+  document.getElementById('zoom-in').addEventListener('click', function() {
+    svg.transition().duration(300).call(
+      zoom.scaleBy, 1.5
+    );
+  });
+  
+  document.getElementById('zoom-out').addEventListener('click', function() {
+    svg.transition().duration(300).call(
+      zoom.scaleBy, 1 / 1.5
+    );
+  });
+  
+  document.getElementById('zoom-reset').addEventListener('click', function() {
+    svg.transition().duration(500).call(
+      zoom.transform,
+      d3.zoomIdentity
+    );
+  });
+  
+});
+</script>
+<% end %>
+
+<style>
+  /* レスポンシブ対応 */
+  @media (max-width: 768px) {
+    #user-network {
+      height: 400px !important;
+    }
+    
+    .max-w-7xl {
+      max-width: 100%;
+      padding: 0 1rem;
+    }
+  }
+</style>

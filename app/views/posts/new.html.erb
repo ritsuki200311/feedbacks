@@ -1,80 +1,216 @@
-<!-- ホームに戻るリンク -->
-<%= link_to "← ホームに戻る", root_path, class: "bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200" %>
+<!-- メインコンテンツ -->
+<div class="p-4 lg:p-8 bg-gray-50 min-h-screen">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-3xl font-bold text-gray-800">新規投稿を作成</h1>
+      <div class="text-right">
+        <p class="text-sm text-gray-600">保有コイン</p>
+        <p class="text-xl font-bold text-gray-800">💰 <%= current_user.coins %></p>
+      </div>
+    </div>
 
-<h1>新規投稿</h1>
+    <%= form_with model: @post, local: false, class: "space-y-6 bg-white p-6 rounded-lg shadow-md", data: { controller: "file-preview" } do |form| %>
 
-<% if @post.errors.any? %>
-  <div class="error-messages">
-    <h2><%= pluralize(@post.errors.count, "件のエラー") %>が発生しました：</h2>
-    <ul>
-      <% @post.errors.full_messages.each do |msg| %>
-        <li><%= msg %></li>
+      <% if @post.errors.any? %>
+        <div class="bg-red-100 text-red-700 p-4 rounded">
+          <h2 class="font-bold mb-2"><%= pluralize(@post.errors.count, "件のエラー") %>が発生しました：</h2>
+          <ul class="list-disc list-inside">
+            <% @post.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
       <% end %>
-    </ul>
-  </div>
-<% end %>
 
-<%= form_with model: @post, local: true, html: { multipart: true } do |form| %>
-  <div>
-    <%= form.label :title, "タイトル" %><br>
-    <%= form.text_field :title %>
-  </div>
+      <!-- 画像・メディアアップロードエリア（最上部） -->
+      <div class="drop-zone bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-blue-400 transition-colors">
+        <%= form.label :files, "📷 画像を追加", class: "block text-lg font-semibold text-blue-600 mb-2 cursor-pointer" %>
 
-  <div>
-    <%= form.label :body, "本文" %><br>
-    <%= form.text_area :body %>
-  </div>
+        <!-- ドラッグ&ドロップ説明 -->
+        <div class="mb-2">
+          <div class="flex items-center justify-center mb-1">
+            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48" aria-hidden="true">
+              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <p class="text-xs text-gray-600 mb-0">ファイルをドラッグ&ドロップ または</p>
+        </div>
 
-  <div>
-    <%= form.label :thumbnail, "サムネイル画像" %><br>
-    <%= form.file_field :thumbnail %>
-  </div>
+        <div class="mb-2">
+          <%= form.file_field :files, multiple: true,
+              class: "block w-full text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer",
+              data: {
+                file_preview_target: "allFilesInput",
+                action: "change->file-preview#previewFiles"
+              },
+              accept: "image/*,video/*,audio/*" %>
+          <p class="text-xs text-gray-500 mt-1">
+            JPEG / GIF / PNG / MP4 / MP3（32MB以内）
+          </p>
+        </div>
+        <!-- ファイルプレビューエリア -->
+        <div class="mt-2 flex flex-wrap justify-center" data-file-preview-target="mediaPreview"></div>
+      </div>
 
-  <div>
-    <%= form.label :video, "動画ファイル" %><br>
-    <%= form.file_field :video %>
-  </div>
+      <!-- エラー時のファイル情報表示 -->
+      <% if @post.errors.any? %>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+          <div class="flex items-center mb-2">
+            <svg class="w-4 h-4 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="text-yellow-800 font-medium text-sm">ファイル選択状態が保持されています</span>
+          </div>
+          <p class="text-yellow-700 text-xs">上記のエラーを修正後、ファイルを再選択せずに送信できます。</p>
+        </div>
+      <% end %>
 
-<div class="mt-4">
-  <p class="font-semibold mb-2">タグを選んでください（複数選択可）</p>
-  <div id="tag-options" class="flex flex-wrap gap-2">
-    <% ["批評ください", "優しい意見ください", "どう感じたのか", "厳しい意見お待ちしています"].each_with_index do |tag_option, index| %>
-      <label
-        for="tag_<%= index %>"
-        class="tag-label inline-block px-3 py-1 border rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300 transition"
-      >
-        <%= check_box_tag "post[tag_list][]", tag_option, @post.tag.to_s.include?(tag_option), id: "tag_#{index}", class: "hidden" %>
-        <span><%= tag_option %></span>
-      </label>
+      <!-- タイトルとキャプション -->
+      <div class="space-y-4 bg-white border border-gray-200 rounded-lg p-6">
+        <div>
+          <%= form.label :title, "タイトル", class: "block text-lg font-semibold text-gray-800 mb-2" %>
+          <div class="relative">
+            <%= form.text_field :title, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-16", placeholder: "タイトルを入力してください", maxlength: 32 %>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+              <span class="text-sm text-gray-400" id="titleCounter">0/32</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <%= form.label :body, "キャプション", class: "block text-lg font-semibold text-gray-800 mb-2" %>
+          <div class="relative">
+            <%= form.text_area :body, rows: 4, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-16", placeholder: "キャプション", maxlength: 3000 %>
+            <div class="absolute bottom-3 right-3">
+              <span class="text-sm text-gray-400" id="bodyCounter">0/3000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          // 文字数カウンター
+          const titleInput = document.querySelector('input[name="post[title]"]');
+          const titleCounter = document.getElementById('titleCounter');
+          const bodyInput = document.querySelector('textarea[name="post[body]"]');
+          const bodyCounter = document.getElementById('bodyCounter');
+
+          function updateCounter(input, counter, max) {
+            const length = input.value.length;
+            counter.textContent = `${length}/${max}`;
+            if (length > max * 0.9) {
+              counter.classList.add('text-red-500');
+              counter.classList.remove('text-gray-400');
+            } else {
+              counter.classList.remove('text-red-500');
+              counter.classList.add('text-gray-400');
+            }
+          }
+
+          if (titleInput && titleCounter) {
+            titleInput.addEventListener('input', function() {
+              updateCounter(this, titleCounter, 32);
+            });
+            updateCounter(titleInput, titleCounter, 32);
+          }
+
+          if (bodyInput && bodyCounter) {
+            bodyInput.addEventListener('input', function() {
+              updateCounter(this, bodyCounter, 3000);
+            });
+            updateCounter(bodyInput, bodyCounter, 3000);
+          }
+
+          // 創作ジャンル選択
+          const options = document.querySelectorAll('.creation-type-option');
+
+          options.forEach(option => {
+            option.addEventListener('click', function() {
+              // すべての選択を解除
+              options.forEach(opt => {
+                opt.querySelector('.option-card').classList.remove('border-blue-700', 'bg-blue-100', 'border-indigo-500', 'bg-indigo-50', 'border-4');
+                opt.querySelector('.option-card').classList.add('border-gray-200', 'border-2');
+                opt.querySelector('.creation-type-radio').checked = false;
+              });
+
+              // クリックされた要素を選択状態に
+              const card = this.querySelector('.option-card');
+              const radio = this.querySelector('.creation-type-radio');
+
+              card.classList.remove('border-gray-200', 'border-2');
+              card.classList.add('border-blue-700', 'bg-blue-100', 'border-4');
+              radio.checked = true;
+            });
+          });
+        });
+      </script>
+
+      <!-- ドラッグ&ドロップのスタイル -->
+      <style>
+        .drop-zone {
+          transition: all 0.3s ease;
+        }
+        .drop-zone.dragover {
+          transform: scale(1.02);
+          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+        }
+        .drop-zone:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+      </style>
+
+
+      <div>
+        <%= form.label :creation_type, "創作ジャンル", class: "block text-lg font-semibold text-gray-800 mb-3" %>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="creation-type-options">
+          <% Post::CREATION_TYPES.each do |type_name, type_value| %>
+            <label class="relative cursor-pointer creation-type-option" data-value="<%= type_value %>">
+              <%= form.radio_button :creation_type, type_value, class: "hidden creation-type-radio", checked: @post.creation_type == type_value %>
+              <div class="flex items-center gap-3 p-4 border-2 <%= @post.creation_type == type_value ? 'border-blue-700 bg-blue-100 border-4' : 'border-gray-200' %> rounded-lg hover:border-blue-400 transition-all option-card">
+                <div class="flex-shrink-0">
+                  <% case type_name.to_s %>
+                  <% when 'イラスト・マンガ' %>
+                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <span class="text-lg">🎨</span>
+                    </div>
+                  <% when '詩・小説' %>
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span class="text-lg">📝</span>
+                    </div>
+                  <% when '音楽' %>
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <span class="text-lg">🎵</span>
+                    </div>
+                  <% end %>
+                </div>
+                <div class="flex-1">
+                  <span class="font-medium text-gray-900"><%= type_name %></span>
+                </div>
+              </div>
+            </label>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="pt-6 text-center">
+        <div class="flex flex-col md:flex-row gap-4 justify-center">
+          <%= form.submit "送るユーザーを選ぶ", class: "bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105", style: "background-color: #4F46E5; color: white; border: none;" %>
+          <%= form.submit "投稿する", class: "bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105", style: "background-color: #059669; color: white; border: none;" %>
+        </div>
+      </div>
     <% end %>
-  </div>
 </div>
 
-  <div class="mt-4">
-    <%= form.submit "投稿する", class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-  </div>
-<% end %>
-
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('#tag-options input[type="checkbox"]').forEach(function (checkbox) {
-      checkbox.addEventListener('change', function () {
-        const label = this.closest('label');
-        if (this.checked) {
-          label.classList.add('bg-blue-400', 'text-white');
-          label.classList.remove('bg-gray-200', 'hover:bg-gray-300');
-        } else {
-          label.classList.remove('bg-blue-400', 'text-white');
-          label.classList.add('bg-gray-200', 'hover:bg-gray-300');
-        }
-      });
-
-      // 初期状態の反映
-      if (checkbox.checked) {
-        const label = checkbox.closest('label');
-        label.classList.add('bg-blue-400', 'text-white');
-        label.classList.remove('bg-gray-200', 'hover:bg-gray-300');
-      }
-    });
+  // 投稿成功時のクリーンアップ
+  document.addEventListener('DOMContentLoaded', function() {
+    // 成功メッセージがある場合はファイル保存をクリア
+    const notice = document.querySelector('.bg-green-50');
+    if (notice) {
+      window.lastSelectedFiles = null;
+      console.log('Cleared saved files due to success');
+    }
   });
 </script>
+

@@ -43,13 +43,16 @@ export default class extends Controller {
     this.showLoading()
     
     try {
-      const response = await fetch(`/posts/${this.postIdValue}/ai_comment_assistant/analyze`, {
+      const response = await fetch(`/ai_comment_assistant/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
           'Accept': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          post_id: this.postIdValue
+        })
       })
       
       const data = await response.json()

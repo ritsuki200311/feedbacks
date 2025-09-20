@@ -6,28 +6,47 @@ class AiCommentAssistantController < ApplicationController
   def analyze_post
     @post = Post.find(params[:post_id])
 
-    # AI機能を一時的に停止し、フォールバック値を返す
-    Rails.logger.info "AI analysis requested for post #{@post.id} - returning fallback values (API disabled)"
-    
-    result = {
-      success: true,
-      comment_examples: [
-        "とても素晴らしい作品ですね。#{@post.title}の表現が印象的です。",
-        "この作品から#{determine_content_type(@post)}としての魅力を感じました。",
-        "#{@post.user.name}さんの創作への情熱が伝わってきます。"
-      ],
-      observation_points: [
-        "作品の構成や全体のバランスに注目してみましょう",
-        "使用されている技法や表現手法を観察してみましょう", 
-        "作品から受ける感情や印象を言葉にしてみましょう",
-        "改善点や発展の可能性について考えてみましょう"
-      ],
-      vocabularies: [
-        "美しい", "印象的", "繊細", "力強い", 
-        "調和", "表現力", "創造的", "独創的"
-      ]
-    }
-    
+    begin
+      Rails.logger.info "AI analysis requested for post #{@post.id}"
+
+      # 実際のAI分析を実行
+      ai_result = call_gemini_api(@post)
+
+      result = {
+        success: true,
+        comment_examples: ai_result[:comment_examples],
+        observation_points: ai_result[:observation_points],
+        vocabularies: ai_result[:vocabularies]
+      }
+
+      Rails.logger.info "AI analysis completed successfully for post #{@post.id}"
+
+    rescue => e
+      Rails.logger.error "AI analysis failed for post #{@post.id}: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+
+      # エラー時はフォールバック値を返す
+      result = {
+        success: true,
+        comment_examples: [
+          "とても素晴らしい作品ですね。#{@post.title}の表現が印象的です。",
+          "この作品から#{determine_content_type(@post)}としての魅力を感じました。",
+          "#{@post.user.name}さんの創作への情熱が伝わってきます。"
+        ],
+        observation_points: [
+          "作品の構成や全体のバランスに注目してみましょう",
+          "使用されている技法や表現手法を観察してみましょう",
+          "作品から受ける感情や印象を言葉にしてみましょう",
+          "改善点や発展の可能性について考えてみましょう"
+        ],
+        vocabularies: [
+          "美しい", "印象的", "繊細", "力強い",
+          "調和", "表現力", "創造的", "独創的"
+        ],
+        fallback: true
+      }
+    end
+
     render json: result
   end
 

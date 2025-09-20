@@ -402,7 +402,18 @@ class PostsController < ApplicationController
     Rails.logger.debug "Query: '#{@query}'"
     Rails.logger.debug "Query present?: #{@query.present?}"
 
-    if @query.present?
+    # ジャンルフィルタリング用のパラメータを取得
+    @genre_filter = params[:genre_filter]
+    Rails.logger.debug "Genre filter: '#{@genre_filter}'"
+
+    if @genre_filter.present?
+      # ジャンルが選択されている場合
+      @results = User.joins(:supporter_profile).where(
+        "supporter_profiles.support_genres::text ILIKE ?",
+        "%#{@genre_filter}%"
+      ).distinct.limit(20)
+      Rails.logger.debug "Genre filter results: #{@results.map(&:name)}"
+    elsif @query.present?
       if @query.match?(/\A\d+\z/)
         # 数字のみの場合はIDで検索
         Rails.logger.debug "Searching by ID: #{@query.to_i}"
@@ -413,7 +424,7 @@ class PostsController < ApplicationController
         # フリーワード検索 - ユーザー名とプロフィール内容を対象
         Rails.logger.debug "Free-word search: '%#{@query}%'"
         search_term = "%#{@query}%"
-        
+
         # 統合クエリで検索
         @results = User.left_joins(:supporter_profile).where(
           "users.name ILIKE ? OR " \

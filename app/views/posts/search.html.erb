@@ -29,11 +29,39 @@
 
       <!-- ユーザー検索フィールド -->
       <div id="user-form" class="<%= 'hidden' unless @search_type == 'users' %>">
-        <div class="max-w-md mx-auto">
+        <div class="max-w-2xl mx-auto">
           <h3 class="text-lg font-medium mb-3 text-center">ユーザー検索</h3>
+
+          <!-- ジャンル選択 -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">対象ジャンルを選択</label>
+            <p class="text-xs text-gray-600 mb-3">ジャンルを選択すると自動で検索されます</p>
+            <%= form.select :genre_filter,
+                options_for_select([
+                  ['', ''],
+                  ['イラスト・絵画', 'イラスト・絵画'],
+                  ['マンガ・コミック', 'マンガ・コミック'],
+                  ['小説・詩・エッセイ', '小説・詩・エッセイ'],
+                  ['音楽制作・作詞作曲', '音楽制作・作詞作曲'],
+                  ['映像制作・動画編集', '映像制作・動画編集'],
+                  ['ゲーム制作・プログラミング', 'ゲーム制作・プログラミング'],
+                  ['デザイン・グラフィック', 'デザイン・グラフィック'],
+                  ['写真・撮影技術', '写真・撮影技術'],
+                  ['舞台・演劇・パフォーマンス', '舞台・演劇・パフォーマンス'],
+                  ['手芸・クラフト', '手芸・クラフト'],
+                  ['その他', 'その他']
+                ], @genre_filter),
+                { prompt: "ジャンルを選択してください" },
+                {
+                  class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
+                  onchange: "this.form.submit();"
+                } %>
+          </div>
+
+          <!-- フリーワード検索 -->
           <div class="flex gap-2">
-            <%= form.text_field :query, value: @query, 
-                placeholder: "IDまたはユーザーネーム", 
+            <%= form.text_field :query, value: @query,
+                placeholder: "IDまたはユーザーネーム",
                 class: "flex-1 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" %>
             <%= form.submit "検索", class: "bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium" %>
           </div>
@@ -133,11 +161,26 @@
         <!-- ユーザー検索結果 -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <% @results.each do |user| %>
-            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                 onclick="showUserProfile(<%= user.id %>, '<%= escape_javascript(user.name) %>', '<%= escape_javascript(user.supporter_profile&.age_group || '') %>', '<%= escape_javascript(user.supporter_profile&.creation_experience || '') %>', <%= raw (user.supporter_profile&.support_genres || []).to_json %>, <%= raw (user.supporter_profile&.interests || []).to_json %>, '<%= escape_javascript(user.supporter_profile&.favorite_artists || '') %>', '<%= user.rank %>')"
+                 data-user-id="<%= user.id %>">
               <h3 class="font-semibold mb-2"><%= user.name %></h3>
-              <p class="text-sm text-gray-600 mb-3">ID: <%= user.id %></p>
-              <%= link_to "マイページを見る", user_path(user), 
-                  class: "inline-block bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm" %>
+              <p class="text-sm text-gray-600 mb-2">ID: <%= user.id %> | ランク: <%= user.rank %></p>
+              <% if user.supporter_profile&.support_genres&.any? %>
+                <p class="text-sm text-blue-600 mb-2">専門: <%= user.supporter_profile.support_genres.join(', ') %></p>
+              <% end %>
+              <% if user.supporter_profile&.creation_experience %>
+                <p class="text-xs text-gray-500">経験: <%= user.supporter_profile.creation_experience %></p>
+              <% end %>
+              <div class="mt-3 flex gap-2">
+                <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                        onclick="event.stopPropagation(); testModal();">
+                  プロフィール
+                </button>
+                <%= link_to "マイページ", user_path(user),
+                    class: "inline-block bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm",
+                    onclick: "event.stopPropagation();" %>
+              </div>
             </div>
           <% end %>
         </div>
@@ -221,7 +264,169 @@
   <% end %>
 </div>
 
+<!-- プロフィールモーダル -->
+<div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+  <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-bold" id="modalUserName">ユーザー名</h3>
+      <button onclick="closeUserProfile()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <span class="inline-block bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded" id="modalUserRank">Aランク</span>
+      </div>
+
+      <div id="modalAgeGroup" class="hidden">
+        <h4 class="font-semibold text-gray-700 mb-1">年代</h4>
+        <p class="text-gray-600" id="modalAgeGroupText"></p>
+      </div>
+
+      <div id="modalCreationExperience" class="hidden">
+        <h4 class="font-semibold text-gray-700 mb-1">創作経験</h4>
+        <p class="text-gray-600" id="modalCreationExperienceText"></p>
+      </div>
+
+      <div id="modalSupportGenres" class="hidden">
+        <h4 class="font-semibold text-gray-700 mb-1">専門ジャンル</h4>
+        <div class="flex flex-wrap gap-2" id="modalSupportGenresContainer"></div>
+      </div>
+
+      <div id="modalInterests" class="hidden">
+        <h4 class="font-semibold text-gray-700 mb-1">関心のある分野</h4>
+        <div class="flex flex-wrap gap-2" id="modalInterestsContainer"></div>
+      </div>
+
+      <div id="modalFavoriteArtists" class="hidden">
+        <h4 class="font-semibold text-gray-700 mb-1">フィードバックできること</h4>
+        <p class="text-gray-600 text-sm leading-relaxed" id="modalFavoriteArtistsText"></p>
+      </div>
+    </div>
+
+    <div class="mt-6 flex gap-3">
+      <button onclick="selectUser()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
+        この人を選ぶ
+      </button>
+      <button onclick="closeUserProfile()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+        閉じる
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
+let currentSelectedUserId = null;
+
+function testModal() {
+  console.log('testModal called');
+  const modal = document.getElementById('profileModal');
+  console.log('Modal element:', modal);
+  if (modal) {
+    modal.classList.remove('hidden');
+    console.log('Modal should be visible now');
+  } else {
+    console.error('Modal element not found');
+  }
+}
+
+function showUserProfile(userId, userName, ageGroup, creationExperience, supportGenres, interests, favoriteArtists, rank) {
+  console.log('showUserProfile called with:', {
+    userId, userName, ageGroup, creationExperience, supportGenres, interests, favoriteArtists, rank
+  });
+
+  currentSelectedUserId = userId;
+
+  // ユーザー名とランクを設定
+  document.getElementById('modalUserName').textContent = userName;
+  document.getElementById('modalUserRank').textContent = rank + 'ランク';
+
+  // 年代
+  const ageGroupDiv = document.getElementById('modalAgeGroup');
+  const ageGroupText = document.getElementById('modalAgeGroupText');
+  if (ageGroup && ageGroup.trim() !== '') {
+    ageGroupText.textContent = ageGroup;
+    ageGroupDiv.classList.remove('hidden');
+  } else {
+    ageGroupDiv.classList.add('hidden');
+  }
+
+  // 創作経験
+  const creationExpDiv = document.getElementById('modalCreationExperience');
+  const creationExpText = document.getElementById('modalCreationExperienceText');
+  if (creationExperience && creationExperience.trim() !== '') {
+    creationExpText.textContent = creationExperience;
+    creationExpDiv.classList.remove('hidden');
+  } else {
+    creationExpDiv.classList.add('hidden');
+  }
+
+  // 専門ジャンル
+  const supportGenresDiv = document.getElementById('modalSupportGenres');
+  const supportGenresContainer = document.getElementById('modalSupportGenresContainer');
+  if (supportGenres && supportGenres.length > 0) {
+    supportGenresContainer.innerHTML = '';
+    supportGenres.forEach(genre => {
+      const span = document.createElement('span');
+      span.className = 'bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded';
+      span.textContent = genre;
+      supportGenresContainer.appendChild(span);
+    });
+    supportGenresDiv.classList.remove('hidden');
+  } else {
+    supportGenresDiv.classList.add('hidden');
+  }
+
+  // 関心のある分野
+  const interestsDiv = document.getElementById('modalInterests');
+  const interestsContainer = document.getElementById('modalInterestsContainer');
+  if (interests && interests.length > 0) {
+    interestsContainer.innerHTML = '';
+    interests.forEach(interest => {
+      const span = document.createElement('span');
+      span.className = 'bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded';
+      span.textContent = interest;
+      interestsContainer.appendChild(span);
+    });
+    interestsDiv.classList.remove('hidden');
+  } else {
+    interestsDiv.classList.add('hidden');
+  }
+
+  // フィードバックできること
+  const favoriteArtistsDiv = document.getElementById('modalFavoriteArtists');
+  const favoriteArtistsText = document.getElementById('modalFavoriteArtistsText');
+  if (favoriteArtists && favoriteArtists.trim() !== '') {
+    favoriteArtistsText.textContent = favoriteArtists;
+    favoriteArtistsDiv.classList.remove('hidden');
+  } else {
+    favoriteArtistsDiv.classList.add('hidden');
+  }
+
+  // モーダル表示
+  document.getElementById('profileModal').classList.remove('hidden');
+}
+
+function closeUserProfile() {
+  document.getElementById('profileModal').classList.add('hidden');
+  currentSelectedUserId = null;
+}
+
+function selectUser() {
+  if (currentSelectedUserId) {
+    // ここでユーザー選択の処理を実装
+    // 例: フォームに選択されたユーザーIDを設定、または次のページに遷移
+    alert('ユーザーID ' + currentSelectedUserId + ' が選択されました');
+    closeUserProfile();
+  }
+}
+
+// モーダル外クリックで閉じる
+document.getElementById('profileModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeUserProfile();
+  }
+});
+
 function toggleSearchType(searchType) {
   console.log('Toggle search type:', searchType);
   

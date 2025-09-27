@@ -234,7 +234,7 @@
           </div>
           <h2 class="text-sm font-bold text-gray-900">コメント補助</h2>
         </div>
-          
+
           <!-- 初期状態の説明 -->
           <div data-ai-sidebar-target="initialMessage" class="text-center py-4">
             <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -244,9 +244,9 @@
             <p class="text-xs text-gray-600 mb-4">
               AIがコメント作成をサポート
             </p>
-            
+
             <!-- AI起動ボタン -->
-            <button type="button" 
+            <button type="button"
                     data-action="click->ai-sidebar#toggleAI"
                     data-ai-sidebar-target="toggleButton"
                     class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-bold rounded-lg shadow-md hover:from-purple-700 hover:to-indigo-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto">
@@ -254,16 +254,16 @@
               <span data-ai-sidebar-target="toggleText">開始</span>
             </button>
           </div>
-          
+
           <!-- ローディング表示 -->
           <div data-ai-sidebar-target="loading" class="hidden text-center py-4">
             <div class="w-8 h-8 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-2"></div>
             <p class="text-xs text-gray-600">AI分析中...</p>
           </div>
-          
+
           <!-- AI補助コンテンツ（初期は非表示） -->
           <div data-ai-sidebar-target="aiContent" class="hidden space-y-3">
-            
+
             <!-- 語彙・表現の補助 -->
             <div class="bg-gradient-to-br from-emerald-50 to-teal-100 rounded-lg p-4 border-2 border-emerald-200">
               <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -281,7 +281,7 @@
                 </p>
               </div>
             </div>
-            
+
             <!-- AI分析結果 -->
             <div class="bg-gradient-to-br from-indigo-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
               <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -303,10 +303,10 @@
                 </p>
               </div>
             </div>
-            
+
             <!-- 閉じるボタン -->
             <div class="text-center pt-1">
-              <button type="button" 
+              <button type="button"
                       data-action="click->ai-sidebar#closeAI"
                       class="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
                 閉じる
@@ -402,7 +402,7 @@
               </div>
               コメント補助
             </h4>
-            <button type="button" 
+            <button type="button"
                     onclick="toggleVoteModalAI()"
                     id="voteModalAIToggle"
                     class="px-2 py-1 bg-purple-600 text-white text-xs font-medium rounded hover:bg-purple-700 transition-colors flex items-center gap-1">
@@ -410,7 +410,7 @@
               <span>開始</span>
             </button>
           </div>
-          
+
           <!-- 初期状態の説明 -->
           <div id="voteModalAIInitial" class="text-center py-2">
             <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1">
@@ -420,16 +420,16 @@
               AIがコメント作成をサポート
             </p>
           </div>
-          
+
           <!-- ローディング表示 -->
           <div id="voteModalAILoading" class="hidden text-center py-2">
             <div class="w-5 h-5 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-1"></div>
             <p class="text-xs text-gray-600">AI分析中...</p>
           </div>
-          
+
           <!-- AI補助コンテンツ -->
           <div id="voteModalAIContent" class="hidden space-y-3 flex-1">
-            
+
           </div>
         </div>
       </div>

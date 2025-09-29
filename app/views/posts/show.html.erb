@@ -40,6 +40,11 @@
           <%= link_to @post.user.name, user_path(@post.user), class: "text-blue-500 hover:underline" %>
         </div>
 
+        <div class="flex items-center gap-2 mb-2 text-sm text-gray-500">
+          <span class="font-medium">投稿日時:</span>
+          <%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
+        </div>
+
         <p class="mb-3 text-sm text-gray-600 leading-relaxed"><%= @post.body %></p>
 
         <% if @post.request_tag.present? %>

@@ -28,9 +28,14 @@
 
 <% if @posts.any? %>
   <% @posts.each do |post| %>
-    <div class="<%= post_card_class(post) %> cursor-pointer post-card"
+    <div class="<%= post_card_class(post) %> cursor-pointer post-card relative"
          onclick="handlePostCardClick(event, <%= post.id %>)"
          data-post-id="<%= post.id %>">
+      <!-- 投稿日時（右上） -->
+      <div class="absolute top-2 right-2 text-xs text-gray-400 bg-white bg-opacity-90 px-2 py-1 rounded-full">
+        <%= time_ago_in_words(post.created_at) %>前
+      </div>
+
       <p class="text-gray-500 mb-1 text-sm">
         👤 <%= link_to post.user.name, user_path(post.user), class: "text-indigo-600 hover:underline" %>
       </p>

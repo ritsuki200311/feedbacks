@@ -56,50 +56,113 @@
 
         <!-- 画像表示エリア -->
         <% if @post.images.attached? %>
-          <div class="space-y-4 text-center">
-            <% @post.images.each_with_index do |image, index| %>
-              <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
-                <%= image_tag image, class: "max-w-md rounded-lg shadow cursor-crosshair", data: { "image-comments-target": "image" }, onclick: "testClickIndicator(event)" %>
-                
-                <!-- 右下の拡大マーク -->
-                <button type="button" 
-                        onclick="showImageModal('<%= url_for(image) %>')"
-                        class="absolute bottom-1 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                </svg>
-                </button>
-                
-                <!-- 画像上のコメントマーカー表示エリア -->
-                <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
-                
-                <!-- 画像上コメント用のフォーム（初期は非表示） -->
-                <div class="hidden absolute z-50 bg-white border border-gray-300 rounded p-2 shadow-lg image-comment-form" data-image-comments-target="form">
-                  <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
-                    <%= f.hidden_field :x_position %>
-                    <%= f.hidden_field :y_position %>
-                    <div class="flex items-center gap-2">
-                      <%= f.text_area :body, rows: 1, placeholder: "コメントを追加", class: "w-48 p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none", required: true, data: { action: "keydown->image-comments#handleKeydown" } %>
-                      <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors" title="コメントを送信">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M12 19V5M5 12l7-7 7 7"/>
-                        </svg>
-                      </button>
-                    </div>
-                  <% end %>
-                </div>
-                
-                <!-- マーカー表示切り替えボタン -->
-                <div class="mt-2 flex items-center gap-2 justify-center">
-                  <button type="button" 
-                          data-action="click->image-comments#toggleMarkers" 
-                          data-image-comments-target="toggleButton"
-                          class="flex items-center gap-1 px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-                    <span data-image-comments-target="toggleIcon">👁️</span>
-                    <span data-image-comments-target="toggleText">ピン表示</span>
+          <div class="mb-4">
+            <% if @post.images.count == 1 %>
+              <!-- 単一画像の場合 -->
+              <% image = @post.images.first %>
+              <div class="text-center">
+                <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
+                  <%= image_tag image, class: "max-w-md rounded-lg shadow cursor-crosshair", data: { "image-comments-target": "image" }, onclick: "testClickIndicator(event)" %>
+
+                  <!-- 右下の拡大マーク -->
+                  <button type="button"
+                          onclick="showImageModal('<%= url_for(image) %>')"
+                          class="absolute bottom-1 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
                   </button>
-                  <span data-image-comments-target="markerCount" class="text-xs text-gray-500"></span>
+
+                  <!-- 画像上のコメントマーカー表示エリア -->
+                  <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+
+                  <!-- 画像上コメント用のフォーム（初期は非表示） -->
+                  <div class="hidden absolute z-50 bg-white border border-gray-300 rounded p-2 shadow-lg image-comment-form" data-image-comments-target="form">
+                    <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
+                      <%= f.hidden_field :x_position %>
+                      <%= f.hidden_field :y_position %>
+                      <div class="flex items-center gap-2">
+                        <%= f.text_area :body, rows: 1, placeholder: "コメントを追加", class: "w-48 p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none", required: true, data: { action: "keydown->image-comments#handleKeydown" } %>
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors" title="コメントを送信">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 19V5M5 12l7-7 7 7"/>
+                          </svg>
+                        </button>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- マーカー表示切り替えボタン -->
+                  <div class="mt-2 flex items-center gap-2 justify-center">
+                    <button type="button"
+                            data-action="click->image-comments#toggleMarkers"
+                            data-image-comments-target="toggleButton"
+                            class="flex items-center gap-1 px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                      <span data-image-comments-target="toggleIcon">👁️</span>
+                      <span data-image-comments-target="toggleText">ピン表示</span>
+                    </button>
+                    <span data-image-comments-target="markerCount" class="text-xs text-gray-500"></span>
+                  </div>
                 </div>
+              </div>
+            <% else %>
+              <!-- 複数画像の場合：縦スクロール形式 -->
+              <div class="space-y-3">
+                <div class="text-center text-sm text-gray-600 mb-3">
+                  <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">📷 <%= @post.images.count %>枚の画像</span>
+                </div>
+                <% @post.images.each_with_index do |image, index| %>
+                  <div class="bg-gray-50 rounded-lg p-3 mb-3">
+                    <div class="text-center mb-2">
+                      <span class="text-sm font-medium text-gray-700"><%= index + 1 %>枚目</span>
+                    </div>
+                    <div class="text-center">
+                      <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
+                        <%= image_tag image, class: "max-w-md rounded-lg shadow cursor-crosshair", data: { "image-comments-target": "image" }, onclick: "testClickIndicator(event)" %>
+
+                        <!-- 右下の拡大マーク -->
+                        <button type="button"
+                                onclick="showImageModal('<%= url_for(image) %>')"
+                                class="absolute bottom-1 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity z-10">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                          </svg>
+                        </button>
+
+                        <!-- 画像上のコメントマーカー表示エリア -->
+                        <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+
+                        <!-- 画像上コメント用のフォーム（初期は非表示） -->
+                        <div class="hidden absolute z-50 bg-white border border-gray-300 rounded p-2 shadow-lg image-comment-form" data-image-comments-target="form">
+                          <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
+                            <%= f.hidden_field :x_position %>
+                            <%= f.hidden_field :y_position %>
+                            <div class="flex items-center gap-2">
+                              <%= f.text_area :body, rows: 1, placeholder: "コメントを追加", class: "w-48 p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none", required: true, data: { action: "keydown->image-comments#handleKeydown" } %>
+                              <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors" title="コメントを送信">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M12 19V5M5 12l7-7 7 7"/>
+                                </svg>
+                              </button>
+                            </div>
+                          <% end %>
+                        </div>
+
+                        <!-- マーカー表示切り替えボタン -->
+                        <div class="mt-2 flex items-center gap-2 justify-center">
+                          <button type="button"
+                                  data-action="click->image-comments#toggleMarkers"
+                                  data-image-comments-target="toggleButton"
+                                  class="flex items-center gap-1 px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                            <span data-image-comments-target="toggleIcon">👁️</span>
+                            <span data-image-comments-target="toggleText">ピン表示</span>
+                          </button>
+                          <span data-image-comments-target="markerCount" class="text-xs text-gray-500"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
               </div>
             <% end %>
           </div>

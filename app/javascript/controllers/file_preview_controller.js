@@ -18,6 +18,9 @@ export default class extends Controller {
 
     // ドラッグ&ドロップのイベントリスナーを設定
     this.setupDragAndDrop()
+
+    // 初期ファイル数表示を更新
+    this.updateFileCountDisplay()
   }
 
   setupDragAndDrop() {
@@ -112,16 +115,38 @@ export default class extends Controller {
       return
     }
 
-    // 既存のファイルと新しいファイルを結合
-    this.selectedFiles = [...this.selectedFiles, ...validFiles]
+    // 画像ファイルの10枚制限チェック
+    const imageFiles = validFiles.filter(file => file.type.startsWith('image/'))
+    const currentImageCount = this.selectedFiles.filter(file => file.type.startsWith('image/')).length
+    const totalImageCount = currentImageCount + imageFiles.length
 
-    console.log(`Added ${validFiles.length} files. Total: ${this.selectedFiles.length}`)
+    if (totalImageCount > 10) {
+      const allowedImageCount = 10 - currentImageCount
+      if (allowedImageCount <= 0) {
+        alert('画像は最大10枚まで添付できます。現在の画像をいくつか削除してから追加してください。')
+        return
+      } else {
+        alert(`画像は最大10枚まで添付できます。${allowedImageCount}枚まで追加可能です。`)
+        // 許可される枚数だけを追加
+        const allowedFiles = [...validFiles.filter(file => !file.type.startsWith('image/')),
+                            ...imageFiles.slice(0, allowedImageCount)]
+        this.selectedFiles = [...this.selectedFiles, ...allowedFiles]
+      }
+    } else {
+      // 既存のファイルと新しいファイルを結合
+      this.selectedFiles = [...this.selectedFiles, ...validFiles]
+    }
+
+    console.log(`Added files. Total: ${this.selectedFiles.length}`)
 
     // ファイル入力フィールドを更新
     this.updateFileInput()
 
     // プレビューを再生成
     this.regeneratePreview()
+
+    // ファイル数の更新
+    this.updateFileCountDisplay()
   }
 
   // 統合されたファイルプレビューメソッド（新規投稿フォーム用）
@@ -132,16 +157,29 @@ export default class extends Controller {
     const previewContainer = this.mediaPreviewTarget
     console.log("Preview container:", previewContainer)
 
-    // 選択されたファイルを配列として保存
-    this.selectedFiles = Array.from(files)
+    if (files.length === 0) {
+      console.log("No files selected")
+      this.selectedFiles = []
+      previewContainer.innerHTML = ''
+      this.updateFileCountDisplay()
+      return
+    }
+
+    // 画像ファイルの10枚制限チェック
+    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
+    if (imageFiles.length > 10) {
+      alert('画像は最大10枚まで添付できます。')
+      // 最初の10枚だけを使用
+      const allowedFiles = [...Array.from(files).filter(file => !file.type.startsWith('image/')),
+                          ...imageFiles.slice(0, 10)]
+      this.selectedFiles = allowedFiles
+    } else {
+      // 選択されたファイルを配列として保存
+      this.selectedFiles = Array.from(files)
+    }
 
     // 既存のプレビューをクリア
     previewContainer.innerHTML = ''
-
-    if (files.length === 0) {
-      console.log("No files selected")
-      return
-    }
 
     // 各ファイルに対してプレビューを生成
     this.selectedFiles.forEach((file, index) => {
@@ -157,6 +195,9 @@ export default class extends Controller {
         this.createAudioPreview(file, index, previewContainer)
       }
     })
+
+    // ファイル数の更新
+    this.updateFileCountDisplay()
 
     console.log('Preview container after processing:', previewContainer.innerHTML.length > 0 ? 'has content' : 'empty')
   }
@@ -203,6 +244,9 @@ export default class extends Controller {
 
     // プレビューを再生成
     this.regeneratePreview()
+
+    // ファイル数の更新
+    this.updateFileCountDisplay()
   }
 
   // ファイル入力フィールドを更新
@@ -844,13 +888,19 @@ export default class extends Controller {
       // フォームデータを作成
       const formData = new FormData(form)
 
+      // ファイル情報をログ出力
+      console.log('FormData files count:', formData.getAll('post[files]').length)
+      formData.getAll('post[files]').forEach((file, index) => {
+        console.log(`File ${index}:`, file.name, file.type, file.size)
+      })
+
       // Fetch APIでフォームを送信
       fetch(form.action, {
         method: 'POST',
         body: formData,
         headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+          'Accept': 'text/html'
         }
       })
       .then(response => {
@@ -922,6 +972,63 @@ export default class extends Controller {
 
       console.log('File state restored successfully')
     }
+  }
+
+  // ファイル数の表示を更新
+  updateFileCountDisplay() {
+    if (!this.selectedFiles) return
+
+    const imageCount = this.selectedFiles.filter(file => file.type.startsWith('image/')).length
+    const videoCount = this.selectedFiles.filter(file => file.type.startsWith('video/')).length
+    const audioCount = this.selectedFiles.filter(file => file.type.startsWith('audio/')).length
+
+    // ファイルカウント表示を更新または作成
+    this.createOrUpdateFileCountDisplay(imageCount, videoCount, audioCount)
+  }
+
+  // ファイル数表示を作成または更新
+  createOrUpdateFileCountDisplay(imageCount, videoCount, audioCount) {
+    const previewContainer = this.mediaPreviewTarget
+    if (!previewContainer) return
+
+    // 既存のファイル数表示を削除
+    const existingDisplay = previewContainer.querySelector('.file-count-display')
+    if (existingDisplay) {
+      existingDisplay.remove()
+    }
+
+    // 総ファイル数が0の場合は表示しない
+    const totalCount = imageCount + videoCount + audioCount
+    if (totalCount === 0) return
+
+    // 新しいファイル数表示を作成
+    const countDisplay = document.createElement('div')
+    countDisplay.className = 'file-count-display bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-center'
+
+    let countText = []
+    if (imageCount > 0) {
+      const limitText = imageCount >= 10 ? ' (上限)' : ` / 10`
+      countText.push(`📸 画像: ${imageCount}枚${limitText}`)
+    }
+    if (videoCount > 0) {
+      countText.push(`🎬 動画: ${videoCount}個`)
+    }
+    if (audioCount > 0) {
+      countText.push(`🎵 音声: ${audioCount}個`)
+    }
+
+    countDisplay.innerHTML = `
+      <div class="text-sm font-medium text-blue-800 mb-1">
+        📁 選択中のファイル: ${totalCount}個
+      </div>
+      <div class="text-xs text-blue-600">
+        ${countText.join(' ・ ')}
+      </div>
+      ${imageCount >= 10 ? '<div class="text-xs text-orange-600 mt-1">⚠️ 画像は10枚が上限です</div>' : ''}
+    `
+
+    // プレビューコンテナの最初に追加
+    previewContainer.insertBefore(countDisplay, previewContainer.firstChild)
   }
 }
 

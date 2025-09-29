@@ -8,7 +8,7 @@
       </div>
     </div>
 
-    <%= form_with model: @post, local: false, class: "space-y-6 bg-white p-6 rounded-lg shadow-md", data: { controller: "file-preview" } do |form| %>
+    <%= form_with model: @post, local: true, class: "space-y-6 bg-white p-6 rounded-lg shadow-md", data: { controller: "file-preview" } do |form| %>
 
       <% if @post.errors.any? %>
         <div class="bg-red-100 text-red-700 p-4 rounded">
@@ -44,7 +44,7 @@
               },
               accept: "image/*,video/*,audio/*" %>
           <p class="text-xs text-gray-500 mt-1">
-            JPEG / GIF / PNG / MP4 / MP3（32MB以内）
+            JPEG / GIF / PNG / WebP（5MB以内、10枚まで） / MP4（500MB以内） / MP3（100MB以内）
           </p>
         </div>
         <!-- ファイルプレビューエリア -->

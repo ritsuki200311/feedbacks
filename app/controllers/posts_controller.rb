@@ -11,6 +11,12 @@ class PostsController < ApplicationController
   end
 
   def create
+    Rails.logger.debug "=== POST CREATE DEBUG ==="
+    Rails.logger.debug "All params: #{params.inspect}"
+    Rails.logger.debug "post_params: #{post_params.inspect}"
+    Rails.logger.debug "files in params[:post]: #{params[:post][:files].inspect if params[:post]}"
+    Rails.logger.debug "=========================="
+
     @post = Post.new(post_params.except(:files))
     @post.user = current_user
 
@@ -24,15 +30,47 @@ class PostsController < ApplicationController
     respond_to do |format|
       if @post.valid?
         @post.save
+        Rails.logger.debug "Post saved successfully with ID: #{@post.id}"
 
-        # filesパラメータを適切なアタッチメントに振り分け
-        if params[:post][:files].present?
+        # filesパラメータを適切なアタッチメントに振り分け（トランザクション外で実行）
+        if params[:post] && params[:post][:files].present?
           Rails.logger.debug "Files parameter: #{params[:post][:files].inspect}"
           Rails.logger.debug "Files parameter class: #{params[:post][:files].class}"
           params[:post][:files].each_with_index do |file, index|
             Rails.logger.debug "File #{index}: #{file.inspect} (class: #{file.class})"
           end
-          attach_files_to_post(@post, params[:post][:files])
+
+          # バリデーションを回避するため、トランザクション外でアタッチメントを追加
+          files_to_attach = params[:post][:files].reject(&:blank?)
+
+          # 画像ファイル数制限チェック
+          image_files = files_to_attach.select { |f| f.respond_to?(:content_type) && f.content_type&.start_with?('image/') }
+          if image_files.count > 10
+            @post.errors.add(:images, "は10枚まで添付できます")
+            format.html { render :new, status: :unprocessable_entity }
+            return
+          end
+          files_to_attach.each do |file|
+            next unless file.respond_to?(:content_type) && file.respond_to?(:original_filename)
+
+            Rails.logger.debug "Processing file: #{file.original_filename} (#{file.content_type})"
+
+            case file.content_type
+            when /^image\//
+              @post.images.attach(file)
+              Rails.logger.debug "Attached image: #{file.original_filename}"
+            when /^video\//
+              @post.videos.attach(file)
+              Rails.logger.debug "Attached video: #{file.original_filename}"
+            when /^audio\//
+              @post.audios.attach(file)
+              Rails.logger.debug "Attached audio: #{file.original_filename}"
+            end
+          end
+
+          Rails.logger.debug "After attaching files: #{@post.images.count} images, #{@post.videos.count} videos, #{@post.audios.count} audios"
+        else
+          Rails.logger.debug "No files parameter found or files parameter is empty"
         end
 
         # 成功時にセッションをクリア
@@ -347,25 +385,6 @@ class PostsController < ApplicationController
 
   private
 
-  def attach_files_to_post(post, files)
-    files.each do |file|
-      # ファイルオブジェクトかどうかを確認
-      next unless file.respond_to?(:content_type) && file.respond_to?(:original_filename)
-
-      Rails.logger.debug "Attaching file: #{file.original_filename} (#{file.content_type})"
-
-      case file.content_type
-      when /^image\//
-        post.images.attach(file)
-      when /^video\//
-        post.videos.attach(file)
-      when /^audio\//
-        post.audios.attach(file)
-      else
-        Rails.logger.warn "Unknown file type: #{file.content_type} for file #{file.original_filename}"
-      end
-    end
-  end
 
   def extract_tags(tag_string)
     return [] if tag_string.blank?

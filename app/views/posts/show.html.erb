@@ -73,10 +73,13 @@
                   <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
                     <%= f.hidden_field :x_position %>
                     <%= f.hidden_field :y_position %>
-                    <%= f.text_area :body, rows: 2, placeholder: "コメントを入力...", class: "w-40 p-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500", required: true %>
-                    <div class="mt-1 flex gap-1">
-                      <%= f.submit "コメント", class: "bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs" %>
-                      <button type="button" data-action="click->image-comments#hideForm" class="bg-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-400 text-xs">×</button>
+                    <div class="flex items-center gap-2">
+                      <%= f.text_area :body, rows: 1, placeholder: "コメントを追加", class: "w-48 p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none", required: true, data: { action: "keydown->image-comments#handleKeydown" } %>
+                      <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors" title="コメントを送信">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M12 19V5M5 12l7-7 7 7"/>
+                        </svg>
+                      </button>
                     </div>
                   <% end %>
                 </div>

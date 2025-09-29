@@ -54,8 +54,13 @@ export default class extends Controller {
     console.log("Post ID:", this.postIdValue)
     console.log("Image target:", this.hasImageTarget ? "found" : "not found")
     this.tempPin = null
+    this.documentClickListener = null
     this.setupImageClickListener()
     this.loadExistingComments()
+  }
+
+  disconnect() {
+    this.removeDocumentClickListener()
   }
 
   setupImageClickListener() {
@@ -68,6 +73,9 @@ export default class extends Controller {
     this.imageTarget.addEventListener("click", (event) => {
       console.log("Image clicked!")
 
+      // まず現在のフォームを閉じる
+      this.hideForm()
+
       // クリック位置を青い丸で表示
       console.log("About to call showClickIndicator with:", event.clientX, event.clientY)
       this.showClickIndicator(event.clientX, event.clientY)
@@ -75,13 +83,13 @@ export default class extends Controller {
       const rect = this.imageTarget.getBoundingClientRect()
       const x = event.clientX - rect.left
       const y = event.clientY - rect.top
-      
+
       // 相対座標に変換（画像サイズに対する割合）
       const relativeX = (x / rect.width * 100).toFixed(2)
       const relativeY = (y / rect.height * 100).toFixed(2)
-      
+
       console.log(`Clicked at: ${relativeX}%, ${relativeY}%`)
-      
+
       // 既存のマーカーがクリック位置にある場合はスキップ
       const markerExists = this.isMarkerAtPosition(relativeX, relativeY)
       console.log("Checking for existing marker at position:", relativeX, relativeY, "exists:", markerExists)
@@ -89,14 +97,74 @@ export default class extends Controller {
         console.log("Marker already exists at this position")
         return
       }
-      
+
       console.log("Creating temp pin and focusing form...")
       console.log("About to call createTempPin with:", relativeX, relativeY)
-      // 仮ピンを表示し、右側のフォームにフォーカス
+      // 仮ピンを表示し、画像上にフォームを表示
       this.createTempPin(relativeX, relativeY)
-      console.log("createTempPin called, now calling focusCommentForm")
-      this.focusCommentForm(relativeX, relativeY)
+      console.log("createTempPin called, now calling showImageCommentForm")
+      this.showImageCommentForm(relativeX, relativeY)
     })
+  }
+
+  setupDocumentClickListener() {
+    // 既存のリスナーを削除
+    this.removeDocumentClickListener()
+
+    // 新しいリスナーを追加
+    this.documentClickListener = (event) => {
+      const form = this.element.querySelector("[data-image-comments-target='form']")
+      if (!form || form.classList.contains('hidden')) {
+        console.log('Form not found or already hidden')
+        return
+      }
+
+      console.log('Document click detected, checking if should hide form')
+      console.log('Click target:', event.target)
+
+      // フォームやその内部、画像がクリックされた場合は無視
+      if (form.contains(event.target)) {
+        console.log('Click was inside form, not hiding')
+        return
+      }
+
+      if (this.imageTarget && this.imageTarget.contains(event.target)) {
+        console.log('Click was on image, not hiding (will be handled by image click)')
+        return
+      }
+
+      if (this.tempPin && this.tempPin.contains(event.target)) {
+        console.log('Click was on temp pin, not hiding')
+        return
+      }
+
+      // それ以外の場所がクリックされたらフォームを閉じる
+      console.log('Outside click detected, hiding form')
+      this.hideForm()
+    }
+
+    document.addEventListener('click', this.documentClickListener)
+    console.log('Document click listener added')
+  }
+
+  removeDocumentClickListener() {
+    if (this.documentClickListener) {
+      document.removeEventListener('click', this.documentClickListener)
+      this.documentClickListener = null
+      console.log('Document click listener removed')
+    }
+  }
+
+  handleKeydown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      const form = event.target.closest('form')
+      if (form) {
+        // フォームを送信
+        const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+        form.dispatchEvent(submitEvent)
+      }
+    }
   }
 
   showClickIndicator(clientX, clientY) {
@@ -137,10 +205,10 @@ export default class extends Controller {
     tempPin.style.fontWeight = "bold"
     tempPin.dataset.tempPin = "true"
 
-    // 仮ピンにクリックで削除機能を追加
-    tempPin.addEventListener("click", () => {
-      this.removeTempPin()
-      this.clearCommentForm()
+    // 仮ピンにクリックイベントを追加（何もしない）
+    tempPin.addEventListener("click", (event) => {
+      event.stopPropagation() // イベントの伝播を停止（外部クリック検出を防ぐため）
+      // フォームは閉じない
     })
 
     console.log('Temp pin created and event listener added')
@@ -162,6 +230,39 @@ export default class extends Controller {
     // または既存の仮ピンを全て削除
     const existingTempPins = this.markersContainerTarget.querySelectorAll("[data-temp-pin]")
     existingTempPins.forEach(pin => pin.remove())
+  }
+
+  showImageCommentForm(x, y) {
+    const form = this.element.querySelector("[data-image-comments-target='form']")
+    if (!form) {
+      console.error('Comment form not found!')
+      return
+    }
+
+    // フォーム位置を設定
+    form.style.left = `${x}%`
+    form.style.top = `${y}%`
+    form.classList.remove('hidden')
+
+    // 隠しフィールドに座標を設定
+    const xField = form.querySelector('input[name="comment[x_position]"]')
+    const yField = form.querySelector('input[name="comment[y_position]"]')
+
+    if (xField) xField.value = x
+    if (yField) yField.value = y
+
+    // テキストエリアにフォーカス
+    const textarea = form.querySelector('textarea')
+    if (textarea) {
+      setTimeout(() => textarea.focus(), 50)
+    }
+
+    // ドキュメントクリックリスナーを少し遅延して設定（現在のクリックイベントが完了してから）
+    setTimeout(() => {
+      this.setupDocumentClickListener()
+    }, 100)
+
+    console.log('Image comment form shown at:', x, y)
   }
 
   focusCommentForm(x, y) {
@@ -210,6 +311,32 @@ export default class extends Controller {
     // ピンコメント状態表示をクリア
     if (typeof window.clearPinCommentStatus === 'function') {
       window.clearPinCommentStatus()
+    }
+  }
+
+  hideForm() {
+    const form = this.element.querySelector("[data-image-comments-target='form']")
+    if (form) {
+      form.classList.add('hidden')
+
+      // フォーム内容をクリア
+      const textarea = form.querySelector('textarea')
+      if (textarea) {
+        textarea.value = ''
+      }
+
+      // 仮ピンを削除
+      this.removeTempPin()
+
+      // 青い丸も削除
+      if (window.removeClickIndicator) {
+        window.removeClickIndicator()
+      }
+
+      // ドキュメントクリックリスナーを削除
+      this.removeDocumentClickListener()
+
+      console.log('Image comment form hidden')
     }
   }
 

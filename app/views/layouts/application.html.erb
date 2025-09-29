@@ -315,25 +315,32 @@
           console.log("Read Only:", this.readOnlyValue)
           console.log("Available targets:", this.targets)
           console.log("Has toggleButton target:", this.hasToggleButtonTarget)
-          
+
           // グローバル設定があれば初期状態はそれに従う、読み取り専用の場合
           if (this.readOnlyValue) {
             this.markersVisible = localStorage.getItem('globalCommentPinsVisible') === 'true'
           } else {
             this.markersVisible = false // 詳細ページでは従来通り
           }
-          
+
           // 読み取り専用でない場合のみクリックリスナーを設定
           if (!this.readOnlyValue) {
             this.setupImageClickListener()
           }
-          
+
           this.loadExistingComments()
           this.setupResizeListener()
           this.updateToggleButton()
-          
+
           // グローバルピン切り替えイベントを監視（すべてのモードで）
           window.addEventListener('globalCommentPinsToggled', this.handleGlobalToggle.bind(this))
+
+          // 外部クリック用の変数を初期化
+          this.documentClickListener = null
+        }
+
+        disconnect() {
+          this.removeDocumentClickListener()
         }
 
         setupResizeListener() {
@@ -359,17 +366,24 @@
           
           this.imageTarget.addEventListener("click", (event) => {
             console.log("Image clicked!")
+
+            // フォームが表示されている場合は閉じるだけ
+            if (this.hasFormTarget && !this.formTarget.classList.contains('hidden')) {
+              console.log("Form is visible, hiding it")
+              this.hideForm()
+              return
+            }
+
             const rect = this.imageTarget.getBoundingClientRect()
             const x = event.clientX - rect.left
             const y = event.clientY - rect.top
-            
+
             // 画像に対する相対的な位置（パーセンテージ）で保存
             const xPercent = (x / rect.width) * 100
             const yPercent = (y / rect.height) * 100
-            
+
             console.log(`Click position: ${x}, ${y} (${xPercent.toFixed(2)}%, ${yPercent.toFixed(2)}%)`)
-            
-            this.hideForm()
+
             this.showFormAt(x, y, xPercent, yPercent)
           })
         }
@@ -380,29 +394,78 @@
             console.error("Form target not found!")
             return
           }
-          
+
           this.formTarget.style.left = x + "px"
           this.formTarget.style.top = y + "px"
           this.formTarget.classList.remove("hidden")
           console.log("Form should be visible now")
-          
+
           // パーセンテージで位置を保存
           const xField = this.formTarget.querySelector("input[name='comment[x_position]']")
           const yField = this.formTarget.querySelector("input[name='comment[y_position]']")
-          
+
           if (xField) xField.value = xPercent.toFixed(2)
           if (yField) yField.value = yPercent.toFixed(2)
-          
+
           const textarea = this.formTarget.querySelector("textarea")
           if (textarea) {
             textarea.focus()
             textarea.value = ""
           }
+
+          // フォーム表示後に外部クリックリスナーを設定（少し遅延して）
+          setTimeout(() => {
+            this.setupDocumentClickListener()
+          }, 100)
         }
 
         hideForm() {
           if (this.hasFormTarget) {
             this.formTarget.classList.add("hidden")
+            // フォームを隠すときに外部クリックリスナーも削除
+            this.removeDocumentClickListener()
+
+            // 青い丸（クリックインジケーター）も削除
+            if (window.removeClickIndicator) {
+              window.removeClickIndicator()
+            }
+
+            console.log("Form hidden, document click listener removed, and click indicators cleared")
+          }
+        }
+
+        setupDocumentClickListener() {
+          // 既存のリスナーを削除
+          this.removeDocumentClickListener()
+
+          // 新しいリスナーを追加
+          this.documentClickListener = (event) => {
+            if (!this.hasFormTarget || this.formTarget.classList.contains('hidden')) {
+              return
+            }
+
+            console.log('Document click detected, checking if should hide form')
+
+            // フォーム内がクリックされた場合のみ無視
+            if (this.formTarget.contains(event.target)) {
+              console.log('Click was inside form, not hiding')
+              return
+            }
+
+            // それ以外の場所（画像を含む）がクリックされたらフォームを閉じる
+            console.log('Outside click detected, hiding form')
+            this.hideForm()
+          }
+
+          document.addEventListener('click', this.documentClickListener)
+          console.log('Document click listener added')
+        }
+
+        removeDocumentClickListener() {
+          if (this.documentClickListener) {
+            document.removeEventListener('click', this.documentClickListener)
+            this.documentClickListener = null
+            console.log('Document click listener removed')
           }
         }
 

@@ -77,7 +77,7 @@ class UsersController < ApplicationController
     @user = current_user
 
     if @user.update(user_params)
-      redirect_to mypage_path, notice: "ユーザーネームが更新されました。"
+      redirect_to mypage_path, notice: "プロフィールが更新されました。"
     else
       redirect_to mypage_path, alert: @user.errors.full_messages.join(", ")
     end
@@ -122,6 +122,6 @@ class UsersController < ApplicationController
   private
 
   def user_params
-    params.require(:user).permit(:name)
+    params.require(:user).permit(:name, :bio)
   end
 end

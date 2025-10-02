@@ -15,11 +15,18 @@
   <!-- Header -->
   <div class="rounded-2xl p-6 mb-6 shadow-lg" style="background: linear-gradient(to right,rgb(107, 180, 198),rgb(90, 170, 184));">
     <div class="flex justify-between items-start">
-      <div>
+      <div class="flex-1">
         <h1 class="text-4xl font-bold text-black bg-white bg-opacity-90 px-4 py-2 rounded-lg inline-block shadow-md"><%= current_user.name %>さんのマイページ</h1>
-        
+
+        <!-- プロフィール文 -->
+        <% if current_user.bio.present? %>
+          <div class="mt-4 bg-white bg-opacity-90 px-4 py-3 rounded-lg shadow-md">
+            <p class="text-gray-800 whitespace-pre-wrap"><%= current_user.bio %></p>
+          </div>
+        <% end %>
+
         <!-- フォロー数・フォロワー数 -->
-        <div class="flex gap-4 mt-6">
+        <div class="flex gap-4 mt-4">
           <div class="bg-white bg-opacity-90 px-3 py-1 rounded-lg text-sm shadow-md">
             <span class="text-xs text-gray-600">フォロワー</span>
             <span class="font-bold ml-1 text-gray-800"><%= current_user.followers_count %></span>
@@ -70,18 +77,29 @@
         📧 アカウント情報
       </h2>
       
-      <!-- ユーザーネーム編集フォーム -->
+      <!-- ユーザーネーム・プロフィール編集フォーム -->
       <div class="bg-blue-50 rounded-lg p-4 mb-4 border border-blue-200">
         <h3 class="font-semibold text-blue-800 mb-3 flex items-center gap-2">
-          👤 ユーザーネーム
+          👤 ユーザーネーム・プロフィール
         </h3>
-        <%= form_with model: current_user, url: update_user_path, method: :patch, local: true, class: "flex gap-2 items-end" do |form| %>
-          <div class="flex-1">
-            <%= form.text_field :name, value: current_user.name, 
-                class: "w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500", 
+        <%= form_with model: current_user, url: update_user_path, method: :patch, local: true do |form| %>
+          <div class="mb-4">
+            <%= form.label :name, "ユーザーネーム", class: "block text-sm font-medium text-blue-800 mb-1" %>
+            <%= form.text_field :name, value: current_user.name,
+                class: "w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
                 placeholder: "ユーザーネームを入力" %>
             <p class="text-xs text-blue-600 mt-1">※ 他のユーザーに表示される名前です</p>
           </div>
+
+          <div class="mb-4">
+            <%= form.label :bio, "プロフィール文", class: "block text-sm font-medium text-blue-800 mb-1" %>
+            <%= form.text_area :bio, value: current_user.bio,
+                class: "w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
+                placeholder: "自己紹介を入力してください",
+                rows: 4 %>
+            <p class="text-xs text-blue-600 mt-1">※ マイページ上部に表示されます</p>
+          </div>
+
           <%= form.submit "更新", class: "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" %>
         <% end %>
       </div>

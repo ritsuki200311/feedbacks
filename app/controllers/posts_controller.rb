@@ -163,17 +163,20 @@ class PostsController < ApplicationController
     respond_to do |format|
       format.html
       format.json do
+        # 画像がある投稿のみをフィルタリング
+        posts_with_images = @posts.select { |post| post.images.attached? }
+
         # 新しいサービス層を使用
         post_similarity_service = PostSimilarityService.new(current_user)
 
         # 階層的クラスタリングを生成
-        hierarchical_clusters = post_similarity_service.generate_hierarchical_clusters(@posts)
+        hierarchical_clusters = post_similarity_service.generate_hierarchical_clusters(posts_with_images)
 
         # 従来の類似度マトリックス（後方互換性のため）
-        similarity_matrix = post_similarity_service.calculate_similarity_matrix(@posts)
+        similarity_matrix = post_similarity_service.calculate_similarity_matrix(posts_with_images)
 
         render json: {
-          posts: @posts.map do |post|
+          posts: posts_with_images.map do |post|
             {
               id: post.id,
               title: post.title,

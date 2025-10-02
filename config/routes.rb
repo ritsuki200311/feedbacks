@@ -16,6 +16,8 @@ Rails.application.routes.draw do
 
   # ユーザープロフィール表示（Deviseと競合を避けるため）
   get "users/:id", to: "users#show", as: :user, constraints: { id: /\d+/ }
+  get "users/:id/followers", to: "users#followers", as: :user_followers, constraints: { id: /\d+/ }
+  get "users/:id/following", to: "users#following", as: :user_following, constraints: { id: /\d+/ }
   post "users/:id/follows", to: "follows#create", as: :user_follows
   delete "users/:id/follows", to: "follows#destroy", as: :destroy_user_follows
 

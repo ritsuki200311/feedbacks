@@ -17,8 +17,8 @@ class Post < ApplicationRecord
   has_many_attached :videos
   has_many_attached :audios
 
-  validates :title, presence: true, length: { minimum: 3, maximum: 100 }
-    validates :body, presence: true, length: { maximum: 10000 }
+  validates :title, presence: true, length: { minimum: 1, maximum: 100 }
+  validates :body, presence: true, length: { minimum: 1, maximum: 10000 }
 
 
   # validate :validate_video_format

@@ -2,13 +2,26 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["image", "markersContainer", "toggleButton", "toggleIcon", "toggleText", "markerCount"]
-  static values = { postId: Number }
+  static values = { postId: Number, imageIndex: Number }
 
   // コメント投稿成功時に青い丸を削除する関数
   removeClickIndicator() {
     // グローバル関数を呼び出し
     if (window.removeClickIndicator) {
       window.removeClickIndicator();
+    }
+  }
+
+  // キーボードイベントハンドラー（Enterキーでフォーム送信）
+  handleKeydown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      const form = event.target.closest('form')
+      if (form) {
+        // フォームを送信
+        const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+        form.dispatchEvent(submitEvent)
+      }
     }
   }
 
@@ -20,6 +33,13 @@ export default class extends Controller {
     const form = event.target;
     const formData = new FormData(form);
 
+    // デバッグ情報をログ出力
+    console.log('Form action:', form.action);
+    console.log('Form data entries:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}: ${value}`);
+    }
+
     fetch(form.action, {
       method: 'POST',
       headers: {
@@ -28,8 +48,18 @@ export default class extends Controller {
       },
       body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return response.json();
+    })
     .then(data => {
+      console.log('Response data:', data);
       if (data.success) {
         console.log('Comment submitted successfully');
         // 青い丸を削除
@@ -37,22 +67,27 @@ export default class extends Controller {
         // フォームを隠す
         this.clearCommentForm();
         // コメントをリロード
-        this.loadComments();
+        this.loadExistingComments();
       } else {
         console.error('Comment submission failed:', data.errors);
-        alert('コメントの投稿に失敗しました。');
+        alert('コメントの投稿に失敗しました: ' + JSON.stringify(data.errors));
       }
     })
     .catch(error => {
       console.error('Error submitting comment:', error);
-      alert('エラーが発生しました。');
+      alert('エラーが発生しました: ' + error.message);
     });
   }
 
   connect() {
-    console.log("Image Comments Controller connected! [UPDATED VERSION]")
+    console.log("🔥🔥🔥 NEW VERSION 2025-10-02 🔥🔥🔥")
+    console.log("=== Image Comments Controller connected! ===")
     console.log("Post ID:", this.postIdValue)
+    console.log("Image Index:", this.imageIndexValue)
     console.log("Image target:", this.hasImageTarget ? "found" : "not found")
+    console.log("Markers container:", this.hasMarkersContainerTarget ? "found" : "not found")
+    console.log("Element ID:", this.element.id || "no-id")
+    console.log("==========================================")
     this.tempPin = null
     this.documentClickListener = null
     this.setupImageClickListener()
@@ -155,17 +190,6 @@ export default class extends Controller {
     }
   }
 
-  handleKeydown(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault()
-      const form = event.target.closest('form')
-      if (form) {
-        // フォームを送信
-        const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
-        form.dispatchEvent(submitEvent)
-      }
-    }
-  }
 
   showClickIndicator(clientX, clientY) {
     console.log('showClickIndicator called in controller at:', clientX, clientY);
@@ -247,9 +271,27 @@ export default class extends Controller {
     // 隠しフィールドに座標を設定
     const xField = form.querySelector('input[name="comment[x_position]"]')
     const yField = form.querySelector('input[name="comment[y_position]"]')
+    const imageIndexField = form.querySelector('input[name="comment[image_index]"]')
+
+    console.log('Form fields found:', {
+      xField: !!xField,
+      yField: !!yField,
+      imageIndexField: !!imageIndexField
+    })
 
     if (xField) xField.value = x
     if (yField) yField.value = y
+    if (imageIndexField) {
+      console.log("Current imageIndexValue:", this.imageIndexValue)
+      console.log("Type of imageIndexValue:", typeof this.imageIndexValue)
+      // 0も有効な値なので、undefinedやnullの場合のみ0にフォールバック
+      const indexValue = (this.imageIndexValue !== undefined && this.imageIndexValue !== null) ? this.imageIndexValue : 0
+      console.log("Setting image index to:", indexValue)
+      imageIndexField.value = indexValue
+      console.log("Image index field value after setting:", imageIndexField.value)
+    } else {
+      console.error("Image index field not found!")
+    }
 
     // テキストエリアにフォーカス
     const textarea = form.querySelector('textarea')
@@ -262,7 +304,7 @@ export default class extends Controller {
       this.setupDocumentClickListener()
     }, 100)
 
-    console.log('Image comment form shown at:', x, y)
+    console.log('Image comment form shown at:', x, y, 'for image index:', this.imageIndexValue)
   }
 
   focusCommentForm(x, y) {
@@ -292,22 +334,42 @@ export default class extends Controller {
   }
 
   clearCommentForm() {
-    const commentForm = document.querySelector("[data-comment-form-target='form']")
-    if (!commentForm) return
-    
-    // 隠しフィールドをクリア
-    const xField = commentForm.querySelector("[data-comment-form-target='xPosition']")
-    const yField = commentForm.querySelector("[data-comment-form-target='yPosition']")
-    
-    if (xField) xField.value = ""
-    if (yField) yField.value = ""
-    
-    // プレースホルダーを元に戻す
-    const textarea = commentForm.querySelector("[data-comment-form-target='textarea']")
-    if (textarea) {
-      textarea.placeholder = "画像を見ながらコメントを書いてみましょう..."
+    // ピンコメント用のフォームをクリア
+    const form = this.element.querySelector("[data-image-comments-target='form']")
+    if (form) {
+      // フォーム内容をクリア
+      const textarea = form.querySelector('textarea')
+      if (textarea) {
+        textarea.value = ''
+      }
+
+      // 隠しフィールドをクリア
+      const xField = form.querySelector('input[name="comment[x_position]"]')
+      const yField = form.querySelector('input[name="comment[y_position]"]')
+      const imageIndexField = form.querySelector('input[name="comment[image_index]"]')
+
+      if (xField) xField.value = ""
+      if (yField) yField.value = ""
+      if (imageIndexField) imageIndexField.value = ""
     }
-    
+
+    // 右側のコメントフォームもクリア（存在する場合）
+    const commentForm = document.querySelector("[data-comment-form-target='form']")
+    if (commentForm) {
+      // 隠しフィールドをクリア
+      const xField = commentForm.querySelector("[data-comment-form-target='xPosition']")
+      const yField = commentForm.querySelector("[data-comment-form-target='yPosition']")
+
+      if (xField) xField.value = ""
+      if (yField) yField.value = ""
+
+      // プレースホルダーを元に戻す
+      const textarea = commentForm.querySelector("[data-comment-form-target='textarea']")
+      if (textarea) {
+        textarea.placeholder = "画像を見ながらコメントを書いてみましょう..."
+      }
+    }
+
     // ピンコメント状態表示をクリア
     if (typeof window.clearPinCommentStatus === 'function') {
       window.clearPinCommentStatus()
@@ -347,7 +409,7 @@ export default class extends Controller {
     }
 
     const markers = this.markersContainerTarget.querySelectorAll("[data-comment-id]")
-    console.log("Checking", markers.length, "existing markers")
+    console.log("Checking", markers.length, "existing markers for image index", this.imageIndexValue)
 
     for (let marker of markers) {
       const markerX = parseFloat(marker.style.left)
@@ -355,26 +417,54 @@ export default class extends Controller {
 
       console.log("Marker at:", markerX, markerY, "vs clicked:", parseFloat(x), parseFloat(y))
 
+      // 同じ画像インデックスのマーカーのみチェック（既にフィルタリングされているので現在は不要だが、念のため確認）
       if (Math.abs(markerX - parseFloat(x)) < tolerance &&
           Math.abs(markerY - parseFloat(y)) < tolerance) {
         console.log("Found existing marker within tolerance")
         return true
       }
     }
-    console.log("No existing marker found at this position")
+    console.log("No existing marker found at this position for this image")
     return false
   }
 
   async loadExistingComments() {
     try {
+      console.log(`[Image ${this.imageIndexValue}] Loading existing comments...`)
       const response = await fetch(`/posts/${this.postIdValue}/comments.json`)
       if (!response.ok) {
         console.error("Failed to load comments")
         return
       }
-      
+
       const comments = await response.json()
-      this.renderComments(comments)
+      console.log(`[Image ${this.imageIndexValue}] Total comments loaded:`, comments.length)
+
+      // 画像上のコメントのみを抽出
+      const pinComments = comments.filter(c => c.x_position !== null && c.y_position !== null)
+      console.log(`[Image ${this.imageIndexValue}] Pin comments (with x/y):`, pinComments.length)
+
+      // 現在の画像インデックスに対応するコメントのみをフィルタリング
+      const filteredComments = pinComments.filter(comment => {
+        const commentImageIndex = comment.image_index
+        const currentImageIndex = this.imageIndexValue
+
+        // 厳密な比較：image_indexがnullまたはundefinedの場合は0として扱う
+        const effectiveCommentIndex = (commentImageIndex === null || commentImageIndex === undefined) ? 0 : parseInt(commentImageIndex)
+        const effectiveCurrentIndex = (currentImageIndex === null || currentImageIndex === undefined) ? 0 : parseInt(currentImageIndex)
+
+        const shouldInclude = effectiveCommentIndex === effectiveCurrentIndex
+
+        if (comment.x_position !== null) {
+          console.log(`[Image ${this.imageIndexValue}] Comment ${comment.id} (body: "${comment.body}"): image_index=${commentImageIndex} -> effective=${effectiveCommentIndex}, match=${shouldInclude}`)
+        }
+
+        return shouldInclude
+      })
+
+      console.log(`[Image ${this.imageIndexValue}] FINAL filtered comments:`, filteredComments.length)
+      console.log(`[Image ${this.imageIndexValue}] Filtered comment IDs:`, filteredComments.map(c => c.id))
+      this.renderComments(filteredComments)
     } catch (error) {
       console.error("Error loading comments:", error)
       // エラーが出た場合はページのデータから読み込む
@@ -406,15 +496,21 @@ export default class extends Controller {
   }
 
   renderComments(comments) {
+    console.log(`>>> renderComments called for image index ${this.imageIndexValue}`)
+    console.log(`>>> Rendering ${comments.length} comments`)
+
     const container = this.markersContainerTarget
     container.innerHTML = "" // 既存のマーカーをクリア
-    
+
     // 画像上のコメントのみをフィルタリング
-    const imageComments = comments.filter(comment => 
+    const imageComments = comments.filter(comment =>
       comment.x_position !== null && comment.y_position !== null
     )
-    
+
+    console.log(`>>> After filtering, ${imageComments.length} image comments to render`)
+
     imageComments.forEach((comment, index) => {
+      console.log(`>>> Creating marker ${index + 1} for comment ${comment.id} at (${comment.x_position}, ${comment.y_position})`)
       this.createMarker(comment, index + 1)
     })
   }

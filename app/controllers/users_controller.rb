@@ -5,12 +5,33 @@ class UsersController < ApplicationController
 
   def show
     @user = User.find(params[:id])
-    if user_signed_in? && @user == current_user
-      redirect_to mypage_path
-      return
+
+    respond_to do |format|
+      format.html do
+        if user_signed_in? && @user == current_user
+          redirect_to mypage_path
+          return
+        end
+        @posts = @user.posts.where(is_private: false).includes(:votes, :comments, images_attachments: :blob).order(created_at: :desc)
+        @supporter_profile = @user.supporter_profile
+      end
+
+      format.json do
+        render json: {
+          id: @user.id,
+          name: @user.name,
+          email: @user.email,
+          bio: @user.preference&.bio,
+          coins: @user.coins,
+          rank: @user.rank,
+          supporter_profile: @user.supporter_profile ? {
+            can_feedback: @user.supporter_profile.can_feedback,
+            creation_genres: @user.supporter_profile.creation_genres,
+            creation_experience: @user.supporter_profile.creation_experience
+          } : nil
+        }
+      end
     end
-    @posts = @user.posts.where(is_private: false).includes(:votes, :comments, images_attachments: :blob).order(created_at: :desc)
-    @supporter_profile = @user.supporter_profile
   end
 
 
@@ -59,6 +80,42 @@ class UsersController < ApplicationController
       redirect_to mypage_path, notice: "ユーザーネームが更新されました。"
     else
       redirect_to mypage_path, alert: @user.errors.full_messages.join(", ")
+    end
+  end
+
+  def followers
+    @user = User.find(params[:id])
+    @followers = @user.followers
+
+    respond_to do |format|
+      format.json do
+        render json: @followers.map { |follower|
+          {
+            id: follower.id,
+            name: follower.name,
+            bio: follower.preference&.bio || follower.supporter_profile&.bio,
+            rank: follower.rank
+          }
+        }
+      end
+    end
+  end
+
+  def following
+    @user = User.find(params[:id])
+    @following = @user.followings
+
+    respond_to do |format|
+      format.json do
+        render json: @following.map { |user|
+          {
+            id: user.id,
+            name: user.name,
+            bio: user.preference&.bio || user.supporter_profile&.bio,
+            rank: user.rank
+          }
+        }
+      end
     end
   end
 

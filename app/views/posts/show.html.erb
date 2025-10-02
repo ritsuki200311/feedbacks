@@ -61,7 +61,7 @@
               <!-- 単一画像の場合 -->
               <% image = @post.images.first %>
               <div class="text-center">
-                <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
+                <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>" data-image-comments-image-index-value="0">
                   <%= image_tag image, class: "max-w-md rounded-lg shadow cursor-crosshair", data: { "image-comments-target": "image" }, onclick: "testClickIndicator(event)" %>
 
                   <!-- 右下の拡大マーク -->
@@ -81,6 +81,7 @@
                     <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
                       <%= f.hidden_field :x_position %>
                       <%= f.hidden_field :y_position %>
+                      <%= f.hidden_field :image_index %>
                       <div class="flex items-center gap-2">
                         <%= f.text_area :body, rows: 1, placeholder: "コメントを追加", class: "w-48 p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none", required: true, data: { action: "keydown->image-comments#handleKeydown" } %>
                         <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors" title="コメントを送信">
@@ -117,7 +118,7 @@
                       <span class="text-sm font-medium text-gray-700"><%= index + 1 %>枚目</span>
                     </div>
                     <div class="text-center">
-                      <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
+                      <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>" data-image-comments-image-index-value="<%= index %>">
                         <%= image_tag image, class: "max-w-md rounded-lg shadow cursor-crosshair", data: { "image-comments-target": "image" }, onclick: "testClickIndicator(event)" %>
 
                         <!-- 右下の拡大マーク -->
@@ -137,6 +138,7 @@
                           <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
                             <%= f.hidden_field :x_position %>
                             <%= f.hidden_field :y_position %>
+                            <%= f.hidden_field :image_index %>
                             <div class="flex items-center gap-2">
                               <%= f.text_area :body, rows: 1, placeholder: "コメントを追加", class: "w-48 p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none", required: true, data: { action: "keydown->image-comments#handleKeydown" } %>
                               <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors" title="コメントを送信">
@@ -1083,27 +1085,67 @@
       <% if user_can_view_comments?(current_user, @post) %>
         <div class="space-y-4 max-h-64 overflow-y-auto border border-blue-200 rounded-lg p-3 bg-blue-50" data-controller="compact-comments">
           <% if image_comments.any? %>
-            <% image_comments.each_with_index do |comment, index| %>
-              <div class="bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer hover:bg-blue-100"
-                   data-comment-id="<%= comment.id %>"
-                   data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
-                <div class="flex items-start justify-between mb-3">
-                  <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                      <%= index + 1 %>
+            <% if @post.images.count > 1 %>
+              <!-- 複数画像の場合は画像ごとに分類して表示 -->
+              <% @post.images.each_with_index do |image, img_index| %>
+                <% image_specific_comments = image_comments.where(image_index: img_index).order(:created_at) %>
+                <% if image_specific_comments.any? %>
+                  <div class="mb-4">
+                    <div class="text-sm font-semibold text-blue-700 mb-2 pb-1 border-b border-blue-300">
+                      <%= img_index + 1 %>枚目の画像 (<%= image_specific_comments.count %>件)
                     </div>
-                    <div>
-                      <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
-                      <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
-                    </div>
-                  </div>
+                    <div class="space-y-3">
+                      <% image_specific_comments.each_with_index do |comment, index| %>
+                        <div class="bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer hover:bg-blue-100"
+                             data-comment-id="<%= comment.id %>"
+                             data-image-index="<%= img_index %>"
+                             data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
+                          <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                              <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                <%= index + 1 %>
+                              </div>
+                              <div>
+                                <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
+                                <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
+                              </div>
+                            </div>
 
-                  <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
-                    画像上のコメント
+                            <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
+                              画像上のコメント
+                            </div>
+                          </div>
+                          <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
+                        </div>
+                      <% end %>
+                    </div>
                   </div>
+                <% end %>
+              <% end %>
+            <% else %>
+              <!-- 単一画像の場合は通常表示 -->
+              <% image_comments.each_with_index do |comment, index| %>
+                <div class="bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer hover:bg-blue-100"
+                     data-comment-id="<%= comment.id %>"
+                     data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        <%= index + 1 %>
+                      </div>
+                      <div>
+                        <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
+                        <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
+                      </div>
+                    </div>
+
+                    <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
+                      画像上のコメント
+                    </div>
+                  </div>
+                  <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
                 </div>
-                <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
-              </div>
+              <% end %>
             <% end %>
           <% else %>
             <div class="text-center py-8 text-blue-500">

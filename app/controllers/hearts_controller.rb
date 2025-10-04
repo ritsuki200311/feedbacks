@@ -6,7 +6,7 @@ class HeartsController < ApplicationController
 
     # 投稿者のみが他人のコメントにハートを付けられる
     unless current_user == comment.post.user && current_user != comment.user
-      render json: { error: 'Unauthorized' }, status: :forbidden
+      render json: { error: "Unauthorized" }, status: :forbidden
       return
     end
 

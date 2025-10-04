@@ -8,7 +8,7 @@ class AiCommentAssistantController < ApplicationController
 
     # AI機能を一時的に停止し、フォールバック値を返す
     Rails.logger.info "AI analysis requested for post #{@post.id} - returning fallback values (API disabled)"
-    
+
     result = {
       success: true,
       comment_examples: [
@@ -18,16 +18,16 @@ class AiCommentAssistantController < ApplicationController
       ],
       observation_points: [
         "作品の構成や全体のバランスに注目してみましょう",
-        "使用されている技法や表現手法を観察してみましょう", 
+        "使用されている技法や表現手法を観察してみましょう",
         "作品から受ける感情や印象を言葉にしてみましょう",
         "改善点や発展の可能性について考えてみましょう"
       ],
       vocabularies: [
-        "美しい", "印象的", "繊細", "力強い", 
+        "美しい", "印象的", "繊細", "力強い",
         "調和", "表現力", "創造的", "独創的"
       ]
     }
-    
+
     render json: result
   end
 
@@ -37,7 +37,7 @@ class AiCommentAssistantController < ApplicationController
     # ユーザーごとのレート制限（5分間に3回まで）
     rate_limit_key = "ai_rate_limit_user_#{current_user.id}"
     current_count = Rails.cache.read(rate_limit_key) || 0
-    
+
     if current_count >= 3
       render json: {
         success: false,
@@ -45,7 +45,7 @@ class AiCommentAssistantController < ApplicationController
       }, status: 429
       return
     end
-    
+
     # カウントを更新
     Rails.cache.write(rate_limit_key, current_count + 1, expires_in: 5.minutes)
   end

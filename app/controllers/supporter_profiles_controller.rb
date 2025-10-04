@@ -4,7 +4,7 @@ class SupporterProfilesController < ApplicationController
 
   def index
     @supporter_profiles = SupporterProfile.includes(:user)
-    
+
     # フリーワード検索 - 複数のフィールドを対象にした全文検索
     if params[:search].present?
       search_term = "%#{params[:search]}%"
@@ -19,7 +19,7 @@ class SupporterProfilesController < ApplicationController
         search_term, search_term, search_term, search_term, search_term, search_term, search_term
       )
     end
-    
+
     @supporter_profiles = @supporter_profiles.page(params[:page]).per(20)
   end
 

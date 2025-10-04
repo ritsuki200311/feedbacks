@@ -35,7 +35,7 @@ class HomeController < ApplicationController
       end
 
       # 「最新」タブが選択された場合は時系列順、それ以外はレコメンド順
-      if params[:sort] == 'latest'
+      if params[:sort] == "latest"
         @posts = filtered_posts.order(created_at: :desc)
       else
         # レコメンドシステムを使用してソート（バズ回避設計）
@@ -72,7 +72,7 @@ class HomeController < ApplicationController
       end
 
       # 「最新」タブが選択された場合は時系列順
-      if params[:sort] == 'latest'
+      if params[:sort] == "latest"
         @posts = posts.order(created_at: :desc)
       else
         @posts = posts.order(created_at: :desc)  # 未ログインユーザーは常に時系列順
@@ -83,7 +83,7 @@ class HomeController < ApplicationController
     # 最近の高評価コメントを取得
     begin
       # 過去7日間のコメントを取得し、Rubyでスコア計算
-      recent_comments = Comment.where('created_at >= ?', 7.days.ago)
+      recent_comments = Comment.where("created_at >= ?", 7.days.ago)
                               .includes(:user, :post, :votes)
                               .order(created_at: :desc)
 

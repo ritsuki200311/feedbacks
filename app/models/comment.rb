@@ -20,19 +20,19 @@ class Comment < ApplicationRecord
   # 高評価コメントを取得するスコープ
   scope :highly_rated, -> {
     joins(:votes)
-      .select('comments.*, COUNT(votes.id) as vote_count, SUM(votes.value) as net_score')
-      .group('comments.id')
-      .having('SUM(votes.value) > 0') # ネットスコアがプラスのもの
-      .order('SUM(votes.value) DESC, COUNT(votes.id) DESC, comments.created_at DESC')
+      .select("comments.*, COUNT(votes.id) as vote_count, SUM(votes.value) as net_score")
+      .group("comments.id")
+      .having("SUM(votes.value) > 0") # ネットスコアがプラスのもの
+      .order("SUM(votes.value) DESC, COUNT(votes.id) DESC, comments.created_at DESC")
   }
 
-  scope :recent_highly_rated, -> (limit = 5) {
-    where('comments.created_at >= ?', 7.days.ago)
+  scope :recent_highly_rated, ->(limit = 5) {
+    where("comments.created_at >= ?", 7.days.ago)
       .joins(:votes)
-      .select('comments.*, COUNT(votes.id) as vote_count, SUM(votes.value) as net_score')
-      .group('comments.id')
-      .having('SUM(votes.value) > 0')
-      .order('SUM(votes.value) DESC, COUNT(votes.id) DESC, comments.created_at DESC')
+      .select("comments.*, COUNT(votes.id) as vote_count, SUM(votes.value) as net_score")
+      .group("comments.id")
+      .having("SUM(votes.value) > 0")
+      .order("SUM(votes.value) DESC, COUNT(votes.id) DESC, comments.created_at DESC")
       .limit(limit)
   }
 

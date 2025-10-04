@@ -6,9 +6,17 @@ class PostsController < ApplicationController
 
   def new
     @post = Post.new
+    # セッションからファイル情報を復元
+    @submitted_files_info = session[:submitted_files_info]
   end
 
   def create
+    Rails.logger.debug "=== POST CREATE DEBUG ==="
+    Rails.logger.debug "All params: #{params.inspect}"
+    Rails.logger.debug "post_params: #{post_params.inspect}"
+    Rails.logger.debug "files in params[:post]: #{params[:post][:files].inspect if params[:post]}"
+    Rails.logger.debug "=========================="
+
     @post = Post.new(post_params.except(:files))
     @post.user = current_user
 
@@ -22,16 +30,51 @@ class PostsController < ApplicationController
     respond_to do |format|
       if @post.valid?
         @post.save
+        Rails.logger.debug "Post saved successfully with ID: #{@post.id}"
 
-        # filesパラメータを適切なアタッチメントに振り分け
-        if params[:post][:files].present?
+        # filesパラメータを適切なアタッチメントに振り分け（トランザクション外で実行）
+        if params[:post] && params[:post][:files].present?
           Rails.logger.debug "Files parameter: #{params[:post][:files].inspect}"
           Rails.logger.debug "Files parameter class: #{params[:post][:files].class}"
           params[:post][:files].each_with_index do |file, index|
             Rails.logger.debug "File #{index}: #{file.inspect} (class: #{file.class})"
           end
-          attach_files_to_post(@post, params[:post][:files])
+
+          # バリデーションを回避するため、トランザクション外でアタッチメントを追加
+          files_to_attach = params[:post][:files].reject(&:blank?)
+
+          # 画像ファイル数制限チェック
+          image_files = files_to_attach.select { |f| f.respond_to?(:content_type) && f.content_type&.start_with?('image/') }
+          if image_files.count > 10
+            @post.errors.add(:images, "は10枚まで添付できます")
+            format.html { render :new, status: :unprocessable_entity }
+            return
+          end
+          files_to_attach.each do |file|
+            next unless file.respond_to?(:content_type) && file.respond_to?(:original_filename)
+
+            Rails.logger.debug "Processing file: #{file.original_filename} (#{file.content_type})"
+
+            case file.content_type
+            when /^image\//
+              @post.images.attach(file)
+              Rails.logger.debug "Attached image: #{file.original_filename}"
+            when /^video\//
+              @post.videos.attach(file)
+              Rails.logger.debug "Attached video: #{file.original_filename}"
+            when /^audio\//
+              @post.audios.attach(file)
+              Rails.logger.debug "Attached audio: #{file.original_filename}"
+            end
+          end
+
+          Rails.logger.debug "After attaching files: #{@post.images.count} images, #{@post.videos.count} videos, #{@post.audios.count} audios"
+        else
+          Rails.logger.debug "No files parameter found or files parameter is empty"
         end
+
+        # 成功時にセッションをクリア
+        session[:submitted_files_info] = nil
 
         if params[:commit] == "投稿する"
           format.html { redirect_to root_path, notice: "投稿を公開しました。" }
@@ -41,6 +84,7 @@ class PostsController < ApplicationController
         end
       else
         Rails.logger.debug "Post validation failed: #{@post.errors.full_messages.join(', ')}"
+        # エラー時のファイル情報は保持しない（通常のプレビュー機能に任せる）
         format.html { render :new, status: :unprocessable_entity }
         format.turbo_stream { render :new, status: :unprocessable_entity }
       end
@@ -119,17 +163,20 @@ class PostsController < ApplicationController
     respond_to do |format|
       format.html
       format.json do
+        # 画像がある投稿のみをフィルタリング
+        posts_with_images = @posts.select { |post| post.images.attached? }
+
         # 新しいサービス層を使用
         post_similarity_service = PostSimilarityService.new(current_user)
 
         # 階層的クラスタリングを生成
-        hierarchical_clusters = post_similarity_service.generate_hierarchical_clusters(@posts)
+        hierarchical_clusters = post_similarity_service.generate_hierarchical_clusters(posts_with_images)
 
         # 従来の類似度マトリックス（後方互換性のため）
-        similarity_matrix = post_similarity_service.calculate_similarity_matrix(@posts)
+        similarity_matrix = post_similarity_service.calculate_similarity_matrix(posts_with_images)
 
         render json: {
-          posts: @posts.map do |post|
+          posts: posts_with_images.map do |post|
             {
               id: post.id,
               title: post.title,
@@ -341,25 +388,6 @@ class PostsController < ApplicationController
 
   private
 
-  def attach_files_to_post(post, files)
-    files.each do |file|
-      # ファイルオブジェクトかどうかを確認
-      next unless file.respond_to?(:content_type) && file.respond_to?(:original_filename)
-
-      Rails.logger.debug "Attaching file: #{file.original_filename} (#{file.content_type})"
-
-      case file.content_type
-      when /^image\//
-        post.images.attach(file)
-      when /^video\//
-        post.videos.attach(file)
-      when /^audio\//
-        post.audios.attach(file)
-      else
-        Rails.logger.warn "Unknown file type: #{file.content_type} for file #{file.original_filename}"
-      end
-    end
-  end
 
   def extract_tags(tag_string)
     return [] if tag_string.blank?
@@ -396,7 +424,18 @@ class PostsController < ApplicationController
     Rails.logger.debug "Query: '#{@query}'"
     Rails.logger.debug "Query present?: #{@query.present?}"
 
-    if @query.present?
+    # ジャンルフィルタリング用のパラメータを取得
+    @genre_filter = params[:genre_filter]
+    Rails.logger.debug "Genre filter: '#{@genre_filter}'"
+
+    if @genre_filter.present?
+      # ジャンルが選択されている場合
+      @results = User.joins(:supporter_profile).where(
+        "supporter_profiles.support_genres::text ILIKE ?",
+        "%#{@genre_filter}%"
+      ).distinct.limit(20)
+      Rails.logger.debug "Genre filter results: #{@results.map(&:name)}"
+    elsif @query.present?
       if @query.match?(/\A\d+\z/)
         # 数字のみの場合はIDで検索
         Rails.logger.debug "Searching by ID: #{@query.to_i}"

@@ -17,13 +17,14 @@ class Post < ApplicationRecord
   has_many_attached :videos
   has_many_attached :audios
 
-  validates :title, presence: true, length: { minimum: 3, maximum: 100 }
-    validates :body, presence: true, length: { maximum: 10000 }
+  validates :title, presence: true, length: { minimum: 1, maximum: 100 }
+  validates :body, presence: true, length: { minimum: 1, maximum: 10000 }
 
 
-  validate :validate_video_format
-  validate :validate_image_format
-  validate :validate_audio_format
+  # validate :validate_video_format
+  # validate :validate_image_format
+  # validate :validate_audio_format
+  # validate :validate_image_count
 
   has_many :comments, dependent: :destroy
   has_many :votes, as: :votable, dependent: :destroy
@@ -74,8 +75,8 @@ class Post < ApplicationRecord
     return unless images.attached?
 
     images.each do |image|
-      unless image.content_type.in?(%w[image/jpeg image/png image/gif])
-        errors.add(:images, "はJPEG、PNG、またはGIF形式の画像を選択してください")
+      unless image.content_type.in?(%w[image/jpeg image/png image/gif image/webp])
+        errors.add(:images, "はJPEG、PNG、GIF、またはWebP形式の画像を選択してください")
       end
 
       if image.byte_size > 5.megabytes
@@ -95,6 +96,14 @@ class Post < ApplicationRecord
       if audio.byte_size > 100.megabytes
         errors.add(:audios, "は100MB以下のサイズにしてください")
       end
+    end
+  end
+
+  def validate_image_count
+    return unless images.attached?
+
+    if images.count > 10
+      errors.add(:images, "は10枚まで添付できます")
     end
   end
 end

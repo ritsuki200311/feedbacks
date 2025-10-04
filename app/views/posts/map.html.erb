@@ -1,57 +1,41 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-  <div class="py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">作品マップ</h1>
-    
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 space-y-4 lg:space-y-0">
-        <p class="text-gray-600">
-          投稿同士の関係性を可視化したネットワーク図です。類似した作品は近くに配置され、自然なクラスタを形成します。
-        </p>
-        <div class="flex flex-col lg:flex-row items-start lg:items-center space-y-2 lg:space-y-0 lg:space-x-6">
-          <div class="flex items-center space-x-4">
-            <div class="flex items-center">
-              <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-              <span class="text-sm text-gray-600">他のユーザーの投稿</span>
-            </div>
-            <div class="flex items-center">
-              <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-              <span class="text-sm text-gray-600">あなたの投稿</span>
-            </div>
+<div class="relative w-full" style="height: 100vh;">
+  <!-- 固定ヘッダー -->
+  <div class="absolute top-0 left-0 right-0 z-10 bg-white border-b border-gray-200 p-4">
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-4 lg:space-y-0">
+      <div class="flex items-center space-x-4">
+        <h1 class="text-2xl font-bold text-gray-900">作品マップ</h1>
+        <div class="flex items-center space-x-3">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-blue-400 rounded mr-2"></div>
+            <span class="text-xs text-gray-600">他のユーザー</span>
           </div>
-          <!-- 表示制御パネル -->
-          <div class="flex flex-col space-y-2 text-xs">
-            <div class="flex items-center space-x-2">
-              <label for="similarity-threshold" class="text-gray-600 font-medium">関連度フィルタ:</label>
-              <select id="similarity-threshold" name="similarity-threshold" class="px-2 py-1 border border-gray-300 rounded text-xs" aria-describedby="threshold-description">
-                <option value="0.1">すべて表示 (10%+)</option>
-                <option value="0.3" selected>標準 (30%+)</option>
-                <option value="0.5">強い関連のみ (50%+)</option>
-                <option value="0.7">非常に強い関連 (70%+)</option>
-              </select>
-            </div>
-            <!-- ズーム情報表示 -->
-            <div class="flex items-center space-x-2">
-              <span class="text-gray-600 font-medium">ズームレベル:</span>
-              <span id="zoom-info" class="px-2 py-1 bg-gray-100 rounded text-xs">俯瞰表示</span>
-            </div>
-            <div id="threshold-description" class="sr-only">投稿間の関連線を表示する類似度の最小値を選択できます</div>
-            <div class="text-gray-500">
-              <div class="hidden md:block">🔍 スクロール: ズーム | 🖱️ ホバー: 詳細 | 🎯 クリック: 投稿表示</div>
-              <div class="block md:hidden">📱 ピンチ: ズーム | 👆 タップ: 投稿表示</div>
-            </div>
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-red-400 rounded mr-2"></div>
+            <span class="text-xs text-gray-600">あなた</span>
           </div>
         </div>
       </div>
-      
-      <div id="network-map" class="w-full border border-gray-200 rounded-xl bg-gradient-to-br from-white to-gray-50 shadow-inner" style="height: 600px; min-height: 600px;"></div>
-      
-      
-      <div id="post-details" class="mt-6 p-4 bg-gray-50 rounded-md hidden">
-        <h4 class="font-semibold text-gray-900 mb-2">投稿詳細</h4>
-        <div id="post-content"></div>
+      <!-- 表示制御パネル -->
+      <div class="flex items-center space-x-4 text-xs">
+        <div class="flex items-center space-x-2">
+          <label for="similarity-threshold" class="text-gray-600 font-medium">関連度:</label>
+          <select id="similarity-threshold" name="similarity-threshold" class="px-2 py-1 border border-gray-300 rounded text-xs">
+            <option value="0.1">すべて (10%+)</option>
+            <option value="0.3" selected>標準 (30%+)</option>
+            <option value="0.5">強い関連 (50%+)</option>
+            <option value="0.7">非常に強い (70%+)</option>
+          </select>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="text-gray-600 font-medium">ズーム:</span>
+          <span id="zoom-info" class="px-2 py-1 bg-gray-100 rounded text-xs">俯瞰表示</span>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- フルスクリーンマップ -->
+  <div id="network-map" class="w-full h-full bg-white"></div>
 </div>
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -468,15 +452,20 @@ class PostsMapController {
       .attr("class", "node-group")
       .attr("cursor", "pointer");
 
-    // オシャレなノードスタイル
-    const node = nodeGroup.append("circle")
-      .attr("r", d => {
-        const radius = d.radius || 12; // フォールバック値
-        console.log(`Node ${d.id} radius: ${radius}`);
-        return radius;
+    // オシャレなノードスタイル（四角形）
+    const node = nodeGroup.append("rect")
+      .attr("width", d => {
+        const size = (d.radius || 12) * 2; // 直径を幅に
+        console.log(`Node ${d.id} size: ${size}`);
+        return size;
       })
+      .attr("height", d => (d.radius || 12) * 2)
+      .attr("x", d => -(d.radius || 12))
+      .attr("y", d => -(d.radius || 12))
+      .attr("rx", 4) // 角丸
+      .attr("ry", 4)
       .attr("fill", d => {
-        const color = (d.isCurrentUser === true) ? "#ef4444" : "#3b82f6";
+        const color = (d.isCurrentUser === true) ? "#f87171" : "#60a5fa";
         console.log(`Node ${d.id} isCurrentUser: ${d.isCurrentUser}, color: ${color}`);
         return color;
       })
@@ -484,7 +473,7 @@ class PostsMapController {
       .attr("stroke-width", 3)
       .style("filter", "drop-shadow(0px 2px 4px rgba(0,0,0,0.2))");
 
-    console.log('Node circles created:', node.size());
+    console.log('Node rectangles created:', node.size());
 
     // 画像がある場合のサムネイル
     const imageNodes = nodeGroup.filter(d => d.imageUrl && d.imageUrl !== null && d.imageUrl !== "");
@@ -499,10 +488,13 @@ class PostsMapController {
     imageNodes.each(function(d) {
       defs.append("clipPath")
         .attr("id", `clip-${d.id}`)
-        .append("circle")
-        .attr("r", (d.radius || 12) - 3)
-        .attr("cx", 0)
-        .attr("cy", 0);
+        .append("rect")
+        .attr("width", ((d.radius || 12) - 3) * 2)
+        .attr("height", ((d.radius || 12) - 3) * 2)
+        .attr("x", -((d.radius || 12) - 3))
+        .attr("y", -((d.radius || 12) - 3))
+        .attr("rx", 4)
+        .attr("ry", 4);
     });
 
     // 画像を追加
@@ -1093,36 +1085,8 @@ class PostsMapController {
   }
 
   showPostDetails(post) {
-    const detailsDiv = document.getElementById('post-details');
-    const contentDiv = document.getElementById('post-content');
-    
-    // post.sentimentsの安全な処理
-    const sentiments = post.sentiments || {};
-    const sentimentText = Object.entries(sentiments)
-      .filter(([_, count]) => count > 0)
-      .map(([sentiment, count]) => {
-        const labels = {
-          positive: 'ポジティブ',
-          strong: '力強い',
-          unique: '独特',
-          gentle: 'やさしい'
-        };
-        return `${labels[sentiment]}: ${count}`;
-      })
-      .join(', ');
-
-    contentDiv.innerHTML = `
-      <div class="space-y-2">
-        <h5 class="font-medium">${post.title}</h5>
-        <p class="text-sm text-gray-600">作者: ${post.userName}</p>
-        <p class="text-sm text-gray-600">コメント数: ${post.commentsCount}</p>
-        <p class="text-sm text-gray-600">タグ: ${(post.tags && post.tags.length > 0) ? post.tags.join(', ') : 'なし'}</p>
-        <p class="text-sm text-gray-600">コメント傾向: ${sentimentText || 'なし'}</p>
-        ${post.body ? `<p class="text-sm mt-2">${post.body.substring(0, 100)}${post.body.length > 100 ? '...' : ''}</p>` : ''}
-      </div>
-    `;
-    
-    detailsDiv.classList.remove('hidden');
+    // 投稿ページに遷移
+    window.location.href = `/posts/${post.id}`;
   }
 
   drag(simulation) {

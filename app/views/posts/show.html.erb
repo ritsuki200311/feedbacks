@@ -40,6 +40,11 @@
           <%= link_to @post.user.name, user_path(@post.user), class: "text-blue-500 hover:underline" %>
         </div>
 
+        <div class="flex items-center gap-2 mb-2 text-sm text-gray-500">
+          <span class="font-medium">投稿日時:</span>
+          <%= @post.created_at.strftime("%Y年%m月%d日 %H:%M") %>
+        </div>
+
         <p class="mb-3 text-sm text-gray-600 leading-relaxed"><%= @post.body %></p>
 
         <% if @post.request_tag.present? %>
@@ -51,47 +56,115 @@
 
         <!-- 画像表示エリア -->
         <% if @post.images.attached? %>
-          <div class="space-y-4 text-center">
-            <% @post.images.each_with_index do |image, index| %>
-              <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>">
-                <%= image_tag image, class: "max-w-md rounded-lg shadow cursor-crosshair", data: { "image-comments-target": "image" }, onclick: "testClickIndicator(event)" %>
-                
-                <!-- 右下の拡大マーク -->
-                <button type="button" 
-                        onclick="showImageModal('<%= url_for(image) %>')"
-                        class="absolute bottom-1 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                </svg>
-                </button>
-                
-                <!-- 画像上のコメントマーカー表示エリア -->
-                <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
-                
-                <!-- 画像上コメント用のフォーム（初期は非表示） -->
-                <div class="hidden absolute z-50 bg-white border border-gray-300 rounded p-2 shadow-lg image-comment-form" data-image-comments-target="form">
-                  <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
-                    <%= f.hidden_field :x_position %>
-                    <%= f.hidden_field :y_position %>
-                    <%= f.text_area :body, rows: 2, placeholder: "コメントを入力...", class: "w-40 p-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500", required: true %>
-                    <div class="mt-1 flex gap-1">
-                      <%= f.submit "コメント", class: "bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs" %>
-                      <button type="button" data-action="click->image-comments#hideForm" class="bg-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-400 text-xs">×</button>
-                    </div>
-                  <% end %>
-                </div>
-                
-                <!-- マーカー表示切り替えボタン -->
-                <div class="mt-2 flex items-center gap-2 justify-center">
-                  <button type="button" 
-                          data-action="click->image-comments#toggleMarkers" 
-                          data-image-comments-target="toggleButton"
-                          class="flex items-center gap-1 px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-                    <span data-image-comments-target="toggleIcon">👁️</span>
-                    <span data-image-comments-target="toggleText">ピン表示</span>
+          <div class="mb-4">
+            <% if @post.images.count == 1 %>
+              <!-- 単一画像の場合 -->
+              <% image = @post.images.first %>
+              <div class="text-center">
+                <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>" data-image-comments-image-index-value="0">
+                  <%= image_tag image, class: "max-w-md rounded-lg shadow cursor-crosshair", data: { "image-comments-target": "image" }, onclick: "testClickIndicator(event)" %>
+
+                  <!-- 右下の拡大マーク -->
+                  <button type="button"
+                          onclick="showImageModal('<%= url_for(image) %>')"
+                          class="absolute bottom-1 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
                   </button>
-                  <span data-image-comments-target="markerCount" class="text-xs text-gray-500"></span>
+
+                  <!-- 画像上のコメントマーカー表示エリア -->
+                  <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+
+                  <!-- 画像上コメント用のフォーム（初期は非表示） -->
+                  <div class="hidden absolute z-50 bg-white border border-gray-300 rounded p-2 shadow-lg image-comment-form" data-image-comments-target="form">
+                    <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
+                      <%= f.hidden_field :x_position %>
+                      <%= f.hidden_field :y_position %>
+                      <%= f.hidden_field :image_index %>
+                      <div class="flex items-center gap-2">
+                        <%= f.text_area :body, rows: 1, placeholder: "コメントを追加", class: "w-48 p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none", required: true, data: { action: "keydown->image-comments#handleKeydown" } %>
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors" title="コメントを送信">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 19V5M5 12l7-7 7 7"/>
+                          </svg>
+                        </button>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- マーカー表示切り替えボタン -->
+                  <div class="mt-2 flex items-center gap-2 justify-center">
+                    <button type="button"
+                            data-action="click->image-comments#toggleMarkers"
+                            data-image-comments-target="toggleButton"
+                            class="flex items-center gap-1 px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                      <span data-image-comments-target="toggleIcon">👁️</span>
+                      <span data-image-comments-target="toggleText">ピン表示</span>
+                    </button>
+                    <span data-image-comments-target="markerCount" class="text-xs text-gray-500"></span>
+                  </div>
                 </div>
+              </div>
+            <% else %>
+              <!-- 複数画像の場合：縦スクロール形式 -->
+              <div class="space-y-3">
+                <div class="text-center text-sm text-gray-600 mb-3">
+                  <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">📷 <%= @post.images.count %>枚の画像</span>
+                </div>
+                <% @post.images.each_with_index do |image, index| %>
+                  <div class="bg-gray-50 rounded-lg p-3 mb-3">
+                    <div class="text-center mb-2">
+                      <span class="text-sm font-medium text-gray-700"><%= index + 1 %>枚目</span>
+                    </div>
+                    <div class="text-center">
+                      <div class="relative inline-block image-container" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>" data-image-comments-image-index-value="<%= index %>">
+                        <%= image_tag image, class: "max-w-md rounded-lg shadow cursor-crosshair", data: { "image-comments-target": "image" }, onclick: "testClickIndicator(event)" %>
+
+                        <!-- 右下の拡大マーク -->
+                        <button type="button"
+                                onclick="showImageModal('<%= url_for(image) %>')"
+                                class="absolute bottom-1 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity z-10">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                          </svg>
+                        </button>
+
+                        <!-- 画像上のコメントマーカー表示エリア -->
+                        <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+
+                        <!-- 画像上コメント用のフォーム（初期は非表示） -->
+                        <div class="hidden absolute z-50 bg-white border border-gray-300 rounded p-2 shadow-lg image-comment-form" data-image-comments-target="form">
+                          <%= form_with model: [@post, Comment.new], local: false, data: { "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
+                            <%= f.hidden_field :x_position %>
+                            <%= f.hidden_field :y_position %>
+                            <%= f.hidden_field :image_index %>
+                            <div class="flex items-center gap-2">
+                              <%= f.text_area :body, rows: 1, placeholder: "コメントを追加", class: "w-48 p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none", required: true, data: { action: "keydown->image-comments#handleKeydown" } %>
+                              <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors" title="コメントを送信">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M12 19V5M5 12l7-7 7 7"/>
+                                </svg>
+                              </button>
+                            </div>
+                          <% end %>
+                        </div>
+
+                        <!-- マーカー表示切り替えボタン -->
+                        <div class="mt-2 flex items-center gap-2 justify-center">
+                          <button type="button"
+                                  data-action="click->image-comments#toggleMarkers"
+                                  data-image-comments-target="toggleButton"
+                                  class="flex items-center gap-1 px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                            <span data-image-comments-target="toggleIcon">👁️</span>
+                            <span data-image-comments-target="toggleText">ピン表示</span>
+                          </button>
+                          <span data-image-comments-target="markerCount" class="text-xs text-gray-500"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
               </div>
             <% end %>
           </div>
@@ -234,7 +307,7 @@
           </div>
           <h2 class="text-sm font-bold text-gray-900">コメント補助</h2>
         </div>
-          
+
           <!-- 初期状態の説明 -->
           <div data-ai-sidebar-target="initialMessage" class="text-center py-4">
             <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -244,9 +317,9 @@
             <p class="text-xs text-gray-600 mb-4">
               AIがコメント作成をサポート
             </p>
-            
+
             <!-- AI起動ボタン -->
-            <button type="button" 
+            <button type="button"
                     data-action="click->ai-sidebar#toggleAI"
                     data-ai-sidebar-target="toggleButton"
                     class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-bold rounded-lg shadow-md hover:from-purple-700 hover:to-indigo-700 transition-all transform hover:scale-105 flex items-center gap-2 mx-auto">
@@ -254,16 +327,16 @@
               <span data-ai-sidebar-target="toggleText">開始</span>
             </button>
           </div>
-          
+
           <!-- ローディング表示 -->
           <div data-ai-sidebar-target="loading" class="hidden text-center py-4">
             <div class="w-8 h-8 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-2"></div>
             <p class="text-xs text-gray-600">AI分析中...</p>
           </div>
-          
+
           <!-- AI補助コンテンツ（初期は非表示） -->
           <div data-ai-sidebar-target="aiContent" class="hidden space-y-3">
-            
+
             <!-- 語彙・表現の補助 -->
             <div class="bg-gradient-to-br from-emerald-50 to-teal-100 rounded-lg p-4 border-2 border-emerald-200">
               <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -281,7 +354,7 @@
                 </p>
               </div>
             </div>
-            
+
             <!-- AI分析結果 -->
             <div class="bg-gradient-to-br from-indigo-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
               <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -303,10 +376,10 @@
                 </p>
               </div>
             </div>
-            
+
             <!-- 閉じるボタン -->
             <div class="text-center pt-1">
-              <button type="button" 
+              <button type="button"
                       data-action="click->ai-sidebar#closeAI"
                       class="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
                 閉じる
@@ -402,7 +475,7 @@
               </div>
               コメント補助
             </h4>
-            <button type="button" 
+            <button type="button"
                     onclick="toggleVoteModalAI()"
                     id="voteModalAIToggle"
                     class="px-2 py-1 bg-purple-600 text-white text-xs font-medium rounded hover:bg-purple-700 transition-colors flex items-center gap-1">
@@ -410,7 +483,7 @@
               <span>開始</span>
             </button>
           </div>
-          
+
           <!-- 初期状態の説明 -->
           <div id="voteModalAIInitial" class="text-center py-2">
             <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1">
@@ -420,16 +493,16 @@
               AIがコメント作成をサポート
             </p>
           </div>
-          
+
           <!-- ローディング表示 -->
           <div id="voteModalAILoading" class="hidden text-center py-2">
             <div class="w-5 h-5 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-1"></div>
             <p class="text-xs text-gray-600">AI分析中...</p>
           </div>
-          
+
           <!-- AI補助コンテンツ -->
           <div id="voteModalAIContent" class="hidden space-y-3 flex-1">
-            
+
           </div>
         </div>
       </div>
@@ -1012,27 +1085,67 @@
       <% if user_can_view_comments?(current_user, @post) %>
         <div class="space-y-4 max-h-64 overflow-y-auto border border-blue-200 rounded-lg p-3 bg-blue-50" data-controller="compact-comments">
           <% if image_comments.any? %>
-            <% image_comments.each_with_index do |comment, index| %>
-              <div class="bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer hover:bg-blue-100"
-                   data-comment-id="<%= comment.id %>"
-                   data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
-                <div class="flex items-start justify-between mb-3">
-                  <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                      <%= index + 1 %>
+            <% if @post.images.count > 1 %>
+              <!-- 複数画像の場合は画像ごとに分類して表示 -->
+              <% @post.images.each_with_index do |image, img_index| %>
+                <% image_specific_comments = image_comments.where(image_index: img_index).order(:created_at) %>
+                <% if image_specific_comments.any? %>
+                  <div class="mb-4">
+                    <div class="text-sm font-semibold text-blue-700 mb-2 pb-1 border-b border-blue-300">
+                      <%= img_index + 1 %>枚目の画像 (<%= image_specific_comments.count %>件)
                     </div>
-                    <div>
-                      <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
-                      <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
-                    </div>
-                  </div>
+                    <div class="space-y-3">
+                      <% image_specific_comments.each_with_index do |comment, index| %>
+                        <div class="bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer hover:bg-blue-100"
+                             data-comment-id="<%= comment.id %>"
+                             data-image-index="<%= img_index %>"
+                             data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
+                          <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                              <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                <%= index + 1 %>
+                              </div>
+                              <div>
+                                <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
+                                <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
+                              </div>
+                            </div>
 
-                  <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
-                    画像上のコメント
+                            <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
+                              画像上のコメント
+                            </div>
+                          </div>
+                          <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
+                        </div>
+                      <% end %>
+                    </div>
                   </div>
+                <% end %>
+              <% end %>
+            <% else %>
+              <!-- 単一画像の場合は通常表示 -->
+              <% image_comments.each_with_index do |comment, index| %>
+                <div class="bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer hover:bg-blue-100"
+                     data-comment-id="<%= comment.id %>"
+                     data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        <%= index + 1 %>
+                      </div>
+                      <div>
+                        <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
+                        <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
+                      </div>
+                    </div>
+
+                    <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
+                      画像上のコメント
+                    </div>
+                  </div>
+                  <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
                 </div>
-                <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
-              </div>
+              <% end %>
             <% end %>
           <% else %>
             <div class="text-center py-8 text-blue-500">
@@ -1166,9 +1279,9 @@
             
             <!-- コメント入力エリア -->
             <div>
-              <%= f.text_area :body, 
-                  rows: 3, 
-                  placeholder: "画像を見ながらコメントを書いてみましょう...", 
+              <%= f.text_area :body,
+                  rows: 3,
+                  placeholder: "画像を見ながらコメントを書いてみましょう...",
                   class: "w-full p-3 text-sm border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-none",
                   data: { "comment-form-target": "textarea" } %>
             </div>
@@ -1180,17 +1293,27 @@
             
             <!-- ファイル添付と送信ボタン -->
             <div class="flex items-center gap-2">
-              <%= f.file_field :attachments, 
-                  multiple: true, 
+              <%= f.file_field :attachments,
+                  multiple: true,
                   class: "hidden",
-                  id: "file-input" %>
+                  id: "file-input",
+                  accept: "image/*,video/*,audio/*",
+                  onchange: "handleFileSelection(this)" %>
               <label for="file-input" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg cursor-pointer transition-colors flex-shrink-0">
                 📎
               </label>
-              
+
               <!-- 送信ボタン -->
-              <%= f.submit "送信", 
+              <%= f.submit "送信",
                   class: "bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex-1" %>
+            </div>
+
+            <!-- ファイル選択プレビュー -->
+            <div id="file-preview" class="hidden mt-2 p-2 bg-gray-50 rounded border">
+              <div class="flex items-center justify-between">
+                <span id="file-info" class="text-xs text-gray-600"></span>
+                <button type="button" onclick="clearFileSelection()" class="text-red-600 hover:text-red-800 text-xs">削除</button>
+              </div>
             </div>
           <% end %>
         </div>
@@ -1251,6 +1374,39 @@
         const statusDiv = document.getElementById('pin-comment-status');
         if (statusDiv) {
           statusDiv.classList.add('hidden');
+        }
+      };
+
+      // ファイル選択処理
+      window.handleFileSelection = function(input) {
+        const filePreview = document.getElementById('file-preview');
+        const fileInfo = document.getElementById('file-info');
+
+        if (input.files && input.files.length > 0) {
+          const files = Array.from(input.files);
+          const fileNames = files.map(file => file.name).join(', ');
+          const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+          const sizeText = totalSize > 1024 * 1024 ?
+            `${(totalSize / (1024 * 1024)).toFixed(1)}MB` :
+            `${(totalSize / 1024).toFixed(1)}KB`;
+
+          fileInfo.textContent = `${files.length}件のファイル選択済み (${sizeText}): ${fileNames}`;
+          filePreview.classList.remove('hidden');
+        } else {
+          filePreview.classList.add('hidden');
+        }
+      };
+
+      // ファイル選択クリア
+      window.clearFileSelection = function() {
+        const fileInput = document.getElementById('file-input');
+        const filePreview = document.getElementById('file-preview');
+
+        if (fileInput) {
+          fileInput.value = '';
+        }
+        if (filePreview) {
+          filePreview.classList.add('hidden');
         }
       };
     });

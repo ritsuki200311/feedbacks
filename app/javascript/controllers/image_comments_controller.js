@@ -89,7 +89,9 @@ export default class extends Controller {
     console.log("Element ID:", this.element.id || "no-id")
     console.log("==========================================")
     this.tempPin = null
+    this.tempForm = null
     this.documentClickListener = null
+    this.scrollListener = null
     this.setupImageClickListener()
     this.loadExistingComments()
   }
@@ -104,7 +106,7 @@ export default class extends Controller {
       console.error("Image target not found!")
       return
     }
-    
+
     this.imageTarget.addEventListener("click", (event) => {
       console.log("Image clicked!")
 
@@ -220,7 +222,7 @@ export default class extends Controller {
 
     console.log('Creating temp pin at:', x, y)
     const tempPin = document.createElement("div")
-    tempPin.className = "absolute w-6 h-6 bg-yellow-400 text-black rounded-full flex items-center justify-center cursor-pointer z-20 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 animate-pulse"
+    tempPin.className = "absolute w-6 h-6 bg-yellow-400 text-black rounded-full flex items-center justify-center cursor-pointer z-50 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 animate-pulse"
     tempPin.style.left = `${x}%`
     tempPin.style.top = `${y}%`
     tempPin.textContent = "×"
@@ -246,14 +248,17 @@ export default class extends Controller {
     }
   }
 
+
   removeTempPin() {
     if (this.tempPin) {
       this.tempPin.remove()
       this.tempPin = null
     }
     // または既存の仮ピンを全て削除
-    const existingTempPins = this.markersContainerTarget.querySelectorAll("[data-temp-pin]")
-    existingTempPins.forEach(pin => pin.remove())
+    if (this.hasMarkersContainerTarget) {
+      const existingTempPins = this.markersContainerTarget.querySelectorAll("[data-temp-pin]")
+      existingTempPins.forEach(pin => pin.remove())
+    }
   }
 
   showImageCommentForm(x, y) {
@@ -263,9 +268,12 @@ export default class extends Controller {
       return
     }
 
-    // フォーム位置を設定
+    // フォーム位置を設定（相対位置）
+    form.style.position = 'absolute'
     form.style.left = `${x}%`
     form.style.top = `${y}%`
+    form.style.transform = ''
+    form.style.zIndex = '50'
     form.classList.remove('hidden')
 
     // 隠しフィールドに座標を設定
@@ -380,12 +388,21 @@ export default class extends Controller {
     const form = this.element.querySelector("[data-image-comments-target='form']")
     if (form) {
       form.classList.add('hidden')
+      // 元のスタイルに戻す
+      form.style.position = ''
+      form.style.left = ''
+      form.style.top = ''
+      form.style.transform = ''
+      form.style.zIndex = ''
 
       // フォーム内容をクリア
       const textarea = form.querySelector('textarea')
       if (textarea) {
         textarea.value = ''
       }
+
+      // フォームの参照をクリア
+      this.tempForm = null
 
       // 仮ピンを削除
       this.removeTempPin()
@@ -502,6 +519,10 @@ export default class extends Controller {
     const container = this.markersContainerTarget
     container.innerHTML = "" // 既存のマーカーをクリア
 
+    // 既存のツールチップを削除（bodyに追加されたもの）
+    const existingTooltips = document.querySelectorAll('[data-tooltip-for]')
+    existingTooltips.forEach(tooltip => tooltip.remove())
+
     // 画像上のコメントのみをフィルタリング
     const imageComments = comments.filter(comment =>
       comment.x_position !== null && comment.y_position !== null
@@ -517,31 +538,61 @@ export default class extends Controller {
 
   createMarker(comment, number) {
     const marker = document.createElement("div")
-    marker.className = "absolute w-2 h-2 bg-blue-500 text-white rounded-full flex items-center justify-center cursor-pointer z-10 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-150"
+    marker.className = "absolute w-2 h-2 bg-blue-500 text-white rounded-full flex items-center justify-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 hover:scale-150"
     marker.style.left = `${comment.x_position}%`
     marker.style.top = `${comment.y_position}%`
+    marker.style.zIndex = "10"
     marker.textContent = number
     marker.dataset.commentId = comment.id
     marker.style.pointerEvents = "auto"
-    
-    // ツールチップ作成
+
+    // ツールチップ作成（bodyに直接追加するため絶対位置で配置）
     const tooltip = document.createElement("div")
-    tooltip.className = "absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-sm rounded py-2 px-3 whitespace-nowrap z-20 opacity-0 transition-opacity duration-200 pointer-events-none"
+    tooltip.className = "fixed bg-gray-800 text-white text-sm rounded py-2 px-3 whitespace-nowrap opacity-0 transition-opacity duration-200 pointer-events-none"
+    tooltip.style.zIndex = "10000"
     tooltip.textContent = comment.body
     tooltip.style.maxWidth = "200px"
     tooltip.style.whiteSpace = "normal"
     tooltip.style.wordWrap = "break-word"
-    
-    // マーカーにツールチップを追加
-    marker.appendChild(tooltip)
-    
+    tooltip.dataset.tooltipFor = comment.id
+
+    // マーカーにツールチップの参照を保存
+    marker._tooltip = tooltip
+
     // ホバーイベント
-    marker.addEventListener("mouseenter", () => {
+    marker.addEventListener("mouseenter", (event) => {
+      // 他のすべてのツールチップを非表示にして後ろに
+      const allTooltips = document.querySelectorAll('[data-tooltip-for]')
+      allTooltips.forEach(t => {
+        t.style.opacity = "0"
+        t.style.zIndex = "10000"
+      })
+
+      // すべてのマーカーのz-indexをリセット
+      const allMarkers = this.markersContainerTarget.querySelectorAll("[data-comment-id]")
+      allMarkers.forEach(m => {
+        m.style.zIndex = "10"
+      })
+
+      // マーカーの位置を取得
+      const rect = marker.getBoundingClientRect()
+
+      // このツールチップだけを最前面に表示
+      tooltip.style.left = `${rect.left + rect.width / 2}px`
+      tooltip.style.top = `${rect.top - 8}px`
+      tooltip.style.transform = "translate(-50%, -100%)"
+      tooltip.style.zIndex = "10001"
       tooltip.style.opacity = "1"
+
+      // マーカーを最前面に
+      marker.style.zIndex = "10000"
     })
-    
+
     marker.addEventListener("mouseleave", () => {
       tooltip.style.opacity = "0"
+      // z-indexを元に戻す
+      marker.style.zIndex = "10"
+      tooltip.style.zIndex = "10000"
     })
     
     // クリックイベント（既存コメントの編集・表示用）

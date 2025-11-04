@@ -1128,22 +1128,21 @@
                 <div class="bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer hover:bg-blue-100"
                      data-comment-id="<%= comment.id %>"
                      data-action="click->image-comments-v2#highlightMarker click->compact-comments#highlightComment">
-                  <div class="flex items-start justify-between mb-3">
-                    <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                        <%= index + 1 %>
-                      </div>
-                      <div>
-                        <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
-                        <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
-                      </div>
-                    </div>
+                          <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                              <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                <%= index + 1 %>
+                              </div>
+                              <div>
+                                <span class="font-medium text-blue-900"><%= comment.user&.name || "匿名" %></span>
+                                <span class="text-xs text-blue-600 ml-2"><%= time_ago_in_words(comment.created_at) %>前</span>
+                              </div>
+                            </div>
 
-                    <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
-                      画像上のコメント
-                    </div>
-                  </div>
-                  <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
+                            <div class="text-xs text-blue-500 bg-blue-100 px-2 py-1 rounded-full">
+                              画像上のコメント
+                            </div>
+                          </div>                  <p class="text-blue-900 leading-relaxed"><%= comment.body %></p>
                 </div>
               <% end %>
             <% end %>

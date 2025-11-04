@@ -123,5 +123,8 @@ class HomeController < ApplicationController
                             .index_by(&:id)
                             .values_at(*recommended_user_ids)
                             .compact
+
+    # 投稿の間に挿入するためのコメントリストを作成
+    @insertable_comments = (@recent_comments + @new_comments).uniq.shuffle
   end
 end

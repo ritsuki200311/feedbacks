@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto px-4 py-8">
+<div class="max-w-7xl py-8 px-0">
   <div class="flex gap-4">
     <!-- メインコンテンツエリア -->
     <div class="flex-1 max-w-4xl mx-auto space-y-8">
@@ -27,7 +27,8 @@
   </div>
 
 <% if @posts.any? %>
-  <% @posts.each do |post| %>
+  <% @comment_iterator = @insertable_comments.each %>
+  <% @posts.each_with_index do |post, index| %>
     <div class="<%= post_card_class(post) %> cursor-pointer post-card relative"
          onclick="handlePostCardClick(event, <%= post.id %>)"
          data-post-id="<%= post.id %>">
@@ -195,6 +196,33 @@
         <%= button_to "削除", post_path(post), method: :delete, data: { confirm: "本当に削除しますか？" }, class: "delete-button text-red-600 hover:underline" %>
       </div>
     </div>
+
+    <%# 4投稿ごとに注目コメントを挿入 %>
+    <% if (index + 1) % 4 == 0 %>
+      <% comment_to_insert = @comment_iterator.next rescue nil %>
+      <% if comment_to_insert %>
+        <% 
+          comment = comment_to_insert
+          card_class = "p-4 rounded-lg shadow border cursor-pointer relative mb-8 bg-blue-50 border-blue-200"
+        %>
+        <div class="<%= card_class %>" onclick="window.location.href='<%= post_path(comment.post) %>#comment-<%= comment.id %>'">
+          <div class="flex items-start gap-3">
+            <div class="flex-1">
+              <div class="flex items-center justify-between text-sm mb-2">
+                <p class="font-semibold text-gray-800">
+                  <%= link_to comment.user.name, user_path(comment.user), class: "hover:underline" %>
+                </p>
+                <p class="text-gray-500"><%= time_ago_in_words(comment.created_at) %>前</p>
+              </div>
+              <p class="text-gray-700 mb-3"><%= simple_format(comment.body) %></p>
+              <div class="text-xs text-gray-500 border-t border-gray-200 pt-2">
+                <p>元の投稿: <%= link_to comment.post.title, post_path(comment.post), class: "text-indigo-600 hover:underline" %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
   <% end %>
 
 <% else %>
@@ -265,8 +293,8 @@ function shouldIgnoreClick(target) {
 
     </div> <!-- メインコンテンツエリア終了 -->
 
-    <!-- 右サイドバー（常時表示） -->
-    <div class="block sticky top-4 h-fit">
+    <!-- 右サイドバー（デスクトップのみ表示） -->
+    <div class="block sticky top-4 h-fit" data-layout="desktop">
       <%= render 'layouts/right_sidebar' %>
     </div>
   </div> <!-- flex コンテナ終了 -->

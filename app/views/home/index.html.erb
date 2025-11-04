@@ -5,22 +5,22 @@
 
 
   <!-- 投稿一覧（見出しなし） -->
-  <div class="mb-4 border-b border-gray-200">
-    <ul class="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500">
-      <li class="mr-2">
-        <%= link_to "ホーム", root_path, class: "inline-block p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:creation_type].blank? && params[:filter].blank? && params[:sort].blank?}" %>
+  <div class="mb-4 border-b border-gray-200 overflow-x-auto">
+    <ul class="flex -mb-px text-sm font-medium text-center text-gray-500 whitespace-nowrap">
+      <li class="mr-2 flex-shrink-0">
+        <%= link_to "ホーム", root_path, class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:creation_type].blank? && params[:filter].blank? && params[:sort].blank?}" %>
       </li>
-      <li class="mr-2">
-        <%= link_to "最新", root_path(sort: 'latest'), class: "inline-block p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:sort] == 'latest'}" %>
+      <li class="mr-2 flex-shrink-0">
+        <%= link_to "最新", root_path(sort: 'latest'), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:sort] == 'latest'}" %>
       </li>
       <% if user_signed_in? %>
-        <li class="mr-2">
-          <%= link_to "フォロー済み", root_path(filter: 'following'), class: "inline-block p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:filter] == 'following'}" %>
+        <li class="mr-2 flex-shrink-0">
+          <%= link_to "フォロー済み", root_path(filter: 'following'), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:filter] == 'following'}" %>
         </li>
       <% end %>
       <% Post::CREATION_TYPES.each do |key, value| %>
-        <li class="mr-2">
-          <%= link_to key, root_path(creation_type: value), class: "inline-block p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:creation_type].to_s == value.to_s}" %>
+        <li class="mr-2 flex-shrink-0">
+          <%= link_to key, root_path(creation_type: value), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:creation_type].to_s == value.to_s}" %>
         </li>
       <% end %>
     </ul>

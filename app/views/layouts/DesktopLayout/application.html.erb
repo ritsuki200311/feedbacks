@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>アプリ名</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "tailwind", "application", "data-turbo-track": "reload", preload: false %>
+    <%= render 'layouts/shared/common_styles' %>
+    <%= render 'layouts/shared/stimulus_app' %>
+  </head>
+
+  <body class="bg-gray-100 text-gray-800">
+    <div class="flex">
+      <!-- デスクトップ用サイドバー（常に表示） -->
+      <div id="sidebar" class="fixed top-0 left-0 z-50 w-64 h-screen bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
+        <%= render 'layouts/sidebar' %>
+      </div>
+
+      <!-- メインコンテンツ -->
+      <main id="main-content" class="ml-64 flex-1 p-8 w-full">
+        <% if notice %>
+          <div class="bg-green-100 text-green-800 p-4 rounded mb-4 max-w-6xl mx-auto"><%= notice %></div>
+        <% end %>
+
+        <% if alert %>
+          <div class="bg-red-100 text-red-800 p-4 rounded mb-4 max-w-6xl mx-auto"><%= alert %></div>
+        <% end %>
+
+        <%= yield %>
+      </main>
+    </div>
+  </body>
+</html>

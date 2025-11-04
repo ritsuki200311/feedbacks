@@ -44,6 +44,27 @@
         }
       }
 
+      /* スマホでの横スクロール防止 */
+      @media (max-width: 767px) {
+        body {
+          overflow-x: hidden;
+        }
+
+        * {
+          max-width: 100vw;
+        }
+
+        img, video, audio {
+          max-width: 100% !important;
+          height: auto;
+        }
+
+        .post-card img {
+          max-width: 100% !important;
+          object-fit: contain;
+        }
+      }
+
       /* カスタムメディアプレーヤーのスタイル */
       .custom-video {
         background: #000;
@@ -207,72 +228,59 @@
       }
 
 
-      /* レスポンシブサイドバー強制スタイル */
+      /* サイドバー共通スタイル */
       #sidebar {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        z-index: 50 !important;
-        width: 16rem !important;
-        height: 100vh !important;
-        background-color: #f9fafb !important;
-        border-right: 1px solid #d1d5db !important;
-        padding: 1rem !important;
-        display: flex !important;
-        flex-direction: column !important;
-        transition: transform 0.3s ease-in-out !important;
-        transform: translateX(0) !important;
-        overflow-y: auto !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 50;
+        width: 16rem;
+        height: 100vh;
+        background-color: #f9fafb;
+        border-right: 1px solid #d1d5db;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s ease-in-out;
+        overflow-y: auto;
       }
 
-      @media (max-width: 767px) {
-        #sidebar {
-          transform: translateX(-100%) !important;
-          box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-        }
-        #sidebar.show-mobile {
-          transform: translateX(0) !important;
-        }
-        #hamburger-btn {
-          display: block !important;
-        }
-        #main-content {
-          margin-left: 0 !important;
-          padding-left: 1rem !important;
-        }
-        
-        /* オーバーレイ表示時のサイドバー */
-        #overlay:not(.hidden) + .flex #sidebar {
-          transform: translateX(0) !important;
-        }
+      /* デスクトップ用サイドバー */
+      #sidebar.desktop-sidebar {
+        transform: translateX(0);
       }
 
-      @media (min-width: 768px) {
-        #sidebar {
-          transform: translateX(0) !important;
-        }
-        #hamburger-btn {
-          display: none !important;
-        }
-        #main-content {
-          margin-left: 16rem !important;
-        }
+      /* モバイル用サイドバー */
+      #sidebar.mobile-sidebar {
+        transform: translateX(-100%);
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
       }
 
+      #sidebar.mobile-sidebar.show-mobile {
+        transform: translateX(0);
+      }
+
+      /* メインコンテンツ共通スタイル */
       #main-content {
         flex: 1;
-        padding: 1rem;
-        padding-top: 4rem;
-        padding-bottom: 6rem; /* 下部メニューバー分のマージン */
         width: 100%;
       }
 
-      @media (min-width: 768px) {
-        #main-content {
-          padding: 2rem;
-          padding-top: 2rem;
-          padding-bottom: 2rem; /* PCでは下部メニューがないので通常マージン */
-        }
+      /* デスクトップ用メインコンテンツ */
+      #main-content.desktop-content {
+        margin-left: 16rem;
+        padding: 2rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+      }
+
+      /* モバイル用メインコンテンツ */
+      #main-content.mobile-content {
+        margin-left: 0;
+        padding: 1rem;
+        padding-left: 1rem;
+        padding-top: 4rem;
+        padding-bottom: 6rem; /* 下部メニューバー分のマージン */
       }
       
       /* 下部ナビゲーション用の極小テキスト */
@@ -1889,13 +1897,76 @@
           console.error('Missing elements for hamburger menu');
         }
       });
+
+      // デバイス検出とレイアウト切り替え
+      function isMobileDevice() {
+        const ua = navigator.userAgent.toLowerCase();
+        const isMobileUA = /iphone|android(?!.*mobile)|ipod|ipad/.test(ua);
+        const isSmallScreen = window.innerWidth <= 768;
+        return isMobileUA || isSmallScreen;
+      }
+
+      function switchLayout() {
+        const isMobile = isMobileDevice();
+        console.log('Layout switched to: ' + (isMobile ? 'mobile' : 'desktop'));
+
+        // デスクトップ専用要素
+        const desktopElements = document.querySelectorAll('[data-layout="desktop"]');
+        desktopElements.forEach(el => {
+          el.style.display = isMobile ? 'none' : '';
+        });
+
+        // モバイル専用要素
+        const mobileElements = document.querySelectorAll('[data-layout="mobile"]');
+        mobileElements.forEach(el => {
+          el.style.display = isMobile ? '' : 'none';
+        });
+
+        // サイドバーのスタイル調整
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+          if (isMobile) {
+            sidebar.classList.add('mobile-sidebar');
+            sidebar.classList.remove('desktop-sidebar');
+          } else {
+            sidebar.classList.add('desktop-sidebar');
+            sidebar.classList.remove('mobile-sidebar');
+          }
+        }
+
+        // メインコンテンツのマージン調整
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+          if (isMobile) {
+            mainContent.classList.add('mobile-content');
+            mainContent.classList.remove('desktop-content');
+          } else {
+            mainContent.classList.add('desktop-content');
+            mainContent.classList.remove('mobile-content');
+          }
+        }
+      }
+
+      // 初回実行
+      document.addEventListener('DOMContentLoaded', function() {
+        switchLayout();
+      });
+
+      // リサイズ時に切り替え
+      let resizeTimer;
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+          switchLayout();
+        }, 200);
+      });
     </script>
   </head>
 
   <body class="bg-gray-100 text-gray-800">
 
     <!-- ハンバーガーメニューボタン（スマホのみ表示） -->
-    <div class="md:hidden fixed top-4 right-4 z-50">
+    <div class="fixed top-4 right-4 z-50" data-layout="mobile">
       <button id="hamburger-btn" class="bg-white p-2 rounded-md shadow-lg border">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -1903,10 +1974,8 @@
       </button>
     </div>
 
-
-
     <!-- オーバーレイ（スマホのみ） -->
-    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden" data-layout="mobile"></div>
 
     <div class="flex">
       <!-- サイドバー -->
@@ -1930,7 +1999,7 @@
     </div>
 
     <!-- Bottom navigation for mobile -->
-    <nav id="bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50" data-layout="mobile">
       <div class="grid grid-cols-5 h-20">
         <!-- Home -->
         <%= link_to root_path, class: "flex flex-col items-center justify-center py-1 mt-1 #{'text-blue-600' if request.path == root_path} #{'text-gray-600' if request.path != root_path} hover:text-blue-600 transition-colors" do %>
@@ -1993,7 +2062,7 @@
     </nav>
 
     <!-- Mobile comment pins toggle button (bottom-right) -->
-    <div class="md:hidden fixed bottom-24 right-4 z-40" data-controller="global-comment-pins">
+    <div class="fixed bottom-24 right-4 z-40" data-layout="mobile" data-controller="global-comment-pins">
       <button type="button" 
               data-action="click->global-comment-pins#toggleGlobalPins"
               data-global-comment-pins-target="toggleButton"

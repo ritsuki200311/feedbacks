@@ -27,8 +27,13 @@ class CommentsController < ApplicationController
     @comment.user = current_user
 
     # image_indexがnilの場合、ピンコメントなら0に設定
-    if @comment.x_position.present? && @comment.y_position.present? && @comment.image_index.nil?
-      @comment.image_index = 0
+    if @comment.x_position.present? && @comment.y_position.present?
+      if @comment.image_index.nil?
+        @comment.image_index = 0
+        Rails.logger.info "Set default image_index=0 for pin comment on post #{@post.id}"
+      else
+        Rails.logger.info "Pin comment on post #{@post.id}, image_index=#{@comment.image_index}"
+      end
     end
 
     respond_to do |format|

@@ -290,13 +290,11 @@ export default class extends Controller {
     if (xField) xField.value = x
     if (yField) yField.value = y
     if (imageIndexField) {
-      console.log("Current imageIndexValue:", this.imageIndexValue)
-      console.log("Type of imageIndexValue:", typeof this.imageIndexValue)
       // 0も有効な値なので、undefinedやnullの場合のみ0にフォールバック
-      const indexValue = (this.imageIndexValue !== undefined && this.imageIndexValue !== null) ? this.imageIndexValue : 0
-      console.log("Setting image index to:", indexValue)
+      // 確実に数値に変換
+      const indexValue = (this.imageIndexValue !== undefined && this.imageIndexValue !== null) ? Number(this.imageIndexValue) : 0
+      console.log(`[Image ${indexValue}] Setting image_index to: ${indexValue} (type: ${typeof indexValue})`)
       imageIndexField.value = indexValue
-      console.log("Image index field value after setting:", imageIndexField.value)
     } else {
       console.error("Image index field not found!")
     }
@@ -467,14 +465,13 @@ export default class extends Controller {
         const currentImageIndex = this.imageIndexValue
 
         // 厳密な比較：image_indexがnullまたはundefinedの場合は0として扱う
-        const effectiveCommentIndex = (commentImageIndex === null || commentImageIndex === undefined) ? 0 : parseInt(commentImageIndex)
-        const effectiveCurrentIndex = (currentImageIndex === null || currentImageIndex === undefined) ? 0 : parseInt(currentImageIndex)
+        // 両方を数値に変換して比較
+        const effectiveCommentIndex = (commentImageIndex === null || commentImageIndex === undefined) ? 0 : Number(commentImageIndex)
+        const effectiveCurrentIndex = (currentImageIndex === null || currentImageIndex === undefined) ? 0 : Number(currentImageIndex)
 
         const shouldInclude = effectiveCommentIndex === effectiveCurrentIndex
 
-        if (comment.x_position !== null) {
-          console.log(`[Image ${this.imageIndexValue}] Comment ${comment.id} (body: "${comment.body}"): image_index=${commentImageIndex} -> effective=${effectiveCommentIndex}, match=${shouldInclude}`)
-        }
+        console.log(`[Image ${effectiveCurrentIndex}] Comment ${comment.id}: image_index=${commentImageIndex}(${effectiveCommentIndex}) vs current=${currentImageIndex}(${effectiveCurrentIndex}) => ${shouldInclude ? 'INCLUDE' : 'EXCLUDE'}`)
 
         return shouldInclude
       })
@@ -519,8 +516,8 @@ export default class extends Controller {
     const container = this.markersContainerTarget
     container.innerHTML = "" // 既存のマーカーをクリア
 
-    // 既存のツールチップを削除（bodyに追加されたもの）
-    const existingTooltips = document.querySelectorAll('[data-tooltip-for]')
+    // このコントローラーインスタンスに属するツールチップのみを削除
+    const existingTooltips = document.querySelectorAll(`[data-tooltip-image-index="${this.imageIndexValue}"][data-tooltip-post-id="${this.postIdValue}"]`)
     existingTooltips.forEach(tooltip => tooltip.remove())
 
     // 画像上のコメントのみをフィルタリング
@@ -555,20 +552,25 @@ export default class extends Controller {
     tooltip.style.whiteSpace = "normal"
     tooltip.style.wordWrap = "break-word"
     tooltip.dataset.tooltipFor = comment.id
+    tooltip.dataset.tooltipImageIndex = this.imageIndexValue
+    tooltip.dataset.tooltipPostId = this.postIdValue
 
     // マーカーにツールチップの参照を保存
     marker._tooltip = tooltip
 
+    // ツールチップをbodyに追加
+    document.body.appendChild(tooltip)
+
     // ホバーイベント
     marker.addEventListener("mouseenter", (event) => {
-      // 他のすべてのツールチップを非表示にして後ろに
-      const allTooltips = document.querySelectorAll('[data-tooltip-for]')
+      // この画像インデックスの他のツールチップを非表示にして後ろに
+      const allTooltips = document.querySelectorAll(`[data-tooltip-image-index="${this.imageIndexValue}"][data-tooltip-post-id="${this.postIdValue}"]`)
       allTooltips.forEach(t => {
         t.style.opacity = "0"
         t.style.zIndex = "10000"
       })
 
-      // すべてのマーカーのz-indexをリセット
+      // この画像のマーカーのz-indexをリセット
       const allMarkers = this.markersContainerTarget.querySelectorAll("[data-comment-id]")
       allMarkers.forEach(m => {
         m.style.zIndex = "10"

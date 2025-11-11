@@ -1,0 +1,89 @@
+<%= link_to post_path(post), class: "block" do %>
+  <div class="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-200 overflow-hidden cursor-pointer">
+    <!-- 画像エリア -->
+    <div class="relative h-48 bg-gray-100">
+      <% if post.images.attached? %>
+        <%= image_tag post.images.first, class: "w-full h-full object-cover" %>
+        <% if post.images.count > 1 %>
+          <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs font-bold rounded-full px-2 py-1">
+            +<%= post.images.count - 1 %>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="w-full h-full flex items-center justify-center text-gray-400">
+          <div class="text-center">
+            <div class="text-4xl mb-2">📄</div>
+            <p class="text-sm">画像なし</p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    
+    <!-- コンテンツエリア -->
+    <div class="p-4">
+      <h3 class="text-lg font-bold text-blue-600 mb-2 line-clamp-2 hover:text-blue-800 transition-colors">
+        <%= post.title %>
+      </h3>
+      
+      <p class="text-gray-600 text-sm mb-3 line-clamp-2">
+        <%= truncate(post.body, length: 60) %>
+      </p>
+      
+      <!-- タグ -->
+      <% if post.tag.present? %>
+        <div class="flex flex-wrap gap-1 mb-3">
+          <% post.tag.split(',').first(2).each do |tag| %>
+            <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+              <%= tag.strip %>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
+      
+      <!-- デバッグ情報を追加 -->
+      <% up_count = post.votes.where(value: 1).count %>
+      <% down_count = post.votes.where(value: -1).count %>
+      <% user_vote = current_user ? (post.votes.find_by(user: current_user)&.value || 0) : 0 %>
+      <% total_votes = up_count + down_count %>
+      
+      <div class="flex items-center justify-center gap-3 pt-3 border-t border-gray-100">
+        <!-- 投票バー（表示のみ） -->
+        <div style="position: relative; width: 96px; height: 20px; background-color: #e5e7eb; border-radius: 4px;">
+          <% if total_votes == 0 %>
+            <!-- 投票がない場合：グレーのバー -->
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #6b7280; font-weight: bold;">
+              0
+            </div>
+          <% else %>
+            <!-- 投票がある場合：カラフルなバーと総投票数表示 -->
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex;">
+              <% up_percentage = (up_count.to_f / total_votes * 100).round(1) %>
+              <% down_percentage = (down_count.to_f / total_votes * 100).round(1) %>
+              
+              <!-- プラス票のバー -->
+              <div style="height: 100%; background-color: #10b981; width: <%= up_percentage %>%; border-radius: <%= up_percentage == 100 ? '4px' : '4px 0 0 4px' %>;"></div>
+              
+              <!-- マイナス票のバー -->
+              <div style="height: 100%; background-color: #ef4444; width: <%= down_percentage %>%; border-radius: <%= down_percentage == 100 ? '4px' : '0 4px 4px 0' %>;"></div>
+            </div>
+            
+            <!-- 総投票数表示 -->
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; font-weight: bold; text-shadow: 0px 1px 2px rgba(0,0,0,0.3);">
+              <%= total_votes %>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- コメント数 -->
+        <div class="flex items-center gap-1 text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            <line x1="9" y1="10" x2="15" y2="10"></line>
+            <line x1="9" y1="14" x2="13" y2="14"></line>
+          </svg>
+          <span class="text-sm font-medium ml-1"><%= post.comments.count %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

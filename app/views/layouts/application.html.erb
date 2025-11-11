@@ -2064,14 +2064,16 @@
     </nav>
 
     <!-- Mobile comment pins toggle button (bottom-right) -->
-    <div class="fixed bottom-24 right-4 z-40" data-layout="mobile" data-controller="global-comment-pins">
-      <button type="button" 
-              data-action="click->global-comment-pins#toggleGlobalPins"
-              data-global-comment-pins-target="toggleButton"
-              class="w-16 h-16 bg-emerald-300 text-white rounded-full shadow-xl hover:bg-emerald-400 transition-all duration-300 active:scale-95 flex items-center justify-center">
-        <span data-global-comment-pins-target="toggleIcon" class="text-2xl">📍</span>
-      </button>
-    </div>
+    <% if controller_name == 'posts' && (action_name == 'show' || action_name == 'index') || controller_name == 'home' %>
+      <div class="fixed bottom-24 right-4 z-40" data-layout="mobile" data-controller="global-comment-pins">
+        <button type="button"
+                data-action="click->global-comment-pins#toggleGlobalPins"
+                data-global-comment-pins-target="toggleButton"
+                class="w-16 h-16 bg-emerald-300 text-white rounded-full shadow-xl hover:bg-emerald-400 transition-all duration-300 active:scale-95 flex items-center justify-center">
+          <span data-global-comment-pins-target="toggleIcon" class="text-2xl">📍</span>
+        </button>
+      </div>
+    <% end %>
 
     <!-- スクロール時にバーを透明にするスクリプト -->
     <script>

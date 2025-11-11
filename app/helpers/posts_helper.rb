@@ -50,12 +50,12 @@ module PostsHelper
   end
 
   def post_card_class(post)
-    base_class = "rounded-lg shadow p-3 mb-3"
+    base_class = "p-3 mb-3 border-b border-gray-200 md:rounded-lg md:shadow md:border-0"
     case post.request_tag
     when "見て！感想ください！"
-      "#{base_class} bg-blue-200"
+      "#{base_class} bg-blue-50 md:bg-blue-200"
     when "困ってます！アドバイスください！"
-      "#{base_class} bg-red-200"
+      "#{base_class} bg-red-50 md:bg-red-200"
     else
       "#{base_class} bg-white"
     end

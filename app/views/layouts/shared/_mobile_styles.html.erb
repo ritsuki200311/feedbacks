@@ -1,11 +1,79 @@
 <style>
   /* スマホでの横スクロール防止 */
-  body {
-    overflow-x: hidden;
+  html, body {
+    overflow-x: hidden !important;
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
+    overscroll-behavior-x: none;
   }
 
+  /* すべての要素で横スクロールを防止 */
   * {
     max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  /* ダブルタップズームを防止 */
+  body {
+    touch-action: manipulation;
+  }
+
+  /* メインコンテンツエリアでも横スクロールを防止 */
+  #main-content {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+  }
+
+  /* フォーム要素のサイズ制限 */
+  input, textarea, select {
+    max-width: 100%;
+  }
+
+  /* 画像コンテナでの横スクロール防止 */
+  .image-container {
+    overflow: visible !important;
+    max-width: 100%;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* 画像自体もダブルタップズームを防止 */
+  .image-container img {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* 画像コメントフォームのサイズ制限 */
+  .image-comment-form {
+    max-width: calc(100vw - 20px) !important;
+  }
+
+  /* フォーム入力時の自動ズーム防止 */
+  .image-comment-form input,
+  .image-comment-form textarea {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* すべての入力欄で自動ズーム防止 */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* キーボード表示時の対策 */
+  body.keyboard-open {
+    position: fixed;
+    width: 100%;
   }
 
   img, video, audio {
@@ -26,3 +94,207 @@
     white-space: nowrap;
   }
 </style>
+
+<script>
+  // キーボード表示検知
+  (function() {
+    let lastHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    let savedScrollY = 0;
+
+    function checkKeyboard() {
+      const currentHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+      if (currentHeight < lastHeight - 100) {
+        // キーボードが表示された
+        savedScrollY = window.scrollY;
+        document.body.classList.add('keyboard-open');
+
+        // スクロール位置を固定
+        setTimeout(() => {
+          window.scrollTo(0, savedScrollY);
+        }, 0);
+      } else if (currentHeight > lastHeight + 100) {
+        // キーボードが閉じられた
+        document.body.classList.remove('keyboard-open');
+      }
+
+      lastHeight = currentHeight;
+    }
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', checkKeyboard);
+    } else {
+      window.addEventListener('resize', checkKeyboard);
+    }
+
+    // フォーカス/ブラーイベントでもチェック
+    document.addEventListener('focusin', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        setTimeout(checkKeyboard, 300);
+      }
+    });
+
+    document.addEventListener('focusout', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        setTimeout(checkKeyboard, 300);
+      }
+    });
+  })();
+
+  // フォーム入力時の自動ズーム防止
+  (function() {
+    let viewportMetaTag = document.querySelector('meta[name="viewport"]');
+    const originalContent = viewportMetaTag ? viewportMetaTag.content : '';
+
+    // フォーカス時の処理
+    function preventZoomOnFocus(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        console.log('Input focused, preventing zoom and scroll');
+
+        // 現在のスクロール位置を保存
+        const scrollY = window.scrollY;
+        const scrollX = window.scrollX;
+
+        // フォントサイズを強制的に16px以上に設定
+        const computedStyle = window.getComputedStyle(e.target);
+        const fontSize = parseFloat(computedStyle.fontSize);
+        if (fontSize < 16) {
+          e.target.style.fontSize = '16px';
+        }
+
+        // ビューポートを一時的に変更してズームを完全に無効化
+        if (viewportMetaTag) {
+          viewportMetaTag.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0';
+        }
+
+        // スクロール位置を元に戻す
+        setTimeout(() => {
+          window.scrollTo(scrollX, scrollY);
+        }, 0);
+
+        // さらに、少し遅延してもう一度スクロールを戻す（保険）
+        setTimeout(() => {
+          window.scrollTo(scrollX, scrollY);
+        }, 100);
+      }
+    }
+
+    // ブラー時の処理
+    function restoreZoomOnBlur(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        console.log('Input blurred');
+        // ビューポートを元に戻す
+        setTimeout(function() {
+          if (viewportMetaTag && originalContent) {
+            viewportMetaTag.content = originalContent;
+          }
+        }, 300);
+      }
+    }
+
+    // イベントリスナーを追加
+    document.addEventListener('focusin', preventZoomOnFocus, true);
+    document.addEventListener('focusout', restoreZoomOnBlur, true);
+
+    // ページ読み込み時にすべての入力欄のフォントサイズを設定
+    document.addEventListener('DOMContentLoaded', function() {
+      const inputs = document.querySelectorAll('input, textarea');
+      inputs.forEach(function(input) {
+        input.style.fontSize = '16px';
+      });
+
+      // 新しく追加される要素に対しても適用
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1) {
+              const inputs = node.querySelectorAll ? node.querySelectorAll('input, textarea') : [];
+              inputs.forEach(function(input) {
+                input.style.fontSize = '16px';
+              });
+            }
+          });
+        });
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    });
+  })();
+
+  // ズームを完全に防止
+  (function() {
+    // ダブルタップズーム防止用の変数
+    let lastTouchEnd = 0;
+    let lastTouchStart = 0;
+    let touchCount = 0;
+
+    // ダブルタップを検出して防止
+    document.addEventListener('touchstart', function(e) {
+      const now = Date.now();
+
+      // ピンチズームを防止（2本指以上）
+      if (e.touches.length > 1) {
+        e.preventDefault();
+        return;
+      }
+
+      // ダブルタップを検出（300ms以内に2回タップ）
+      if (now - lastTouchStart < 300) {
+        e.preventDefault();
+        console.log('Double tap prevented');
+        return;
+      }
+
+      lastTouchStart = now;
+    }, { passive: false });
+
+    document.addEventListener('touchend', function(e) {
+      const now = Date.now();
+
+      // 連続したタッチエンドを検出
+      if (now - lastTouchEnd < 300) {
+        e.preventDefault();
+        console.log('Double tap end prevented');
+      }
+
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function(e) {
+      if (e.touches.length > 1) {
+        // ピンチズームを防止
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // gestureイベントでズームを防止（iOS用）
+    document.addEventListener('gesturestart', function(e) {
+      e.preventDefault();
+    });
+
+    document.addEventListener('gesturechange', function(e) {
+      e.preventDefault();
+    });
+
+    document.addEventListener('gestureend', function(e) {
+      e.preventDefault();
+    });
+
+    // ホイールでのズームを防止（デスクトップ用）
+    document.addEventListener('wheel', function(e) {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // キーボードでのズームを防止
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '0')) {
+        e.preventDefault();
+      }
+    });
+  })();
+</script>

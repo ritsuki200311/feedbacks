@@ -1,6 +1,7 @@
 class CommentsController < ApplicationController
-  before_action :authenticate_user!  # ログインしていないとコメントできないように
+  before_action :authenticate_user!, except: [:index]  # indexは認証不要（読み取り専用）
   before_action :set_post
+  protect_from_forgery with: :null_session, only: [:create]
 
   def index
     @comments = @post.comments.includes(:user).order(:created_at)
@@ -23,6 +24,15 @@ class CommentsController < ApplicationController
   end
 
   def create
+    # セッションから手動でユーザーを取得
+    unless user_signed_in?
+      respond_to do |format|
+        format.html { redirect_to new_user_session_path, alert: "ログインが必要です。" }
+        format.json { render json: { success: false, errors: ["ログインが必要です"] }, status: :unauthorized }
+      end
+      return
+    end
+
     @comment = @post.comments.build(comment_params)
     @comment.user = current_user
 

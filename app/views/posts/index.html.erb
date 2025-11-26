@@ -1,0 +1,13 @@
+<div class="px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6">すべての投稿</h1>
+
+  <% if @posts.any? %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @posts.each do |post| %>
+        <%= render "posts/mypage_post_card", post: post %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-gray-600">まだ投稿がありません。</p>
+  <% end %>
+</div>

@@ -1,0 +1,57 @@
+<!-- 最新のコメント -->
+<div class="p-4 border-b border-gray-200">
+  <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+    </svg>
+    最新のコメント
+  </h3>
+
+  <% if @new_comments&.any? %>
+    <div class="space-y-3">
+      <% @new_comments.first(3).each do |comment| %>
+        <div class="bg-blue-50 rounded-lg p-3 hover:bg-blue-100 transition-colors border border-blue-200">
+          <div class="flex items-start gap-2">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span class="text-sm font-medium text-blue-600"><%= comment.user.name.first %></span>
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-1">
+                  <%= link_to comment.user.name, user_path(comment.user), class: "text-sm font-medium text-gray-900 hover:text-blue-600 truncate" %>
+                  <span class="text-xs text-gray-500">
+                    <%= time_ago_in_words(comment.created_at) %>前
+                  </span>
+                </div>
+                <!-- 新着マーク -->
+                <div class="flex items-center gap-1 text-xs">
+                  <span class="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">NEW</span>
+                </div>
+              </div>
+              <p class="text-sm text-gray-700 line-clamp-2 mb-1">
+                <%= truncate(comment.body, length: 60) %>
+              </p>
+              <% if comment.post %>
+                <%= link_to comment.post, class: "text-xs text-blue-600 hover:text-blue-800 hover:underline" do %>
+                  「<%= truncate(comment.post.title, length: 20) %>」へのコメント
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="text-center py-4">
+      <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+        </svg>
+      </div>
+      <p class="text-sm text-gray-500">最新のコメントがありません</p>
+      <p class="text-xs text-gray-400 mt-1">コメントを投稿してみましょう！</p>
+    </div>
+  <% end %>
+</div>

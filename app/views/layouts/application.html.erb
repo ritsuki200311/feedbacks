@@ -615,25 +615,61 @@
           
           // ツールチップ作成
           const tooltip = document.createElement("div")
-          tooltip.className = "absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-20 opacity-0 transition-opacity duration-200 pointer-events-none"
+          tooltip.className = "absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-sm rounded py-2 px-3 z-20 opacity-0 transition-opacity duration-200 pointer-events-none shadow-lg"
           tooltip.textContent = comment.body
-          tooltip.style.maxWidth = "300px"
-          tooltip.style.whiteSpace = "nowrap"
-          tooltip.style.overflow = "hidden"
-          tooltip.style.textOverflow = "ellipsis"
+          tooltip.style.maxWidth = "280px"
+          tooltip.style.minWidth = "150px"
+          tooltip.style.whiteSpace = "pre-wrap"
+          tooltip.style.wordWrap = "break-word"
           
           // マーカーにツールチップを追加
           marker.appendChild(tooltip)
           
-          // ホバーイベント
+          // ホバーイベント（デスクトップ用）
           marker.addEventListener("mouseenter", () => {
             tooltip.style.opacity = "1"
           })
-          
+
           marker.addEventListener("mouseleave", () => {
             tooltip.style.opacity = "0"
           })
-          
+
+          // タップイベント（モバイル用）
+          let isTooltipVisible = false
+          marker.addEventListener("click", (e) => {
+            e.stopPropagation()
+
+            // 他の全てのツールチップを隠す
+            document.querySelectorAll('.pin-tooltip-visible').forEach(el => {
+              el.style.opacity = "0"
+              el.classList.remove('pin-tooltip-visible')
+            })
+
+            if (!isTooltipVisible) {
+              tooltip.style.opacity = "1"
+              tooltip.style.pointerEvents = "auto"
+              tooltip.classList.add('pin-tooltip-visible')
+              isTooltipVisible = true
+
+              // 外部クリックで閉じる
+              setTimeout(() => {
+                const closeTooltip = (event) => {
+                  if (!marker.contains(event.target)) {
+                    tooltip.style.opacity = "0"
+                    tooltip.classList.remove('pin-tooltip-visible')
+                    isTooltipVisible = false
+                    document.removeEventListener('click', closeTooltip)
+                  }
+                }
+                document.addEventListener('click', closeTooltip)
+              }, 100)
+            } else {
+              tooltip.style.opacity = "0"
+              tooltip.classList.remove('pin-tooltip-visible')
+              isTooltipVisible = false
+            }
+          })
+
           // マーカーコンテナーに追加
           this.markersContainerTarget.appendChild(marker)
           console.log(`Created marker #${number} at (${comment.x_position}, ${comment.y_position})`)

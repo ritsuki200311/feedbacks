@@ -25,9 +25,10 @@ class UsersController < ApplicationController
           coins: @user.coins,
           rank: @user.rank,
           supporter_profile: @user.supporter_profile ? {
-            can_feedback: @user.supporter_profile.can_feedback,
-            creation_genres: @user.supporter_profile.creation_genres,
-            creation_experience: @user.supporter_profile.creation_experience
+            support_genres: @user.supporter_profile.support_genres,
+            creation_experience: @user.supporter_profile.creation_experience,
+            standing: @user.supporter_profile.standing,
+            support_styles: @user.supporter_profile.support_styles
           } : nil
         }
       end

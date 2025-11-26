@@ -4,7 +4,7 @@ class Post < ApplicationRecord
                 :recipient_personality_traits
 
   # 動画ファイルのバリデーションを一時的に無効化
-  CREATION_TYPES = { 'イラスト・マンガ': 0, '詩・小説': 1, '音楽': 2 }.freeze
+  CREATION_TYPES = { 'イラスト': 0, '漫画': 1, '写真': 2 }.freeze
 
   def self.creation_types
     CREATION_TYPES.keys.map(&:to_s)
@@ -18,7 +18,9 @@ class Post < ApplicationRecord
   has_many_attached :audios
 
   validates :title, presence: true, length: { minimum: 1, maximum: 100 }
-  validates :body, presence: true, length: { minimum: 1, maximum: 10000 }
+  validates :body, length: { maximum: 10000 }, allow_blank: true
+  # ファイル必須バリデーションは一旦コメントアウト（スマホでの問題を回避）
+  # validate :at_least_one_file_attached
 
 
   # validate :validate_video_format
@@ -56,6 +58,12 @@ class Post < ApplicationRecord
     end
 
     private
+
+  def at_least_one_file_attached
+    unless images.attached? || videos.attached? || audios.attached?
+      errors.add(:base, "画像、動画、または音声ファイルのいずれかを添付してください")
+    end
+  end
 
   def validate_video_format
     return unless videos.attached?

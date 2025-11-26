@@ -6,26 +6,8 @@
 
     <div class="mb-4">
       <%= f.label :name, "ユーザー名", class: "block text-sm font-medium text-gray-700" %>
-      <%= f.text_field :name, required: true, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
-    </div>
-
-    <div class="mb-4">
-      <%= f.label :email, "メールアドレス", class: "block text-sm font-medium text-gray-700" %>
-      <%= f.email_field :email, autofocus: true, autocomplete: "email", required: true, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
-      <p class="text-xs text-gray-500 mt-1">確認メールが送信されます</p>
-    </div>
-
-    <div class="mb-4">
-      <%= f.label :password, "パスワード", class: "block text-sm font-medium text-gray-700" %>
-      <% if @minimum_password_length %>
-        <p class="text-xs text-gray-500 mt-1">最低 <%= @minimum_password_length %> 文字</p>
-      <% end %>
-      <%= f.password_field :password, autocomplete: "new-password", required: true, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
-    </div>
-
-    <div class="mb-6">
-      <%= f.label :password_confirmation, "パスワード（確認）", class: "block text-sm font-medium text-gray-700" %>
-      <%= f.password_field :password_confirmation, autocomplete: "new-password", required: true, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
+      <%= f.text_field :name, autofocus: true, required: true, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
+      <p class="text-xs text-gray-500 mt-1">ユーザー名だけで登録できます</p>
     </div>
 
     <div>

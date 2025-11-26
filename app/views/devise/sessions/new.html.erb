@@ -1,26 +1,39 @@
-<h2>Log in</h2>
+<div class="max-w-md mx-auto mt-10 bg-white shadow rounded-lg p-6">
+  <h2 class="text-xl font-bold mb-4 text-gray-900">ログイン</h2>
 
-<%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
-  <div class="field">
-    <%= f.label :email %><br />
-    <%= f.email_field :email, autofocus: true, autocomplete: "email" %>
-  </div>
+  <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { id: 'login-form' }) do |f| %>
+    <div class="mb-4">
+      <%= f.label :name, "ユーザー名", class: "block text-sm font-medium text-gray-700" %>
+      <%= f.text_field :name, autofocus: true, required: true, id: 'user_name_input', class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
+      <p class="text-xs text-gray-500 mt-1">ユーザー名を入力してください</p>
+    </div>
 
-  <div class="field">
-    <%= f.label :password %><br />
-    <%= f.password_field :password, autocomplete: "current-password" %>
-  </div>
+    <%= f.hidden_field :email, id: 'user_email_hidden' %>
+    <%= f.hidden_field :password, id: 'user_password_hidden' %>
 
-  <% if devise_mapping.rememberable? %>
-    <div class="field">
-      <%= f.check_box :remember_me %>
-      <%= f.label :remember_me %>
+    <div>
+      <%= f.submit "ログイン", class: "w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md" %>
     </div>
   <% end %>
 
-  <div class="actions">
-    <%= f.submit "Log in" %>
+  <div class="mt-4 text-center">
+    <%= render "devise/shared/links" %>
   </div>
-<% end %>
+</div>
 
-<%= render "devise/shared/links" %>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('login-form');
+    const nameInput = document.getElementById('user_name_input');
+    const emailInput = document.getElementById('user_email_hidden');
+    const passwordInput = document.getElementById('user_password_hidden');
+
+    form.addEventListener('submit', function(e) {
+      const username = nameInput.value;
+      // メールアドレスを自動生成
+      emailInput.value = username + '@local.app';
+      // パスワードをユーザー名と同じに設定
+      passwordInput.value = username;
+    });
+  });
+</script>

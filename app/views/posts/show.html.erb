@@ -299,6 +299,50 @@
 
     <!-- AIサイドバー（右側） -->
     <div class="lg:col-span-1">
+      <!-- モバイル専用コメントフォーム（AI補助の上） -->
+      <% if user_signed_in? %>
+        <div class="lg:hidden mb-4 bg-white rounded-xl shadow-lg p-4 border-2 border-blue-200">
+          <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <span>💬</span>
+            <span>コメントを書く</span>
+          </h3>
+          <%= form_with model: [@post, Comment.new], local: true, class: "flex flex-col gap-3", data: { controller: "comment-form" } do |f| %>
+            <%= f.hidden_field :x_position, data: { "comment-form-target": "xPosition" } %>
+            <%= f.hidden_field :y_position, data: { "comment-form-target": "yPosition" } %>
+
+            <div>
+              <%= f.text_area :body,
+                  rows: 4,
+                  placeholder: "コメントを入力してください...",
+                  class: "w-full p-3 text-sm border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-none",
+                  data: { "comment-form-target": "textarea" } %>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <%= f.file_field :attachments,
+                  multiple: true,
+                  class: "hidden",
+                  id: "mobile-file-input",
+                  accept: "image/*,video/*,audio/*",
+                  onchange: "handleMobileFileSelection(this)" %>
+              <label for="mobile-file-input" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg cursor-pointer transition-colors flex-shrink-0 text-sm">
+                📎 ファイル添付
+              </label>
+
+              <%= f.submit "送信",
+                  class: "bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex-1" %>
+            </div>
+
+            <div id="mobile-file-preview" class="hidden mt-2 p-2 bg-gray-50 rounded border">
+              <div class="flex items-center justify-between">
+                <span id="mobile-file-info" class="text-xs text-gray-600"></span>
+                <button type="button" onclick="clearMobileFileSelection()" class="text-red-600 hover:text-red-800 text-xs">削除</button>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
       <div class="bg-gradient-to-br from-purple-100 to-indigo-200 border-2 border-purple-300 rounded-2xl shadow-lg p-4 sticky top-4" data-controller="ai-sidebar" data-ai-sidebar-post-id-value="<%= @post.id %>">
         <!-- AI補助セクション -->
         <div class="flex items-center justify-center gap-2 mb-4">
@@ -1257,9 +1301,9 @@
   </div>
 </div>
 
-<!-- 固定コメントフォーム（投稿詳細ページ専用） -->
+<!-- 固定コメントフォーム（投稿詳細ページ専用・デスクトップのみ） -->
 <% if user_signed_in? %>
-  <div class="fixed bottom-0 right-0 bg-white border-t-2 border-l-2 border-gray-200 shadow-2xl z-50 rounded-tl-lg" id="comment-form-bar" style="width: 400px; max-width: 90vw;">
+  <div class="hidden lg:block fixed bottom-0 right-0 bg-white border-t-2 border-l-2 border-gray-200 shadow-2xl z-50 rounded-tl-lg" id="comment-form-bar" style="width: 400px; max-width: 90vw;">
     <div class="px-4 py-3">
       <div class="flex flex-col gap-3">
         <!-- フォーム切り替えボタン -->
@@ -1400,6 +1444,39 @@
       window.clearFileSelection = function() {
         const fileInput = document.getElementById('file-input');
         const filePreview = document.getElementById('file-preview');
+
+        if (fileInput) {
+          fileInput.value = '';
+        }
+        if (filePreview) {
+          filePreview.classList.add('hidden');
+        }
+      };
+
+      // モバイル用ファイル選択処理
+      window.handleMobileFileSelection = function(input) {
+        const filePreview = document.getElementById('mobile-file-preview');
+        const fileInfo = document.getElementById('mobile-file-info');
+
+        if (input.files && input.files.length > 0) {
+          const files = Array.from(input.files);
+          const fileNames = files.map(file => file.name).join(', ');
+          const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+          const sizeText = totalSize > 1024 * 1024 ?
+            `${(totalSize / (1024 * 1024)).toFixed(1)}MB` :
+            `${(totalSize / 1024).toFixed(1)}KB`;
+
+          fileInfo.textContent = `${files.length}件のファイル選択済み (${sizeText})`;
+          filePreview.classList.remove('hidden');
+        } else {
+          filePreview.classList.add('hidden');
+        }
+      };
+
+      // モバイル用ファイル選択クリア
+      window.clearMobileFileSelection = function() {
+        const fileInput = document.getElementById('mobile-file-input');
+        const filePreview = document.getElementById('mobile-file-preview');
 
         if (fileInput) {
           fileInput.value = '';

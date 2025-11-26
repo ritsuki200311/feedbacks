@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   # Deviseの認証モジュール
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable, :confirmable
+         :recoverable, :rememberable, :validatable
 
   # バリデーション
   validates :name, presence: true, length: { minimum: 1, maximum: 50 }, uniqueness: true

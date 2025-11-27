@@ -299,50 +299,6 @@
 
     <!-- AIサイドバー（右側） -->
     <div class="lg:col-span-1">
-      <!-- モバイル専用コメントフォーム（AI補助の上） -->
-      <% if user_signed_in? %>
-        <div class="lg:hidden mb-4 bg-white rounded-xl shadow-lg p-4 border-2 border-blue-200">
-          <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <span>💬</span>
-            <span>コメントを書く</span>
-          </h3>
-          <%= form_with model: [@post, Comment.new], local: true, class: "flex flex-col gap-3", data: { controller: "comment-form" } do |f| %>
-            <%= f.hidden_field :x_position, data: { "comment-form-target": "xPosition" } %>
-            <%= f.hidden_field :y_position, data: { "comment-form-target": "yPosition" } %>
-
-            <div>
-              <%= f.text_area :body,
-                  rows: 4,
-                  placeholder: "コメントを入力してください...",
-                  class: "w-full p-3 text-sm border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-none",
-                  data: { "comment-form-target": "textarea" } %>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <%= f.file_field :attachments,
-                  multiple: true,
-                  class: "hidden",
-                  id: "mobile-file-input",
-                  accept: "image/*,video/*,audio/*",
-                  onchange: "handleMobileFileSelection(this)" %>
-              <label for="mobile-file-input" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg cursor-pointer transition-colors flex-shrink-0 text-sm">
-                📎 ファイル添付
-              </label>
-
-              <%= f.submit "送信",
-                  class: "bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex-1" %>
-            </div>
-
-            <div id="mobile-file-preview" class="hidden mt-2 p-2 bg-gray-50 rounded border">
-              <div class="flex items-center justify-between">
-                <span id="mobile-file-info" class="text-xs text-gray-600"></span>
-                <button type="button" onclick="clearMobileFileSelection()" class="text-red-600 hover:text-red-800 text-xs">削除</button>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      <% end %>
-
       <div class="bg-gradient-to-br from-purple-100 to-indigo-200 border-2 border-purple-300 rounded-2xl shadow-lg p-4 sticky top-4" data-controller="ai-sidebar" data-ai-sidebar-post-id-value="<%= @post.id %>">
         <!-- AI補助セクション -->
         <div class="flex items-center justify-center gap-2 mb-4">
@@ -1301,6 +1257,61 @@
   </div>
 </div>
 
+<!-- モバイル用スライドアップコメントフォーム -->
+<% if user_signed_in? %>
+  <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300 shadow-2xl z-50 transform translate-y-full transition-transform duration-300" id="mobile-comment-panel">
+    <div class="px-4 py-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+          <span>💬</span>
+          <span>コメントを書く</span>
+        </h3>
+        <button type="button"
+                id="mobile-comment-close-btn"
+                onclick="var p = document.getElementById('mobile-comment-panel'); p.style.transform = 'translateY(100%)'; console.log('Panel hidden via style');"
+                class="text-gray-500 hover:text-gray-700 text-3xl p-2 -m-2 touch-manipulation">
+          ✕
+        </button>
+      </div>
+
+      <%= form_with model: [@post, Comment.new], local: true, class: "flex flex-col gap-3" do |f| %>
+        <%= f.hidden_field :x_position, id: "mobile-x-position" %>
+        <%= f.hidden_field :y_position, id: "mobile-y-position" %>
+
+        <div>
+          <%= f.text_area :body,
+              rows: 4,
+              placeholder: "コメントを入力してください...",
+              class: "w-full p-3 text-base border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-none",
+              style: "font-size: 16px !important;" %>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <%= f.file_field :attachments,
+              multiple: true,
+              class: "hidden",
+              id: "mobile-file-input",
+              accept: "image/*,video/*,audio/*",
+              onchange: "handleMobileFileSelection(this)" %>
+          <label for="mobile-file-input" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg cursor-pointer transition-colors flex-shrink-0 text-sm">
+            📎 ファイル
+          </label>
+
+          <%= f.submit "送信",
+              class: "bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors text-base flex-1" %>
+        </div>
+
+        <div id="mobile-file-preview" class="hidden p-2 bg-gray-50 rounded border">
+          <div class="flex items-center justify-between">
+            <span id="mobile-file-info" class="text-xs text-gray-600"></span>
+            <button type="button" onclick="clearMobileFileSelection()" class="text-red-600 hover:text-red-800 text-xs">削除</button>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
 <!-- 固定コメントフォーム（投稿詳細ページ専用・デスクトップのみ） -->
 <% if user_signed_in? %>
   <div class="hidden lg:block fixed bottom-0 right-0 bg-white border-t-2 border-l-2 border-gray-200 shadow-2xl z-50 rounded-tl-lg" id="comment-form-bar" style="width: 400px; max-width: 90vw;">
@@ -1368,7 +1379,101 @@
   <div class="h-20"></div>
 
   <script>
+    // モバイルコメントフォームのトグル（グローバル関数）
+    function toggleMobileCommentForm() {
+      console.log('toggleMobileCommentForm called');
+      const panel = document.getElementById('mobile-comment-panel');
+      const button = document.getElementById('mobile-comment-button');
+
+      console.log('panel:', panel);
+      console.log('button:', button);
+
+      if (panel) {
+        const currentTransform = window.getComputedStyle(panel).transform;
+        const isHidden = currentTransform.includes('matrix') && currentTransform !== 'none';
+
+        console.log('currentTransform:', currentTransform);
+        console.log('isHidden:', isHidden);
+
+        if (!isHidden || currentTransform === 'none') {
+          // 閉じる（パネルが見えている場合）
+          console.log('Closing panel');
+          panel.style.transform = 'translateY(100%)';
+          if (button) {
+            button.classList.remove('bg-gray-600');
+            button.classList.add('bg-blue-500');
+          }
+        } else {
+          // 開く（パネルが隠れている場合）
+          console.log('Opening panel');
+          panel.style.transform = 'translateY(0)';
+          if (button) {
+            button.classList.remove('bg-blue-500');
+            button.classList.add('bg-gray-600');
+          }
+
+          // テキストエリアにフォーカス
+          setTimeout(() => {
+            const textarea = panel.querySelector('textarea');
+            if (textarea) {
+              textarea.focus();
+            }
+          }, 300);
+        }
+      } else {
+        console.error('Panel not found!');
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+      // モバイルコメント閉じるボタンのイベントリスナー
+      const closeBtn = document.getElementById('mobile-comment-close-btn');
+      const panel = document.getElementById('mobile-comment-panel');
+      const commentBtn = document.getElementById('mobile-comment-button');
+
+      if (closeBtn) {
+        console.log('Close button found, adding event listener');
+        closeBtn.addEventListener('click', function(e) {
+          console.log('Close button clicked');
+          e.preventDefault();
+          e.stopPropagation();
+
+          // 確実に閉じる
+          if (panel) {
+            console.log('Setting transform via click');
+            panel.style.transform = 'translateY(100%)';
+          }
+          if (commentBtn) {
+            commentBtn.classList.remove('bg-gray-600');
+            commentBtn.classList.add('bg-blue-500');
+          }
+        });
+
+        // タッチイベントも追加
+        closeBtn.addEventListener('touchend', function(e) {
+          console.log('Close button touched');
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (panel) {
+            console.log('Setting transform to translateY(100%)');
+            panel.style.transform = 'translateY(100%)';
+            console.log('Panel style.transform set:', panel.style.transform);
+          } else {
+            console.error('Panel not found!');
+          }
+
+          if (commentBtn) {
+            commentBtn.classList.remove('bg-gray-600');
+            commentBtn.classList.add('bg-blue-500');
+            console.log('Comment button updated');
+          } else {
+            console.log('Comment button not found');
+          }
+        });
+      } else {
+        console.log('Close button not found');
+      }
       const toggleButton = document.getElementById('toggle-comment-form');
       const formContainer = document.getElementById('comment-form-container');
       const toggleText = document.getElementById('toggle-text');

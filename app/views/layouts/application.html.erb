@@ -2034,8 +2034,9 @@
       </main>
     </div>
 
-    <!-- Bottom navigation for mobile -->
-    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-50 transition-opacity duration-300" data-layout="mobile">
+    <!-- Bottom navigation for mobile (投稿詳細ページでは非表示) -->
+    <% unless controller_name == 'posts' && action_name == 'show' %>
+      <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-50 transition-opacity duration-300" data-layout="mobile">
       <div class="bg-white border-t border-gray-200 shadow-lg">
         <div class="grid grid-cols-5 h-20">
         <!-- Home -->
@@ -2098,9 +2099,33 @@
       </div>
       </div>
     </nav>
+    <% end %>
 
-    <!-- Mobile comment pins toggle button (bottom-right) -->
-    <% if controller_name == 'posts' && (action_name == 'show' || action_name == 'index') || controller_name == 'home' %>
+    <!-- Mobile floating buttons (bottom-right) -->
+    <% if controller_name == 'posts' && action_name == 'show' %>
+      <% if user_signed_in? %>
+        <!-- コメントボタン -->
+        <div style="position: fixed; bottom: 1.5rem; right: 6rem; z-index: 40;">
+          <button type="button"
+                  onclick="toggleMobileCommentForm()"
+                  id="mobile-comment-button"
+                  class="w-16 h-16 bg-blue-500 text-white rounded-full shadow-xl hover:bg-blue-600 transition-all duration-300 active:scale-95 flex items-center justify-center">
+            <span class="text-2xl">💬</span>
+          </button>
+        </div>
+      <% end %>
+
+      <!-- ピンコメントトグルボタン -->
+      <div style="position: fixed; bottom: 1.5rem; right: 1rem; z-index: 40;" data-controller="global-comment-pins">
+        <button type="button"
+                data-action="click->global-comment-pins#toggleGlobalPins"
+                data-global-comment-pins-target="toggleButton"
+                class="w-16 h-16 bg-emerald-300 text-white rounded-full shadow-xl hover:bg-emerald-400 transition-all duration-300 active:scale-95 flex items-center justify-center">
+          <span data-global-comment-pins-target="toggleIcon" class="text-2xl">📍</span>
+        </button>
+      </div>
+    <% elsif (controller_name == 'posts' && action_name == 'index') || controller_name == 'home' %>
+      <!-- インデックスページではピンボタンのみ -->
       <div class="fixed bottom-24 right-4 z-40" data-layout="mobile" data-controller="global-comment-pins">
         <button type="button"
                 data-action="click->global-comment-pins#toggleGlobalPins"

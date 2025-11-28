@@ -885,7 +885,7 @@
               // サイドバーボタン
               button.classList.remove('border-gray-300', 'hover:bg-gray-50')
               button.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700')
-              if (icon) icon.textContent = '🙈'
+              if (icon) icon.textContent = '📍'
               if (text) text.textContent = 'コメントピン一括非表示'
             }
           } else {
@@ -899,7 +899,7 @@
               // サイドバーボタン
               button.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700')
               button.classList.add('border-gray-300', 'hover:bg-gray-50')
-              if (icon) icon.textContent = '👁️'
+              if (icon) icon.textContent = '📍'
               if (text) text.textContent = 'コメントピン一括表示'
             }
           }
@@ -2034,8 +2034,8 @@
       </main>
     </div>
 
-    <!-- Bottom navigation for mobile (投稿詳細ページでは非表示) -->
-    <% unless controller_name == 'posts' && action_name == 'show' %>
+    <!-- Bottom navigation for mobile (投稿詳細ページとアンケートページでは非表示) -->
+    <% unless (controller_name == 'posts' && action_name == 'show') || controller_name == 'supporter_profiles' %>
       <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-50 transition-opacity duration-300" data-layout="mobile">
       <div class="bg-white border-t border-gray-200 shadow-lg">
         <div class="grid grid-cols-5 h-20">
@@ -2065,10 +2065,16 @@
         
         <!-- Direct Messages -->
         <% if user_signed_in? %>
-          <%= link_to rooms_path, class: "flex flex-col items-center justify-center py-2 #{'text-blue-600' if request.path == rooms_path} #{'text-gray-600' if request.path != rooms_path} hover:text-blue-600 transition-colors" do %>
+          <% unread_count = current_user.entries.joins(:room => :messages).where(messages: { is_read: false }).where.not(messages: { user_id: current_user.id }).distinct.count(:room_id) %>
+          <%= link_to rooms_path, class: "flex flex-col items-center justify-center py-2 relative #{'text-blue-600' if request.path == rooms_path} #{'text-gray-600' if request.path != rooms_path} hover:text-blue-600 transition-colors" do %>
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 4v-4z"></path>
             </svg>
+            <% if unread_count > 0 %>
+              <span class="absolute top-1 right-1/4 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold border-2 border-white">
+                <%= unread_count > 9 ? '9+' : unread_count %>
+              </span>
+            <% end %>
             <span class="text-2xs">DM</span>
           <% end %>
         <% else %>

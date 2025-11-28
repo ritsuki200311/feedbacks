@@ -1,11 +1,6 @@
 <div class="max-w-4xl mx-auto p-6">
   <div class="bg-white rounded-lg shadow-md p-8">
     <h1 class="text-3xl font-bold text-gray-800 mb-6">送信相手を選択</h1>
-    <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-      <p class="text-sm text-yellow-800">
-        <span class="font-semibold">📋 注意:</span> 送信相手は最大5人まで選択できます。
-      </p>
-    </div>
     
     <div class="mb-6 p-4 bg-blue-50 rounded-lg">
       <h3 class="font-bold text-blue-800 mb-2">投稿内容プレビュー</h3>
@@ -22,15 +17,15 @@
           <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors" id="creator-option">
             <input type="radio" name="advisor_type" value="creator" class="h-4 w-4 text-indigo-600">
             <div class="ml-3">
-              <div class="text-lg font-semibold text-gray-800">クリエイターからアドバイス</div>
-              <div class="text-sm text-gray-600">実際に制作経験がある人から具体的なアドバイス</div>
+              <div class="text-lg font-semibold text-gray-800">クリエイターからフィードバックをもらう</div>
+              <div class="text-sm text-gray-600">実際に制作経験がある人から具体的なフィードバック</div>
             </div>
           </label>
           <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-300 transition-colors" id="commenter-option">
             <input type="radio" name="advisor_type" value="commenter" class="h-4 w-4 text-indigo-600">
             <div class="ml-3">
-              <div class="text-lg font-semibold text-gray-800">コメンターからアドバイス</div>
-              <div class="text-sm text-gray-600">視聴者・読者の視点から感想やアドバイス</div>
+              <div class="text-lg font-semibold text-gray-800">コメンターからフィードバックをもらう</div>
+              <div class="text-sm text-gray-600">視聴者・読者の視点から感想やフィードバック</div>
             </div>
           </label>
         </div>
@@ -40,7 +35,7 @@
           <h3 class="text-lg font-semibold text-gray-800 mb-3">対象ジャンルを選択</h3>
           <p class="text-sm text-gray-600 mb-3">ジャンルを選択すると自動で検索されます</p>
           <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="genre-checkboxes">
-            <% ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他'].each do |genre| %>
+            <% ['イラスト・絵画', 'マンガ', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'デザイン・グラフィック', '写真・撮影技術', 'その他'].each do |genre| %>
               <label class="flex items-center p-2 rounded border hover:bg-gray-50">
                 <input type="checkbox" name="target_genres[]" value="<%= genre %>" class="h-4 w-4 text-indigo-600 genre-checkbox">
                 <span class="ml-2 text-sm"><%= genre %></span>
@@ -61,15 +56,17 @@
 
       <!-- フォロー・フォロワーから選ぶセクション -->
       <div class="space-y-6 border-t pt-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">フォロー・フォロワーから選ぶ</h2>
-        <div class="flex gap-3 mb-4">
+        <h2 class="text-lg font-bold text-gray-800 mb-4">フォロー・フォロワーから選ぶ</h2>
+        <div class="flex flex-col md:flex-row gap-3 mb-4">
           <button type="button" id="show-following-btn"
-                  class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            フォロー中一覧を表示
+                  class="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base whitespace-nowrap">
+            <span class="md:hidden">フォロー中</span>
+            <span class="hidden md:inline">フォロー中一覧を表示</span>
           </button>
           <button type="button" id="show-followers-btn"
-                  class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-            フォロワー一覧を表示
+                  class="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm md:text-base whitespace-nowrap">
+            <span class="md:hidden">フォロワー</span>
+            <span class="hidden md:inline">フォロワー一覧を表示</span>
           </button>
         </div>
         <div id="following-list" class="hidden space-y-2 mt-4">
@@ -147,29 +144,29 @@ document.addEventListener('DOMContentLoaded', function() {
       if (this.checked) {
         // ジャンル選択を表示
         genreSelection.classList.remove('hidden');
-        
+
         // 選択されたオプションのスタイルを変更
         creatorOption.classList.remove('border-indigo-500', 'bg-indigo-50');
         commenterOption.classList.remove('border-indigo-500', 'bg-indigo-50');
-        
+
         if (this.value === 'creator') {
           creatorOption.classList.add('border-indigo-500', 'bg-indigo-50');
         } else if (this.value === 'commenter') {
           commenterOption.classList.add('border-indigo-500', 'bg-indigo-50');
         }
+
+        // 全ユーザーを表示
+        showAllUsersOfType(this.value);
       }
     });
   });
-  
-  // ジャンル選択時の自動検索処理
+
+  // ジャンル選択時のフィルタリング処理
   const genreCheckboxes = document.querySelectorAll('.genre-checkbox');
   genreCheckboxes.forEach(checkbox => {
     checkbox.addEventListener('change', function() {
-      // チェックボックスの状態が変更されたら自動で検索を実行
-      const advisorType = document.querySelector('input[name="advisor_type"]:checked')?.value;
-      if (advisorType) {
-        showMatchingUsersWithAdvisorType();
-      }
+      // チェックボックスの状態が変更されたら表示されているユーザーをフィルタリング
+      filterDisplayedUsers();
     });
   });
 
@@ -255,30 +252,55 @@ document.getElementById('user-profile-modal')?.addEventListener('click', functio
   }
 });
 
-// 旧showMatchingUsers関数は削除
+// 全ユーザーを保持する変数
+let allUsers = [];
 
-async function showMatchingUsersWithAdvisorType() {
+// アドバイザータイプの全ユーザーを表示
+async function showAllUsersOfType(advisorType) {
   try {
-    const advisorType = document.querySelector('input[name="advisor_type"]:checked')?.value;
-    const targetGenres = Array.from(document.querySelectorAll('input[name="target_genres[]"]:checked')).map(cb => cb.value);
-
     const params = new URLSearchParams();
-    if (advisorType) params.append('advisor_type', advisorType);
-    targetGenres.forEach(g => params.append('target_genres[]', g));
-    
+    params.append('advisor_type', advisorType);
+
     const response = await fetch(`<%= post_match_users_path(@post) %>?${params.toString()}`);
     const data = await response.json();
-    
+
     if (data.error) {
       console.error('Matching error:', data.error);
       return;
     }
-    
-    displayMatchingResults(data.users, advisorType);
-    
+
+    // 全ユーザーを保存
+    allUsers = data.users;
+
+    // 全ユーザーを表示
+    displayMatchingResults(allUsers, advisorType);
+
   } catch (error) {
     console.error('Matching API error:', error);
   }
+}
+
+// 表示されているユーザーをジャンルでフィルタリング
+function filterDisplayedUsers() {
+  if (allUsers.length === 0) return;
+
+  const advisorType = document.querySelector('input[name="advisor_type"]:checked')?.value;
+  const selectedGenres = Array.from(document.querySelectorAll('input[name="target_genres[]"]:checked')).map(cb => cb.value);
+
+  // ジャンルが選択されていない場合は全ユーザーを表示
+  if (selectedGenres.length === 0) {
+    displayMatchingResults(allUsers, advisorType);
+    return;
+  }
+
+  // ジャンルでフィルタリング
+  const filteredUsers = allUsers.filter(user => {
+    // ユーザーの説明文にジャンルが含まれているかチェック
+    const userGenres = user.description || '';
+    return selectedGenres.some(genre => userGenres.includes(genre));
+  });
+
+  displayMatchingResults(filteredUsers, advisorType);
 }
 
 function displayMatchingResults(users, advisorType = null) {
@@ -352,13 +374,13 @@ document.getElementById('show-following-btn').addEventListener('click', async ()
   if (!followingListDiv.classList.contains('hidden')) {
     // 既に表示されている場合は非表示にする
     followingListDiv.classList.add('hidden');
-    btn.textContent = 'フォロー中一覧を表示';
+    btn.innerHTML = '<span class="md:hidden">フォロー中</span><span class="hidden md:inline">フォロー中一覧を表示</span>';
     return;
   }
 
   followingListDiv.innerHTML = '<p class="text-gray-500">読み込み中...</p>';
   followingListDiv.classList.remove('hidden');
-  btn.textContent = 'フォロー中一覧を非表示';
+  btn.innerHTML = '<span class="md:hidden">非表示</span><span class="hidden md:inline">フォロー中一覧を非表示</span>';
 
   try {
     const response = await fetch('/users/<%= current_user.id %>/following.json');
@@ -407,13 +429,13 @@ document.getElementById('show-followers-btn').addEventListener('click', async ()
   if (!followersListDiv.classList.contains('hidden')) {
     // 既に表示されている場合は非表示にする
     followersListDiv.classList.add('hidden');
-    btn.textContent = 'フォロワー一覧を表示';
+    btn.innerHTML = '<span class="md:hidden">フォロワー</span><span class="hidden md:inline">フォロワー一覧を表示</span>';
     return;
   }
 
   followersListDiv.innerHTML = '<p class="text-gray-500">読み込み中...</p>';
   followersListDiv.classList.remove('hidden');
-  btn.textContent = 'フォロワー一覧を非表示';
+  btn.innerHTML = '<span class="md:hidden">非表示</span><span class="hidden md:inline">フォロワー一覧を非表示</span>';
 
   try {
     const response = await fetch('/users/<%= current_user.id %>/followers.json');

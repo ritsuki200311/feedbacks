@@ -61,7 +61,8 @@ class SupporterProfilesController < ApplicationController
 
   def supporter_profile_params
     params.require(:supporter_profile).permit(
-      :creation_experience, :favorite_artists, :age_group,
+      :creation_experience, :favorite_artists, :favorite_works, :age_group,
+      :support_genres_other_text, :interests_other_text,
       standing: [], interests: [], support_genres: [], support_styles: [], personality_traits: []
     )
   end

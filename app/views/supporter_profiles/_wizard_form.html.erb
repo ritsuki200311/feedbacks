@@ -30,19 +30,16 @@
     <div class="step-content" data-profile-wizard-target="step" data-step="1">
       <div class="text-center mb-8">
         <h2 class="text-3xl font-bold text-gray-800 mb-2">年齢を入力してください</h2>
-        <p class="text-gray-600">該当する年齢層を選択してください</p>
+        <p class="text-gray-600">数字で年齢を入力してください</p>
       </div>
-      
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-        <% ['～15歳', '16～18歳', '19～22歳', '23～29歳', '30代', '40代以上'].each do |option| %>
-          <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectSingle" data-field="age_group" data-value="<%= option %>">
-            <input type="radio" name="supporter_profile[age_group]" value="<%= option %>" 
-                   <%= 'checked' if @supporter_profile.age_group == option %> class="hidden">
-            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
-              <span class="text-lg text-gray-700"><%= option %></span>
-            </div>
-          </label>
-        <% end %>
+
+      <div class="max-w-md mx-auto">
+        <%= f.number_field :age_group,
+            min: 1,
+            max: 120,
+            placeholder: "例: 25",
+            class: "w-full p-4 border-2 border-gray-200 rounded-lg text-center text-2xl focus:ring-indigo-500 focus:border-indigo-500",
+            required: true %>
       </div>
     </div>
 
@@ -52,17 +49,25 @@
         <h2 class="text-3xl font-bold text-gray-800 mb-2">実際に創作をしていますか</h2>
         <p class="text-gray-600">当てはまるものをすべて選択してください</p>
       </div>
-      
+
       <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-        <% ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他', 'していない'].each do |option| %>
+        <% ['イラスト・絵画', 'マンガ', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'デザイン・グラフィック', '写真・撮影技術', 'その他', 'していない'].each do |option| %>
           <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="support_genres" data-value="<%= option %>">
-            <input type="checkbox" name="supporter_profile[support_genres][]" value="<%= option %>" 
-                   <%= 'checked' if @supporter_profile.support_genres.include?(option) %> class="hidden">
+            <input type="checkbox" name="supporter_profile[support_genres][]" value="<%= option %>"
+                   <%= 'checked' if @supporter_profile.support_genres.include?(option) %>
+                   class="hidden"
+                   onchange="toggleOtherInput('support_genres_other', this, 'その他')">
             <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
               <span class="text-base text-gray-700"><%= option %></span>
             </div>
           </label>
         <% end %>
+      </div>
+
+      <!-- その他の入力欄 -->
+      <div id="support_genres_other" class="max-w-2xl mx-auto mt-6" style="display: none;">
+        <label class="block text-lg font-semibold text-gray-800 mb-2">その他の詳細を入力してください</label>
+        <%= f.text_field :support_genres_other_text, class: "w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "例：陶芸、編み物、プログラミングなど" %>
       </div>
     </div>
 
@@ -92,17 +97,32 @@
         <h2 class="text-3xl font-bold text-gray-800 mb-2">よく見るジャンルはありますか？</h2>
         <p class="text-gray-600">当てはまるものをすべて選択してください</p>
       </div>
-      
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-        <% ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他'].each do |option| %>
+
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto mb-8">
+        <% ['イラスト・絵画', 'マンガ', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'デザイン・グラフィック', '写真・撮影技術', 'その他'].each do |option| %>
           <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="interests" data-value="<%= option %>">
-            <input type="checkbox" name="supporter_profile[interests][]" value="<%= option %>" 
-                   <%= 'checked' if @supporter_profile.interests.include?(option) %> class="hidden">
+            <input type="checkbox" name="supporter_profile[interests][]" value="<%= option %>"
+                   <%= 'checked' if @supporter_profile.interests.include?(option) %>
+                   class="hidden"
+                   onchange="toggleOtherInput('interests_other', this, 'その他')">
             <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
               <span class="text-base text-gray-700"><%= option %></span>
             </div>
           </label>
         <% end %>
+      </div>
+
+      <!-- その他の入力欄 -->
+      <div id="interests_other" class="max-w-2xl mx-auto mb-6" style="display: none;">
+        <label class="block text-lg font-semibold text-gray-800 mb-2">その他の詳細を入力してください</label>
+        <%= f.text_field :interests_other_text, class: "w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "例：ゲーム、舞台、手芸など" %>
+      </div>
+
+      <div class="max-w-2xl mx-auto mt-8">
+        <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">実際に好きなアーティストや作品を教えてください</h3>
+        <%= f.text_area :favorite_works, rows: 4,
+            class: "w-full p-4 border-2 border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-lg",
+            placeholder: "例：宮崎駿、新海誠、ピクサー作品、米津玄師、ヨルシカ、東野圭吾の小説、ONE PIECEなど..." %>
       </div>
     </div>
 
@@ -154,11 +174,11 @@
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.4), 0 4px 12px rgba(37, 99, 235, 0.3);
     transform: scale(1.02);
   }
-  
+
   .option-card:hover input + div {
     @apply border-indigo-300;
   }
-  
+
   .option-card input + div {
     transition: all 0.2s ease-in-out;
   }
@@ -166,7 +186,7 @@
   .animate-fade-in {
     animation: fadeIn 0.3s ease-in-out;
   }
-  
+
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -177,4 +197,38 @@
       transform: translateY(0);
     }
   }
+
+  input[type="number"]::placeholder,
+  textarea::placeholder {
+    color: #d1d5db;
+    opacity: 0.6;
+  }
 </style>
+
+<script>
+  function toggleOtherInput(elementId, checkbox, targetValue) {
+    const otherDiv = document.getElementById(elementId);
+    if (checkbox.value === targetValue && checkbox.checked) {
+      otherDiv.style.display = 'block';
+    } else if (checkbox.value === targetValue && !checkbox.checked) {
+      otherDiv.style.display = 'none';
+    }
+  }
+
+  // ページロード時に「その他」がチェックされていれば入力欄を表示
+  document.addEventListener('DOMContentLoaded', function() {
+    const supportGenresCheckboxes = document.querySelectorAll('input[name="supporter_profile[support_genres][]"]');
+    supportGenresCheckboxes.forEach(function(checkbox) {
+      if (checkbox.value === 'その他' && checkbox.checked) {
+        document.getElementById('support_genres_other').style.display = 'block';
+      }
+    });
+
+    const interestsCheckboxes = document.querySelectorAll('input[name="supporter_profile[interests][]"]');
+    interestsCheckboxes.forEach(function(checkbox) {
+      if (checkbox.value === 'その他' && checkbox.checked) {
+        document.getElementById('interests_other').style.display = 'block';
+      }
+    });
+  });
+</script>

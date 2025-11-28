@@ -2,6 +2,7 @@ class PostsController < ApplicationController
   include PostsHelper
   before_action :set_post, only: [ :show, :edit, :update, :destroy ]
   before_action :authenticate_user!, only: [ :new, :create, :destroy, :edit, :update, :select_recipient, :send_to_user ]
+  before_action :check_post_limit, only: [ :new, :create ]
   before_action :authorize_post_owner, only: [ :edit, :update, :destroy ]
 
   def new
@@ -20,12 +21,8 @@ class PostsController < ApplicationController
     @post = Post.new(post_params.except(:files))
     @post.user = current_user
 
-    # ボタンのcommitパラメータによって動作を変える
-    if params[:commit] == "投稿する"
-      @post.is_private = false  # 公開投稿として保存
-    else
-      @post.is_private = true  # 非公開投稿として保存
-    end
+    # 常に公開投稿として保存
+    @post.is_private = false
 
     respond_to do |format|
       if @post.valid?
@@ -607,5 +604,11 @@ class PostsController < ApplicationController
                        .distinct
 
     message_rooms.exists?
+  end
+
+  def check_post_limit
+    if current_user.posts.exists?
+      redirect_to root_path, alert: "投稿は1つまでしか作成できません。"
+    end
   end
 end

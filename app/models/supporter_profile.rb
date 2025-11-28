@@ -9,12 +9,12 @@ class SupporterProfile < ApplicationRecord
 
       case value
       when Array
-        value
+        value.compact.reject(&:blank?)
       when String
         begin
           JSON.parse(value)
         rescue JSON::ParserError
-          value.split(",").map(&:strip)
+          value.split(",").map(&:strip).reject(&:blank?)
         end
       else
         []
@@ -24,9 +24,11 @@ class SupporterProfile < ApplicationRecord
     define_method "#{attr}=" do |value|
       case value
       when Array
-        write_attribute(attr, value)
+        # 空文字列やnilを除外してから保存
+        clean_value = value.compact.reject(&:blank?)
+        write_attribute(attr, clean_value)
       when String
-        write_attribute(attr, value.split(",").map(&:strip))
+        write_attribute(attr, value.split(",").map(&:strip).reject(&:blank?))
       else
         write_attribute(attr, [])
       end

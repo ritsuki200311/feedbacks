@@ -12,6 +12,7 @@ amazon:
   secret_access_key: <%= Rails.application.credentials.dig(:aws, :secret_access_key) %>
   region: ap-northeast-1
   bucket: feedbacks-app-<%= Rails.env %>
+  public: true
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:

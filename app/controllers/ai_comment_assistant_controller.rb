@@ -1,16 +1,17 @@
 class AiCommentAssistantController < ApplicationController
-  before_action :authenticate_user!
-  skip_before_action :verify_authenticity_token, only: [ :analyze_post ]
+  skip_before_action :verify_authenticity_token
   before_action :check_rate_limit, only: [ :analyze_post ]
 
   def analyze_post
-    @post = Post.find(params[:post_id])
+    respond_to do |format|
+      format.json do
+        @post = Post.find(params[:post_id])
 
-    begin
-      Rails.logger.info "AI analysis requested for post #{@post.id}"
+        begin
+          Rails.logger.info "AI analysis requested for post #{@post.id}"
 
-      # 実際のAI分析を実行
-      ai_result = call_gemini_api(@post)
+          # 実際のAI分析を実行
+          ai_result = call_gemini_api(@post)
 
       result = {
         success: true,
@@ -21,38 +22,43 @@ class AiCommentAssistantController < ApplicationController
 
       Rails.logger.info "AI analysis completed successfully for post #{@post.id}"
 
-    rescue => e
-      Rails.logger.error "AI analysis failed for post #{@post.id}: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
+        rescue => e
+          Rails.logger.error "AI analysis failed for post #{@post.id}: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
 
-      # エラー時はフォールバック値を返す
-      result = {
-        success: true,
-        comment_examples: [
-          "とても素晴らしい作品ですね。#{@post.title}の表現が印象的です。",
-          "この作品から#{determine_content_type(@post)}としての魅力を感じました。",
-          "#{@post.user.name}さんの創作への情熱が伝わってきます。"
-        ],
-        observation_points: [
-          "作品の構成や全体のバランスに注目してみましょう",
-          "使用されている技法や表現手法を観察してみましょう",
-          "作品から受ける感情や印象を言葉にしてみましょう",
-          "改善点や発展の可能性について考えてみましょう"
-        ],
-        vocabularies: [
-          "美しい", "印象的", "繊細", "力強い",
-          "調和", "表現力", "創造的", "独創的"
-        ],
-        fallback: true
-      }
+          # エラー時はフォールバック値を返す
+          result = {
+            success: true,
+            comment_examples: [
+              "とても素晴らしい作品ですね。#{@post.title}の表現が印象的です。",
+              "この作品から#{determine_content_type(@post)}としての魅力を感じました。",
+              "#{@post.user.name}さんの創作への情熱が伝わってきます。"
+            ],
+            observation_points: [
+              "作品の構成や全体のバランスに注目してみましょう",
+              "使用されている技法や表現手法を観察してみましょう",
+              "作品から受ける感情や印象を言葉にしてみましょう",
+              "改善点や発展の可能性について考えてみましょう"
+            ],
+            vocabularies: [
+              "美しい", "印象的", "繊細", "力強い",
+              "調和", "表現力", "創造的", "独創的"
+            ],
+            fallback: true
+          }
+        end
+
+        render json: result
+      end
     end
-
-    render json: result
   end
 
   private
 
   def check_rate_limit
+    # ログイン済みユーザーのみレート制限を適用
+    return unless current_user
+
     # ユーザーごとのレート制限（5分間に3回まで）
     rate_limit_key = "ai_rate_limit_user_#{current_user.id}"
     current_count = Rails.cache.read(rate_limit_key) || 0
@@ -84,8 +90,8 @@ class AiCommentAssistantController < ApplicationController
     end
 
     # 画像がある場合はVision対応モデルを使用
-    model = post.images.attached? ? "gemini-1.5-flash" : "gemini-1.5-flash"
-    url = URI("https://generativelanguage.googleapis.com/v1/models/#{model}:generateContent?key=#{api_key}")
+    model = "gemini-flash-latest"
+    url = URI("https://generativelanguage.googleapis.com/v1beta/models/#{model}:generateContent?key=#{api_key}")
 
     http = Net::HTTP.new(url.host, url.port)
     http.use_ssl = true

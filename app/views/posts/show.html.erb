@@ -694,42 +694,69 @@
       loadingDiv.classList.remove('hidden')
       toggleButton.innerHTML = '<span>🤖</span><span>分析中...</span>'
       toggleButton.disabled = true
-      
-      // モックAI分析（実際のAPIは右サイドバーのみで使用）
-      setTimeout(() => {
-        const mockContent = `
-          <div class="space-y-3">
-            <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
-              <h4 class="text-sm font-bold text-emerald-800 mb-2">💡 評価のヒント</h4>
-              <div class="text-xs text-emerald-700 space-y-1">
-                <p>• 作品の技術的な側面に注目してみましょう</p>
-                <p>• 感情的な印象を具体的に表現してみましょう</p>
-                <p>• 建設的なフィードバックを心がけましょう</p>
+
+      // 実際のGemini APIを呼び出し
+      fetch('/posts/<%= @post.id %>/ai_comment_assistant/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({})
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // 語彙・表現ボタンを生成
+          const vocabButtons = data.vocabularies.map(vocab =>
+            `<span class="px-2 py-1 bg-white border border-purple-300 rounded text-xs text-purple-700 cursor-pointer hover:bg-purple-100" onclick="insertToVoteComment('${vocab}')">${vocab}</span>`
+          ).join('')
+
+          // 観察ポイントを生成
+          const observationPoints = data.observation_points.map(point =>
+            `<p>• ${point}</p>`
+          ).join('')
+
+          const aiContent = `
+            <div class="space-y-3">
+              <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                <h4 class="text-sm font-bold text-emerald-800 mb-2">💡 評価のヒント</h4>
+                <div class="text-xs text-emerald-700 space-y-1">
+                  ${observationPoints}
+                </div>
+              </div>
+              <div class="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                <h4 class="text-sm font-bold text-purple-800 mb-2">📝 表現例</h4>
+                <div class="flex flex-wrap gap-1">
+                  ${vocabButtons}
+                </div>
               </div>
             </div>
-            <div class="bg-purple-50 rounded-lg p-3 border border-purple-200">
-              <h4 class="text-sm font-bold text-purple-800 mb-2">📝 表現例</h4>
-              <div class="flex flex-wrap gap-1">
-                <span class="px-2 py-1 bg-white border border-purple-300 rounded text-xs text-purple-700 cursor-pointer hover:bg-purple-100" onclick="insertToVoteComment('印象的')">印象的</span>
-                <span class="px-2 py-1 bg-white border border-purple-300 rounded text-xs text-purple-700 cursor-pointer hover:bg-purple-100" onclick="insertToVoteComment('丁寧')">丁寧</span>
-                <span class="px-2 py-1 bg-white border border-purple-300 rounded text-xs text-purple-700 cursor-pointer hover:bg-purple-100" onclick="insertToVoteComment('創造的')">創造的</span>
-              </div>
-            </div>
-          </div>
-        `
-        
-        contentDiv.innerHTML = mockContent
-        voteModalAICache = mockContent
-        voteModalAILoaded = true
-        
+          `
+
+          contentDiv.innerHTML = aiContent
+          voteModalAICache = aiContent
+          voteModalAILoaded = true
+
+          loadingDiv.classList.add('hidden')
+          contentDiv.classList.remove('hidden')
+          toggleButton.innerHTML = '<span>🤖</span><span>閉じる</span>'
+          toggleButton.disabled = false
+
+          adjustLayoutForAI(true)
+        } else {
+          throw new Error(data.error || 'AI分析に失敗しました')
+        }
+      })
+      .catch(error => {
+        console.error('AI分析エラー:', error)
         loadingDiv.classList.add('hidden')
-        contentDiv.classList.remove('hidden')
-        toggleButton.innerHTML = '<span>🤖</span><span>閉じる</span>'
+        initialDiv.classList.remove('hidden')
+        toggleButton.innerHTML = '<span>🤖</span><span>開始</span>'
         toggleButton.disabled = false
-        
-        // AI表示時にレイアウトを変更
-        adjustLayoutForAI(true)
-      }, 1000) // API呼び出しではないので短時間
+        alert('AI分析中にエラーが発生しました。もう一度お試しください。')
+      })
     } else {
       // AI機能を閉じる
       contentDiv.classList.add('hidden')

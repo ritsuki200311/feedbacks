@@ -2,7 +2,7 @@ class PostsController < ApplicationController
   include PostsHelper
   before_action :set_post, only: [ :show, :edit, :update, :destroy ]
   before_action :authenticate_user!, only: [ :new, :create, :destroy, :edit, :update, :select_recipient, :send_to_user ]
-  before_action :check_post_limit, only: [ :new, :create ]
+  # before_action :check_post_limit, only: [ :new, :create ]  # 投稿数制限を削除
   before_action :authorize_post_owner, only: [ :edit, :update, :destroy ]
 
   def new
@@ -606,9 +606,10 @@ class PostsController < ApplicationController
     message_rooms.exists?
   end
 
-  def check_post_limit
-    if current_user.posts.exists?
-      redirect_to root_path, alert: "投稿は1つまでしか作成できません。"
-    end
-  end
+  # 投稿数制限を削除（複数投稿を許可）
+  # def check_post_limit
+  #   if current_user.posts.exists?
+  #     redirect_to root_path, alert: "投稿は1つまでしか作成できません。"
+  #   end
+  # end
 end

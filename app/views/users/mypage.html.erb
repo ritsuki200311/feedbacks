@@ -16,7 +16,7 @@
   <div class="rounded-2xl p-6 mb-6 shadow-lg" style="background: linear-gradient(to right,rgb(107, 180, 198),rgb(90, 170, 184));">
     <div class="flex justify-between items-start">
       <div class="flex-1">
-        <h1 class="text-4xl font-bold text-black bg-white bg-opacity-90 px-4 py-2 rounded-lg inline-block shadow-md"><%= current_user.name %>さんのマイページ</h1>
+        <h1 class="text-4xl font-bold text-black bg-white bg-opacity-90 px-4 py-2 rounded-lg inline-block shadow-md"><%= current_user.name %></h1>
 
         <!-- プロフィール文 -->
         <% if current_user.bio.present? %>
@@ -63,52 +63,17 @@
     </div>
     
     <!-- Account Edit Card -->
-    <div class="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center">
-      <div class="text-3xl mb-2">⚙️</div>
-      <h3 class="text-lg font-bold text-green-800">アカウント設定</h3>
-      <%= link_to "編集する", "http://localhost:3000/users/edit", class: "inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 mt-2" %>
-    </div>
+    <%= link_to edit_user_registration_path, class: "block" do %>
+      <div class="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center hover:bg-green-100 transition-colors cursor-pointer">
+        <div class="text-3xl mb-2">⚙️</div>
+        <h3 class="text-lg font-bold text-green-800">アカウント設定</h3>
+        <p class="text-sm text-green-600 mt-2">クリックして編集</p>
+      </div>
+    <% end %>
   </div>
 
   <!-- User Info Section -->
   <div class="bg-white rounded-2xl shadow-lg border border-gray-100 mb-6">
-    <div class="p-6 border-b border-gray-100">
-      <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-        📧 アカウント情報
-      </h2>
-      
-      <!-- ユーザーネーム・プロフィール編集フォーム -->
-      <div class="bg-blue-50 rounded-lg p-4 mb-4 border border-blue-200">
-        <h3 class="font-semibold text-blue-800 mb-3 flex items-center gap-2">
-          👤 ユーザーネーム・プロフィール
-        </h3>
-        <%= form_with model: current_user, url: update_user_path, method: :patch, local: true do |form| %>
-          <div class="mb-4">
-            <%= form.label :name, "ユーザーネーム", class: "block text-sm font-medium text-blue-800 mb-1" %>
-            <%= form.text_field :name, value: current_user.name,
-                class: "w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
-                placeholder: "ユーザーネームを入力" %>
-            <p class="text-xs text-blue-600 mt-1">※ 他のユーザーに表示される名前です</p>
-          </div>
-
-          <div class="mb-4">
-            <%= form.label :bio, "プロフィール文", class: "block text-sm font-medium text-blue-800 mb-1" %>
-            <%= form.text_area :bio, value: current_user.bio,
-                class: "w-full p-2 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
-                placeholder: "自己紹介を入力してください",
-                rows: 4 %>
-            <p class="text-xs text-blue-600 mt-1">※ マイページ上部に表示されます</p>
-          </div>
-
-          <%= form.submit "更新", class: "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors" %>
-        <% end %>
-      </div>
-      
-      <div class="bg-gray-50 rounded-lg p-4">
-        <p class="text-gray-700"><strong>メールアドレス:</strong> <%= current_user.email %></p>
-      </div>
-    </div>
-
     <div class="p-6" style="position: static; z-index: auto;">
     <% if @supporter_profile %>
       <div class="flex justify-between items-center mb-4">

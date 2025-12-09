@@ -316,6 +316,9 @@ class PostsMapController {
     // シンプルなdefs（問題解決のため複雑な背景を一時削除）
     const defs = svg.append("defs");
 
+    // グラフ要素のコンテナ
+    const g = svg.append("g");
+
     // ズーム機能を設定
     const zoom = d3.zoom()
       .scaleExtent([0.1, 4])
@@ -323,10 +326,11 @@ class PostsMapController {
         g.attr("transform", event.transform);
       });
 
-    svg.call(zoom);
-
-    // グラフ要素のコンテナ
-    const g = svg.append("g");
+    // 初期ズームを2倍に設定（画面中央を基準に拡大）
+    const initialScale = 2;
+    const translateX = (width / 2) * (1 - initialScale);
+    const translateY = (actualHeight / 2) * (1 - initialScale);
+    svg.call(zoom).call(zoom.transform, d3.zoomIdentity.translate(translateX, translateY).scale(initialScale));
     
     // グリッド線を追加（ズーム実感のため）
     this.addGridLines(g, width, actualHeight);

@@ -264,6 +264,11 @@
       #main-content {
         flex: 1;
         width: 100%;
+        /* デフォルトでデスクトップレイアウト（サイドバーの右側） */
+        margin-left: 16rem;
+        padding: 2rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
       }
 
       /* デスクトップ用メインコンテンツ */
@@ -281,6 +286,17 @@
         padding-left: 1rem;
         padding-top: 4rem;
         padding-bottom: 6rem; /* 下部メニューバー分のマージン */
+      }
+
+      /* モバイル画面サイズでは常にmargin-leftを0に */
+      @media (max-width: 768px) {
+        #main-content {
+          margin-left: 0;
+          padding: 1rem;
+          padding-left: 1rem;
+          padding-top: 4rem;
+          padding-bottom: 6rem;
+        }
       }
       
       /* 下部ナビゲーション用の極小テキスト */
@@ -1987,11 +2003,11 @@
 
       <main id="main-content">
         <% if notice %>
-          <div class="bg-green-100 text-green-800 p-4 rounded mb-4 max-w-6xl mx-auto"><%= notice %></div>
+          <div class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-100 text-green-800 p-4 rounded shadow-lg max-w-md w-full mx-4"><%= notice %></div>
         <% end %>
 
         <% if alert %>
-          <div class="bg-red-100 text-red-800 p-4 rounded mb-4 max-w-6xl mx-auto"><%= alert %></div>
+          <div class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-100 text-red-800 p-4 rounded shadow-lg max-w-md w-full mx-4"><%= alert %></div>
         <% end %>
 
         <%= yield %>
@@ -2097,6 +2113,22 @@
           lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
         }, false);
       })();
+
+      // フラッシュメッセージを自動的にフェードアウト
+      document.addEventListener('DOMContentLoaded', function() {
+        const flashMessages = document.querySelectorAll('.fixed.top-4');
+        flashMessages.forEach(function(message) {
+          if (message.classList.contains('bg-green-100') || message.classList.contains('bg-red-100')) {
+            setTimeout(function() {
+              message.style.transition = 'opacity 0.5s ease-out';
+              message.style.opacity = '0';
+              setTimeout(function() {
+                message.remove();
+              }, 500);
+            }, 3000); // 3秒後にフェードアウト開始
+          }
+        });
+      });
     </script>
 
   </body>

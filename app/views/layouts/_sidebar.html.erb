@@ -19,10 +19,12 @@
       <% if user_signed_in? %>
         <%= link_to "マイページ", mypage_path, class: sidebar_link_class(mypage_path) %>
         <%= link_to "コミュニティ", communities_path, class: sidebar_link_class(communities_path) %>
-        <%= link_to "アカウント編集", edit_user_registration_path, class: sidebar_link_class(edit_user_registration_path) %>
         <%= link_to "ユーザー関係性", user_relationships_path, class: sidebar_link_class(user_relationships_path) %>
         <%= link_to "作品マップ", posts_map_path, class: sidebar_link_class(posts_map_path) %>
-        <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
+        <%= link_to "アカウント設定", edit_user_registration_path, class: sidebar_link_class(edit_user_registration_path) %>
+        <% unless current_user.supporter_profile.present? %>
+          <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
+        <% end %>
         
         <!-- グローバルコメントピン表示切り替え -->
         <div class="px-4 py-2" data-controller="global-comment-pins">
@@ -48,10 +50,12 @@
     <!-- モバイル表示用の二次メニュー（mdより小さい画面で表示） -->
     <div class="md:hidden flex flex-col space-y-2">
       <% if user_signed_in? %>
-        <%= link_to "アカウント編集", edit_user_registration_path, class: sidebar_link_class(edit_user_registration_path) %>
         <%= link_to "ユーザー関係性", user_relationships_path, class: sidebar_link_class(user_relationships_path) %>
         <%= link_to "作品マップ", posts_map_path, class: sidebar_link_class(posts_map_path) %>
-        <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
+        <%= link_to "アカウント設定", edit_user_registration_path, class: sidebar_link_class(edit_user_registration_path) %>
+        <% unless current_user.supporter_profile.present? %>
+          <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
+        <% end %>
         
         <!-- グローバルコメントピン表示切り替え -->
         <div class="px-4 py-2" data-controller="global-comment-pins">

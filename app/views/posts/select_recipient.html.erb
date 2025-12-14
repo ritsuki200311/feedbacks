@@ -133,6 +133,20 @@
 </div>
 
 <script>
+// 信用度スコアを星で表示する関数
+function getTrustScoreStars(score) {
+  const fullStars = Math.floor(score);
+  const hasHalf = (score - fullStars) >= 0.5;
+  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+
+  let html = '';
+  for (let i = 0; i < fullStars; i++) html += '⭐';
+  if (hasHalf) html += '✨';
+  for (let i = 0; i < emptyStars; i++) html += '☆';
+
+  return `${html} <span class="text-xs text-gray-600">(${score.toFixed(1)})</span>`;
+}
+
 // ページ読み込み時の初期化
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -141,17 +155,17 @@ document.addEventListener('DOMContentLoaded', function() {
   const genreSelection = document.getElementById('genre-selection');
   const creatorOption = document.getElementById('creator-option');
   const commenterOption = document.getElementById('commenter-option');
-  
+
   advisorTypeInputs.forEach(input => {
     input.addEventListener('change', function() {
       if (this.checked) {
         // ジャンル選択を表示
         genreSelection.classList.remove('hidden');
-        
+
         // 選択されたオプションのスタイルを変更
         creatorOption.classList.remove('border-indigo-500', 'bg-indigo-50');
         commenterOption.classList.remove('border-indigo-500', 'bg-indigo-50');
-        
+
         if (this.value === 'creator') {
           creatorOption.classList.add('border-indigo-500', 'bg-indigo-50');
         } else if (this.value === 'commenter') {
@@ -160,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
-  
+
   // ジャンル選択時の自動検索処理
   const genreCheckboxes = document.querySelectorAll('.genre-checkbox');
   genreCheckboxes.forEach(checkbox => {
@@ -368,13 +382,14 @@ document.getElementById('show-following-btn').addEventListener('click', async ()
         <div class="flex items-center gap-2 flex-1">
           <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
           <div class="flex-1">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <h4 class="font-semibold text-blue-900 cursor-pointer hover:underline" onclick="showUserProfile(${user.id})">${user.name}</h4>
               <span class="px-2 py-0.5 text-xs font-bold rounded ${
                 user.rank === 'A' ? 'bg-yellow-100 text-yellow-800' :
                 user.rank === 'B' ? 'bg-gray-100 text-gray-800' :
                 'bg-orange-100 text-orange-800'
               }">ランク${user.rank || 'C'}</span>
+              <span class="text-sm">${getTrustScoreStars(user.trust_score || 3.0)}</span>
             </div>
             <p class="text-sm text-blue-700">${user.bio || 'プロフィール未設定'}</p>
           </div>
@@ -423,13 +438,14 @@ document.getElementById('show-followers-btn').addEventListener('click', async ()
         <div class="flex items-center gap-2 flex-1">
           <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
           <div class="flex-1">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <h4 class="font-semibold text-purple-900 cursor-pointer hover:underline" onclick="showUserProfile(${follower.id})">${follower.name}</h4>
               <span class="px-2 py-0.5 text-xs font-bold rounded ${
                 follower.rank === 'A' ? 'bg-yellow-100 text-yellow-800' :
                 follower.rank === 'B' ? 'bg-gray-100 text-gray-800' :
                 'bg-orange-100 text-orange-800'
               }">ランク${follower.rank || 'C'}</span>
+              <span class="text-sm">${getTrustScoreStars(follower.trust_score || 3.0)}</span>
             </div>
             <p class="text-sm text-purple-700">${follower.bio || 'プロフィール未設定'}</p>
           </div>

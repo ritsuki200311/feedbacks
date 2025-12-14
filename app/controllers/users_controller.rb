@@ -94,7 +94,8 @@ class UsersController < ApplicationController
             id: follower.id,
             name: follower.name,
             bio: follower.preference&.bio || follower.supporter_profile&.bio,
-            rank: follower.rank
+            rank: follower.rank,
+            trust_score: follower.trust_score.to_f
           }
         }
       end
@@ -112,7 +113,8 @@ class UsersController < ApplicationController
             id: user.id,
             name: user.name,
             bio: user.preference&.bio || user.supporter_profile&.bio,
-            rank: user.rank
+            rank: user.rank,
+            trust_score: user.trust_score.to_f
           }
         }
       end

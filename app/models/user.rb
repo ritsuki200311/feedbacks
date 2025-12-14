@@ -99,4 +99,20 @@ class User < ApplicationRecord
   # バリデーション
   validates :name, presence: true, length: { maximum: 50 }
   validates :email, presence: true, length: { maximum: 254 }
+  validates :trust_score, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 5 }
+
+  # 信用度スコア関連のメソッド
+  def trust_score_stars
+    trust_score.round(1)
+  end
+
+  def increment_trust_score(amount = 0.1)
+    new_score = [trust_score + amount, 5.0].min
+    update(trust_score: new_score)
+  end
+
+  def decrement_trust_score(amount = 0.05)
+    new_score = [trust_score - amount, 0.0].max
+    update(trust_score: new_score)
+  end
 end

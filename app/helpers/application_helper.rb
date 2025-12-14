@@ -21,4 +21,18 @@ module ApplicationHelper
 
     has_voted || has_commented
   end
+
+  # 信用度スコアを星で表示
+  def trust_score_stars(score)
+    full_stars = score.floor
+    has_half = (score - full_stars) >= 0.5
+    empty_stars = 5 - full_stars - (has_half ? 1 : 0)
+
+    html = ""
+    full_stars.times { html += "⭐" }
+    html += "✨" if has_half
+    empty_stars.times { html += "☆" }
+
+    raw "#{html} <span class=\"text-xs text-gray-600\">(#{score.round(1)})</span>"
+  end
 end

@@ -4,7 +4,7 @@ class Post < ApplicationRecord
                 :recipient_personality_traits
 
   # 動画ファイルのバリデーションを一時的に無効化
-  CREATION_TYPES = { 'イラスト・マンガ': 0, '詩・小説': 1, '音楽': 2 }.freeze
+  CREATION_TYPES = { '写真': 0, 'イラスト': 1, '絵画': 2 }.freeze
 
   def self.creation_types
     CREATION_TYPES.keys.map(&:to_s)

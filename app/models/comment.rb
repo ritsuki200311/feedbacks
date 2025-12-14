@@ -36,6 +36,27 @@ class Comment < ApplicationRecord
       .limit(limit)
   }
 
+  # 時間単位で評価されたコメント（最近1時間）
+  scope :trending_hourly, -> {
+    where("comments.created_at >= ?", 1.hour.ago)
+      .left_joins(:votes)
+      .select("comments.*, COUNT(votes.id) as vote_count, COALESCE(SUM(votes.value), 0) as net_score")
+      .group("comments.id")
+      .order(Arel.sql("COALESCE(SUM(votes.value), 0) DESC, comments.created_at DESC"))
+  }
+
+  # 総合的な表示順序（評価と新しさの両方を考慮）
+  scope :smart_order, -> {
+    left_joins(:votes)
+      .select("comments.*,
+              COUNT(votes.id) as vote_count,
+              COALESCE(SUM(votes.value), 0) as net_score,
+              (COALESCE(SUM(votes.value), 0) * 10 +
+               EXTRACT(EPOCH FROM (NOW() - comments.created_at)) / -3600) as smart_score")
+      .group("comments.id")
+      .order(Arel.sql("smart_score DESC, comments.created_at DESC"))
+  }
+
   # 評価スコアを計算するメソッド
   def net_score
     votes.sum(:value)

@@ -170,17 +170,17 @@
               <div class="flex items-center gap-3 p-4 border-2 <%= @post.creation_type == type_value ? 'border-blue-700 bg-blue-100 border-4' : 'border-gray-200' %> rounded-lg hover:border-blue-400 transition-all option-card">
                 <div class="flex-shrink-0">
                   <% case type_name.to_s %>
-                  <% when 'イラスト・マンガ' %>
+                  <% when '写真' %>
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span class="text-lg">📷</span>
+                    </div>
+                  <% when 'イラスト' %>
                     <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                       <span class="text-lg">🎨</span>
                     </div>
-                  <% when '詩・小説' %>
-                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span class="text-lg">📝</span>
-                    </div>
-                  <% when '音楽' %>
+                  <% when '絵画' %>
                     <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <span class="text-lg">🎵</span>
+                      <span class="text-lg">🖼️</span>
                     </div>
                   <% end %>
                 </div>

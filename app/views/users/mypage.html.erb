@@ -54,14 +54,14 @@
       <h3 class="text-lg font-bold text-yellow-800">保有コイン</h3>
       <p class="text-2xl font-bold text-yellow-600"><%= current_user.coins %></p>
     </div>
-    
-    <!-- Rank Card -->
-    <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 text-center">
-      <div class="text-3xl mb-2">🏆</div>
-      <h3 class="text-lg font-bold text-blue-800">現在のランク</h3>
-      <p class="text-2xl font-bold text-blue-600"><%= current_user.rank %>(<%= current_user.rank_points %>)</p>
+
+    <!-- Trust Score Card -->
+    <div class="bg-purple-50 border-2 border-purple-200 rounded-xl p-4 text-center">
+      <div class="text-3xl mb-2">⭐</div>
+      <h3 class="text-lg font-bold text-purple-800">信用度スコア</h3>
+      <p class="text-2xl font-bold text-purple-600"><%= trust_score_stars(current_user.trust_score) %></p>
     </div>
-    
+
     <!-- Account Edit Card -->
     <%= link_to edit_user_registration_path, class: "block" do %>
       <div class="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center hover:bg-green-100 transition-colors cursor-pointer">

@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["image", "markersContainer", "toggleButton", "toggleIcon", "toggleText", "markerCount"]
-  static values = { postId: Number, imageIndex: Number }
+  static values = { postId: Number, imageIndex: Number, readOnly: Boolean }
 
   // コメント投稿成功時に青い丸を削除する関数
   removeClickIndicator() {
@@ -144,6 +144,12 @@ export default class extends Controller {
     const handleImageInteraction = (event) => {
       console.log("Image interacted!", event.type)
 
+      // 読み取り専用モードの場合は何もしない
+      if (this.readOnlyValue) {
+        console.log("Read-only mode, ignoring interaction")
+        return
+      }
+
       // タッチイベントの場合はデフォルト動作を防ぐ
       if (event.type === 'touchstart') {
         event.preventDefault()
@@ -269,19 +275,21 @@ export default class extends Controller {
   showClickIndicator(clientX, clientY) {
     console.log('showClickIndicator called in controller at:', clientX, clientY);
 
-    // 青い丸のインジケーターを作成（既存のものは削除しない）
+    // 青い丸のインジケーターを作成（より目立つように）
     const indicator = document.createElement('div')
     indicator.className = 'click-indicator'
     indicator.style.cssText = `
       position: fixed;
       left: ${clientX}px;
       top: ${clientY}px;
-      width: 24px;
-      height: 24px;
+      width: 32px;
+      height: 32px;
       background-color: #3b82f6;
+      border: 3px solid white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
       border-radius: 50%;
       pointer-events: none;
-      z-index: 9999;
+      z-index: 10002;
       transform: translate(-50%, -50%);
     `
 
@@ -334,6 +342,75 @@ export default class extends Controller {
     existingTempPins.forEach(pin => pin.remove())
   }
 
+  createOverlay() {
+    console.log('🟢 createOverlay() START')
+    try {
+      // 既存のオーバーレイがあれば削除
+      this.removeOverlay()
+      console.log('🟢 removeOverlay() done')
+
+      // オーバーレイを作成
+      const overlay = document.createElement('div')
+      overlay.id = 'pin-comment-overlay'
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 9997;
+        cursor: pointer;
+      `
+      console.log('🟢 Overlay element created')
+
+      // オーバーレイをクリックするとフォームを閉じる
+      overlay.addEventListener('click', (e) => {
+        e.stopPropagation()
+        this.hideForm()
+      })
+      console.log('🟢 Overlay click listener added')
+
+      // bodyに追加
+      document.body.appendChild(overlay)
+      this.overlay = overlay
+      console.log('🟢 Overlay added to body')
+
+      // 画像コンテナ（this.element）をオーバーレイの上に表示
+      if (this.element) {
+        this.element.style.position = 'relative'
+        this.element.style.zIndex = '9998'
+        console.log('🟢 Element z-index set to 9998')
+      } else {
+        console.error('🔴 this.element is null!')
+      }
+
+      console.log('🟢 Overlay created and element z-index set')
+    } catch (error) {
+      console.error('🔴 Error in createOverlay():', error)
+    }
+  }
+
+  removeOverlay() {
+    if (this.overlay) {
+      this.overlay.remove()
+      this.overlay = null
+    }
+    // IDで検索して削除（念のため）
+    const existingOverlay = document.getElementById('pin-comment-overlay')
+    if (existingOverlay) {
+      existingOverlay.remove()
+    }
+
+    // 画像コンテナのz-indexを元に戻す
+    if (this.element) {
+      this.element.style.position = ''
+      this.element.style.zIndex = ''
+    }
+
+    console.log('Overlay removed and element z-index reset')
+  }
+
   showImageCommentForm(x, y) {
     const form = this.element.querySelector("[data-image-comments-target='form']")
     if (!form) {
@@ -356,6 +433,11 @@ export default class extends Controller {
     }
     document.addEventListener('touchmove', this.preventScrollListener, { passive: false })
     document.addEventListener('wheel', this.preventScrollListener, { passive: false })
+
+    console.log('🔴 About to call createOverlay()...')
+    // 画像以外を暗くするオーバーレイを作成
+    this.createOverlay()
+    console.log('🔴 createOverlay() called')
 
     console.log('Scroll disabled at position:', this.savedScrollY)
 
@@ -553,6 +635,9 @@ export default class extends Controller {
       // 元のスクロール位置に戻す
       window.scrollTo(0, this.savedScrollY)
       console.log('Scroll restored to position:', this.savedScrollY)
+
+      // オーバーレイを削除
+      this.removeOverlay()
 
       // フォーム内容をクリア
       const textarea = form.querySelector('textarea')

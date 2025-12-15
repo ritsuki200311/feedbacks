@@ -540,23 +540,27 @@
 </div>
 
 <!-- 画像拡大表示モーダル -->
-<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden p-4">
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center hidden p-4" style="z-index: 10000;">
   <div class="relative w-full h-full flex items-center justify-center">
-    <div class="relative">
-      <img id="modalImage" src="" alt="拡大画像" class="max-w-full max-h-full object-contain rounded shadow-xl cursor-crosshair">
-      
+    <div class="relative" data-controller="image-comments" data-image-comments-post-id-value="<%= @post.id %>" data-image-comments-image-index-value="0">
+      <img id="modalImage" src="" alt="拡大画像" class="max-w-full max-h-full object-contain rounded shadow-xl cursor-crosshair" data-image-comments-target="image">
+
       <!-- 画像上のコメントマーカー表示エリア -->
-      <div class="absolute inset-0 pointer-events-none" id="modalMarkersContainer"></div>
-      
-      <!-- 画像上コメント用のフォーム（初期は非表示） -->
-      <div class="hidden absolute z-50 bg-white border border-gray-300 rounded p-2 shadow-lg" id="modalCommentForm">
-        <%= form_with model: [@post, Comment.new], local: false, id: "modal-comment-form" do |f| %>
-          <%= f.hidden_field :x_position, id: "modal_x_position" %>
-          <%= f.hidden_field :y_position, id: "modal_y_position" %>
-          <%= f.text_area :body, rows: 2, placeholder: "コメントを入力...", class: "w-40 p-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500", required: true %>
-          <div class="mt-1 flex gap-1">
-            <%= f.submit "コメント", class: "bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs" %>
-            <button type="button" onclick="hideModalCommentForm()" class="bg-gray-300 text-gray-700 px-2 py-1 rounded hover:bg-gray-400 text-xs">×</button>
+      <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+
+      <!-- 画像上コメント用のフォーム（初期は非表示、小さい画像と同じスタイル） -->
+      <div class="hidden absolute bg-white border border-gray-300 rounded p-0.5 shadow-lg image-comment-form" data-image-comments-target="form" style="min-width: 90px; max-width: min(60vw, 150px); width: max-content; z-index: 10001;">
+        <%= form_with model: [@post, Comment.new], local: false, data: { turbo: false, "image-comments-target": "commentForm", action: "submit->image-comments#submitComment" } do |f| %>
+          <%= f.hidden_field :x_position %>
+          <%= f.hidden_field :y_position %>
+          <%= f.hidden_field :image_index %>
+          <div class="flex items-center gap-0.5">
+            <%= f.text_area :body, rows: 1, placeholder: "", class: "w-full min-w-[60px] p-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none", required: true, data: { action: "keydown->image-comments#handleKeydown" }, style: "font-size: 16px !important; -webkit-text-size-adjust: 100%; line-height: 1.2;" %>
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center transition-colors" title="送信">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19V5M5 12l7-7 7 7"/>
+              </svg>
+            </button>
           </div>
         <% end %>
       </div>
@@ -758,9 +762,51 @@
 
   // 画像拡大表示機能
   window.showImageModal = function(imageSrc) {
+    console.log('🔍 showImageModal called');
+
+    // ピンコメントのオーバーレイを削除（ある場合）
+    if (window.removePinCommentOverlay) {
+      window.removePinCommentOverlay();
+      console.log('🔍 Overlay removed');
+    }
+
+    // 小さい画像のピンコメントフォームを閉じる（モーダル内のものは除外）
+    const imageContainers = document.querySelectorAll('[data-controller="image-comments"]');
+    imageContainers.forEach(container => {
+      // モーダル内のコントローラーは除外
+      if (container.closest('#imageModal')) {
+        return;
+      }
+      const controller = container.imageCommentsController;
+      if (controller && typeof controller.hideForm === 'function') {
+        controller.hideForm();
+      }
+    });
+    console.log('🔍 Forms hidden via controller');
+
+    // すべての一時ピン（黄色のx）を削除
+    const tempPins = document.querySelectorAll('[data-temp-pin="true"]');
+    tempPins.forEach(pin => {
+      pin.remove();
+      console.log('🔍 Temp pin removed');
+    });
+
+    // 青い丸のインジケーターを削除
+    if (window.removeClickIndicator) {
+      window.removeClickIndicator();
+      console.log('🔍 Click indicators removed via function');
+    }
+
+    // 念のため、すべての青い丸を直接削除
+    const allBlueCircles = document.querySelectorAll('.click-indicator');
+    allBlueCircles.forEach(circle => {
+      circle.remove();
+      console.log('🔍 Blue circle removed directly');
+    });
+
     const modal = document.getElementById('imageModal')
     const modalImage = document.getElementById('modalImage')
-    
+
     if (modal && modalImage) {
       modalImage.src = imageSrc
       document.body.style.overflow = 'hidden'
@@ -795,9 +841,33 @@
   }
 
   window.hideImageModal = function() {
+    console.log('🔍 hideImageModal called');
+
+    // ピンコメントのオーバーレイを削除
+    if (window.removePinCommentOverlay) {
+      window.removePinCommentOverlay();
+      console.log('🔍 Pin comment overlay removed on modal close');
+    }
+
+    // モーダル内のフォームを閉じる
+    const modalContainer = document.querySelector('#imageModal [data-controller="image-comments"]');
+    if (modalContainer) {
+      const controller = modalContainer.imageCommentsController;
+      if (controller && typeof controller.hideForm === 'function') {
+        controller.hideForm();
+        console.log('🔍 Modal form hidden');
+      }
+    }
+
+    // 青い丸を削除
+    if (window.removeClickIndicator) {
+      window.removeClickIndicator();
+      console.log('🔍 Click indicators removed on modal close');
+    }
+
     const modal = document.getElementById('imageModal')
     const modalImage = document.getElementById('modalImage')
-    
+
     if (modal && modalImage) {
       modal.classList.add('hidden')
       modalImage.src = ''
@@ -805,6 +875,7 @@
       modalImage.style.height = ''
       modalImage.onload = null
       document.body.style.overflow = ''
+      console.log('🔍 Modal hidden and cleaned up');
     }
   }
 
@@ -827,19 +898,21 @@
       currentClickIndicator.remove();
     }
 
-    // 青い丸のインジケーターを作成
+    // 青い丸のインジケーターを作成（より目立つように）
     const indicator = document.createElement('div')
     indicator.className = 'click-indicator'
     indicator.style.cssText = `
       position: fixed;
       left: ${clientX}px;
       top: ${clientY}px;
-      width: 24px;
-      height: 24px;
+      width: 32px;
+      height: 32px;
       background-color: #3b82f6;
+      border: 3px solid white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
       border-radius: 50%;
       pointer-events: none;
-      z-index: 9999;
+      z-index: 10002;
       transform: translate(-50%, -50%);
     `
 
@@ -850,11 +923,19 @@
 
   // コメント投稿時に青い丸を削除する関数
   function removeClickIndicator() {
+    // 変数に保存されている青い丸を削除
     if (currentClickIndicator && currentClickIndicator.parentNode) {
       currentClickIndicator.remove();
       currentClickIndicator = null;
       console.log('Blue indicator removed after comment submission');
     }
+
+    // すべての青い丸（class="click-indicator"）を削除
+    const allIndicators = document.querySelectorAll('.click-indicator');
+    allIndicators.forEach(indicator => {
+      indicator.remove();
+      console.log('Additional blue indicator removed');
+    });
   }
 
   // グローバルからアクセス可能にする
@@ -876,54 +957,108 @@
 
   // モーダル画像のクリック処理を設定
   window.setupModalImageClick = function() {
+    console.log('🔵🔵🔵 setupModalImageClick called!')
     const modalImage = document.getElementById('modalImage')
-    
-    if (!modalImage) return
-    
+
+    if (!modalImage) {
+      console.log('🔴 Modal image not found!')
+      return
+    }
+
+    console.log('🔵 Modal image found, setting up click listener...')
+
     // 既存のイベントリスナーを削除
     modalImage.removeEventListener('click', handleModalImageClick)
-    
+
     // 新しいイベントリスナーを追加
     modalImage.addEventListener('click', handleModalImageClick)
+
+    console.log('🔵 Click listener added to modal image!')
   }
 
   function handleModalImageClick(event) {
-    event.preventDefault()
-    event.stopPropagation()
+    console.log('🟢🟢🟢 handleModalImageClick called!', event.clientX, event.clientY)
+
+    // クリック位置を青い丸で表示（最優先）
+    const clientX = event.clientX
+    const clientY = event.clientY
+
+    console.log('🟢 Creating blue circle at:', clientX, clientY)
+
+    // 既存の青い丸を削除
+    const existingIndicators = document.querySelectorAll('.click-indicator')
+    existingIndicators.forEach(ind => ind.remove())
+
+    // 青い丸を作成（グローバル関数を使わずに直接作成）
+    const indicator = document.createElement('div')
+    indicator.className = 'click-indicator'
+    indicator.style.cssText = `
+      position: fixed;
+      left: ${clientX}px;
+      top: ${clientY}px;
+      width: 32px;
+      height: 32px;
+      background-color: #3b82f6;
+      border: 3px solid white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10002;
+      transform: translate(-50%, -50%);
+    `
+    document.body.appendChild(indicator)
+    console.log('🟢 Blue circle created and added to body!')
 
     const modalImage = event.target
-    const form = document.getElementById('modalCommentForm')
-    
-    if (!form) return
+    const modalContainer = modalImage.closest('[data-controller="image-comments"]')
+
+    if (!modalContainer) {
+      console.log('🔴 Modal container not found')
+      return
+    }
+
+    const form = modalContainer.querySelector('[data-image-comments-target="form"]')
+
+    if (!form) {
+      console.log('🔴 Form not found in modal container')
+      return
+    }
 
     const rect = modalImage.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
 
-    // クリック位置を青い丸で表示
-    showClickIndicator(event.clientX, event.clientY)
-
     // 画像内での相対位置を計算（パーセント）
     const xPercent = (x / rect.width) * 100
     const yPercent = (y / rect.height) * 100
 
+    console.log('🟢 Position calculated:', xPercent, yPercent)
+
     // フォームを表示
-    form.style.left = `${x}px`
-    form.style.top = `${y}px`
+    form.style.position = 'fixed'
+    form.style.left = `${clientX}px`
+    form.style.top = `${clientY}px`
+    form.style.zIndex = '10001'
     form.classList.remove('hidden')
 
     // 隠しフィールドに位置を設定
-    const xPosField = document.getElementById('modal_x_position')
-    const yPosField = document.getElementById('modal_y_position')
-    
-    if (xPosField) xPosField.value = xPercent
-    if (yPosField) yPosField.value = yPercent
+    const xField = form.querySelector('input[name="comment[x_position]"]')
+    const yField = form.querySelector('input[name="comment[y_position]"]')
+    const imageIndexField = form.querySelector('input[name="comment[image_index]"]')
+
+    if (xField) xField.value = xPercent
+    if (yField) yField.value = yPercent
+    if (imageIndexField) imageIndexField.value = 0
 
     // テキストエリアにフォーカス
     const textarea = form.querySelector('textarea')
     if (textarea) {
-      textarea.focus()
+      setTimeout(() => {
+        textarea.focus()
+      }, 100)
     }
+
+    console.log('🟢 Form shown and focused')
   }
 
   // モーダルコメントフォームを非表示にする関数
@@ -1536,5 +1671,205 @@
         console.error('エラー:', error);
       });
     };
+
+    // ピンコメント用オーバーレイ機能（純粋なJavaScript）
+    (function() {
+      let overlayElement = null;
+      let savedScrollY = 0;
+      let isScrollLocked = false;
+
+      // 画像クリック時にオーバーレイを作成
+      document.addEventListener('DOMContentLoaded', () => {
+        const imageContainers = document.querySelectorAll('[data-controller="image-comments"]');
+
+        imageContainers.forEach(container => {
+          const image = container.querySelector('[data-image-comments-target="image"]');
+          if (!image) return;
+
+          // 画像クリックイベントをオーバーライド
+          image.addEventListener('click', (e) => {
+            console.log('🟡 Inline script: Image clicked, creating overlay...');
+
+            // モーダル内の画像の場合はスキップ（Stimulusコントローラーに任せる）
+            if (container.closest('#imageModal')) {
+              console.log('🟡 Modal image clicked, skipping overlay creation');
+              return;
+            }
+
+            // 既にロックされている場合は何もしない
+            if (isScrollLocked) return;
+
+            // 画像クリック時に即座にスクロールを停止（クリック直後に取得）
+            savedScrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+            // スクロールを固定する前の状態を保存
+            const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${savedScrollY}px`;
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.width = '100%';
+
+            // スクロールバーの幅を補正
+            if (scrollBarWidth > 0) {
+              document.body.style.paddingRight = `${scrollBarWidth}px`;
+            }
+
+            isScrollLocked = true;
+
+            createOverlay(container);
+          }, true); // capture phase で先に実行
+        });
+      });
+
+      function createOverlay(imageContainer) {
+        // 既存のオーバーレイを削除
+        removeOverlay();
+
+        // スクロール位置を保存
+        savedScrollY = window.scrollY;
+
+        // オーバーレイを作成
+        overlayElement = document.createElement('div');
+        overlayElement.id = 'pin-comment-overlay-inline';
+        overlayElement.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(0, 0, 0, 0.7);
+          z-index: 9997;
+          cursor: pointer;
+        `;
+
+        // オーバーレイクリックでフォームを閉じる
+        overlayElement.addEventListener('click', () => {
+          console.log('🟡 Overlay clicked, closing form...');
+          removeOverlay();
+          // StimulusコントローラーのhideFormメソッドも呼び出す
+          const controller = imageContainer.imageCommentsController;
+          if (controller && typeof controller.hideForm === 'function') {
+            controller.hideForm();
+          }
+        });
+
+        // bodyに追加
+        document.body.appendChild(overlayElement);
+
+        // 画像コンテナをオーバーレイの上に表示
+        imageContainer.style.position = 'relative';
+        imageContainer.style.zIndex = '9998';
+
+        // スクロールを無効化
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${savedScrollY}px`;
+        document.body.style.width = '100%';
+
+        console.log('🟡 Overlay created successfully');
+      }
+
+      function removeOverlay() {
+        if (overlayElement) {
+          overlayElement.remove();
+          overlayElement = null;
+        }
+
+        // スクロールを再度有効化
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+        document.body.style.paddingRight = '';
+
+        // スクロールロックフラグをリセット
+        isScrollLocked = false;
+
+        // 元のスクロール位置に戻す
+        window.scrollTo(0, savedScrollY);
+
+        // 画像コンテナのz-indexをリセット
+        const imageContainers = document.querySelectorAll('[data-controller="image-comments"]');
+        imageContainers.forEach(container => {
+          container.style.position = '';
+          container.style.zIndex = '';
+        });
+
+        console.log('🟡 Overlay removed');
+      }
+
+      // グローバルに公開（画像拡大機能から呼び出せるように）
+      window.removePinCommentOverlay = removeOverlay;
+
+      // グローバルに公開
+      window.createPinOverlay = createOverlay;
+      window.removePinOverlay = removeOverlay;
+    })();
+
+    // ピンコメント入力欄の自動リサイズ機能
+    (function() {
+      document.addEventListener('DOMContentLoaded', () => {
+        setupTextareaAutoResize();
+      });
+
+      // フォーム表示時にも設定（Stimulus コントローラーから呼ばれる可能性があるため）
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1) { // Element node
+              const textareas = node.querySelectorAll ? node.querySelectorAll('textarea[data-action*="image-comments"]') : [];
+              textareas.forEach(setupAutoResize);
+            }
+          });
+        });
+      });
+
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      function setupTextareaAutoResize() {
+        const textareas = document.querySelectorAll('textarea[data-action*="image-comments"]');
+        textareas.forEach(setupAutoResize);
+      }
+
+      function setupAutoResize(textarea) {
+        if (textarea.dataset.autoResizeSetup) return; // 既に設定済み
+        textarea.dataset.autoResizeSetup = 'true';
+
+        // 初期の高さを設定
+        textarea.style.minHeight = '24px';
+        textarea.style.maxHeight = '150px';
+        textarea.style.overflowY = 'hidden';
+
+        function resize() {
+          // 一旦高さをリセット
+          textarea.style.height = 'auto';
+          // スクロール高さに合わせて調整
+          const newHeight = Math.min(textarea.scrollHeight, 150);
+          textarea.style.height = newHeight + 'px';
+
+          // 最大高さを超えたらスクロール可能にする
+          if (textarea.scrollHeight > 150) {
+            textarea.style.overflowY = 'auto';
+          } else {
+            textarea.style.overflowY = 'hidden';
+          }
+        }
+
+        // input イベントで自動リサイズ
+        textarea.addEventListener('input', resize);
+        // 初期表示時もリサイズ
+        resize();
+
+        console.log('🟢 Auto-resize setup for textarea');
+      }
+
+      // グローバルに公開（必要に応じて）
+      window.setupTextareaAutoResize = setupTextareaAutoResize;
+    })();
   </script>
 <% end %>

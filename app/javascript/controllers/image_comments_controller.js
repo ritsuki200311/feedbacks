@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
+// VERSION: 2025-12-16-03-30 - Fixed pin movement on re-click
 export default class extends Controller {
   static targets = ["image", "markersContainer", "toggleButton", "toggleIcon", "toggleText", "markerCount"]
   static values = { postId: Number, imageIndex: Number, readOnly: Boolean }
@@ -28,22 +29,16 @@ export default class extends Controller {
   // コメント送信処理
   submitComment(event) {
     event.preventDefault();
-    console.log('Comment form submitted');
 
     const form = event.target;
     const formData = new FormData(form);
 
     // デバッグ情報をログ出力
-    console.log('Form action:', form.action);
-    console.log('Form data entries:');
     for (let [key, value] of formData.entries()) {
-      console.log(`  ${key}: ${value}`);
     }
 
     // CSRFトークンの確認
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
-    console.log('CSRF token element:', csrfToken);
-    console.log('CSRF token value:', csrfToken ? csrfToken.getAttribute('content') : 'NOT FOUND');
 
     // URLに.jsonを追加してJSON形式のレスポンスを要求
     const actionUrl = form.action.endsWith('.json') ? form.action : form.action + '.json'
@@ -58,12 +53,9 @@ export default class extends Controller {
       credentials: 'same-origin'
     })
     .then(response => {
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
 
       // レスポンスのテキストを取得してログに出力
       return response.text().then(text => {
-        console.log('Response text:', text);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}\nResponse: ${text}`);
@@ -79,7 +71,6 @@ export default class extends Controller {
       });
     })
     .then(data => {
-      console.log('Response data:', data);
       if (data.success) {
         console.log('Comment submitted successfully');
         // 青い丸を削除
@@ -107,14 +98,6 @@ export default class extends Controller {
   }
 
   connect() {
-    console.log("🔥🔥🔥 NEW VERSION 2025-10-02 🔥🔥🔥")
-    console.log("=== Image Comments Controller connected! ===")
-    console.log("Post ID:", this.postIdValue)
-    console.log("Image Index:", this.imageIndexValue)
-    console.log("Image target:", this.hasImageTarget ? "found" : "not found")
-    console.log("Markers container:", this.hasMarkersContainerTarget ? "found" : "not found")
-    console.log("Element ID:", this.element.id || "no-id")
-    console.log("==========================================")
     this.tempPin = null
     this.tempForm = null
     this.documentClickListener = null
@@ -130,7 +113,6 @@ export default class extends Controller {
   }
 
   setupImageClickListener() {
-    console.log("Setting up image click listener...")
     if (!this.hasImageTarget) {
       console.error("Image target not found!")
       return
@@ -142,11 +124,9 @@ export default class extends Controller {
 
     // クリック/タッチ処理の共通ハンドラー
     const handleImageInteraction = (event) => {
-      console.log("Image interacted!", event.type)
 
       // 読み取り専用モードの場合は何もしない
       if (this.readOnlyValue) {
-        console.log("Read-only mode, ignoring interaction")
         return
       }
 
@@ -160,7 +140,6 @@ export default class extends Controller {
 
         if (tapLength < 300 && tapLength > 0) {
           // ダブルタップ検出 - ズームを防止
-          console.log("Double tap detected, preventing zoom")
           event.preventDefault()
           event.stopPropagation()
           // ダブルタップの場合は処理を続行しない
@@ -170,8 +149,24 @@ export default class extends Controller {
         lastTap = currentTime
       }
 
-      // まず現在のフォームを閉じる
-      this.hideForm()
+      // ❌ hideForm() を呼ばない（スクロール位置がズレるのを防ぐ）
+      // 既存のフォームがある場合は、位置を更新して再利用する
+      // this.hideForm()
+
+      // ✅ 古い青い丸と仮ピンだけを削除（フォームやオーバーレイは維持）
+      if (window.removeClickIndicator) {
+        window.removeClickIndicator()
+      }
+      this.removeTempPin()
+
+      // ✅ フォームのテキストエリアをクリア（新しい位置用に）
+      const form = this.element.querySelector("[data-image-comments-target='form']")
+      if (form) {
+        const textarea = form.querySelector('textarea')
+        if (textarea) {
+          textarea.value = ''
+        }
+      }
 
       // タッチイベントかクリックイベントかで座標取得方法を変える
       let clientX, clientY
@@ -184,7 +179,6 @@ export default class extends Controller {
       }
 
       // クリック位置を青い丸で表示
-      console.log("About to call showClickIndicator with:", clientX, clientY)
       this.showClickIndicator(clientX, clientY)
 
       const rect = this.imageTarget.getBoundingClientRect()
@@ -195,21 +189,15 @@ export default class extends Controller {
       const relativeX = (x / rect.width * 100).toFixed(2)
       const relativeY = (y / rect.height * 100).toFixed(2)
 
-      console.log(`Interacted at: ${relativeX}%, ${relativeY}%`)
 
       // 既存のマーカーがクリック位置にある場合はスキップ
       const markerExists = this.isMarkerAtPosition(relativeX, relativeY)
-      console.log("Checking for existing marker at position:", relativeX, relativeY, "exists:", markerExists)
       if (markerExists) {
-        console.log("Marker already exists at this position")
         return
       }
 
-      console.log("Creating temp pin and focusing form...")
-      console.log("About to call createTempPin with:", relativeX, relativeY)
       // 仮ピンを表示し、画像上にフォームを表示（固定位置で表示）
       this.createTempPin(relativeX, relativeY, clientX, clientY)
-      console.log("createTempPin called, now calling showImageCommentForm")
       this.showImageCommentForm(relativeX, relativeY)
     }
 
@@ -228,38 +216,32 @@ export default class extends Controller {
     this.documentClickListener = (event) => {
       const form = this.element.querySelector("[data-image-comments-target='form']")
       if (!form || form.classList.contains('hidden')) {
-        console.log('Form not found or already hidden')
         return
       }
 
-      console.log('Document interaction detected, checking if should hide form')
-      console.log('Interaction target:', event.target)
 
       // フォームやその内部、画像がクリックされた場合は無視
       if (form.contains(event.target)) {
-        console.log('Interaction was inside form, not hiding')
         return
       }
 
-      if (this.imageTarget && this.imageTarget.contains(event.target)) {
-        console.log('Interaction was on image, not hiding (will be handled by image interaction)')
+      // ✅ より確実な画像クリック検出（this.imageTarget に依存しない）
+      const clickedImage = event.target.closest('[data-image-comments-target="image"]')
+      if (clickedImage || (this.imageTarget && this.imageTarget.contains(event.target))) {
         return
       }
 
       if (this.tempPin && this.tempPin.contains(event.target)) {
-        console.log('Interaction was on temp pin, not hiding')
         return
       }
 
       // それ以外の場所がクリックされたらフォームを閉じる
-      console.log('Outside interaction detected, hiding form')
       this.hideForm()
     }
 
     // クリックとタッチの両方に対応
     document.addEventListener('click', this.documentClickListener)
     document.addEventListener('touchstart', this.documentClickListener)
-    console.log('Document interaction listeners added')
   }
 
   removeDocumentClickListener() {
@@ -267,13 +249,11 @@ export default class extends Controller {
       document.removeEventListener('click', this.documentClickListener)
       document.removeEventListener('touchstart', this.documentClickListener)
       this.documentClickListener = null
-      console.log('Document interaction listeners removed')
     }
   }
 
 
   showClickIndicator(clientX, clientY) {
-    console.log('showClickIndicator called in controller at:', clientX, clientY);
 
     // 青い丸のインジケーターを作成（より目立つように）
     const indicator = document.createElement('div')
@@ -294,14 +274,12 @@ export default class extends Controller {
     `
 
     document.body.appendChild(indicator)
-    console.log('Blue indicator added to body by controller');
   }
 
   createTempPin(x, y, clientX, clientY) {
     // 既存の仮ピンがあれば削除
     this.removeTempPin()
 
-    console.log('Creating temp pin at:', x, y, 'fixed position:', clientX, clientY)
     const tempPin = document.createElement("div")
     // position: fixedに変更して、青い丸と同じ位置に表示
     tempPin.className = "w-6 h-6 bg-yellow-400 text-black rounded-full flex items-center justify-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 animate-pulse"
@@ -324,7 +302,6 @@ export default class extends Controller {
       // フォームは閉じない
     })
 
-    console.log('Temp pin created and event listener added')
     this.tempPin = tempPin
 
     // bodyに直接追加（固定位置なので）
@@ -343,11 +320,9 @@ export default class extends Controller {
   }
 
   createOverlay() {
-    console.log('🟢 createOverlay() START')
     try {
       // 既存のオーバーレイがあれば削除
       this.removeOverlay()
-      console.log('🟢 removeOverlay() done')
 
       // オーバーレイを作成
       const overlay = document.createElement('div')
@@ -362,30 +337,25 @@ export default class extends Controller {
         z-index: 9997;
         cursor: pointer;
       `
-      console.log('🟢 Overlay element created')
 
       // オーバーレイをクリックするとフォームを閉じる
       overlay.addEventListener('click', (e) => {
         e.stopPropagation()
         this.hideForm()
       })
-      console.log('🟢 Overlay click listener added')
 
       // bodyに追加
       document.body.appendChild(overlay)
       this.overlay = overlay
-      console.log('🟢 Overlay added to body')
 
       // 画像コンテナ（this.element）をオーバーレイの上に表示
       if (this.element) {
         this.element.style.position = 'relative'
         this.element.style.zIndex = '9998'
-        console.log('🟢 Element z-index set to 9998')
       } else {
         console.error('🔴 this.element is null!')
       }
 
-      console.log('🟢 Overlay created and element z-index set')
     } catch (error) {
       console.error('🔴 Error in createOverlay():', error)
     }
@@ -408,7 +378,6 @@ export default class extends Controller {
       this.element.style.zIndex = ''
     }
 
-    console.log('Overlay removed and element z-index reset')
   }
 
   showImageCommentForm(x, y) {
@@ -418,14 +387,19 @@ export default class extends Controller {
       return
     }
 
-    // 現在のスクロール位置を保存
-    this.savedScrollY = window.scrollY
+    // ❌ スクロールロック処理を削除（インラインスクリプトで既に実行済み）
+    // インラインスクリプトの createOverlay() で既にスクロールロックされているため、
+    // ここで再度ロックすると savedScrollY が 0 になってしまい、ページが一番上に移動する
 
-    // スクロールを無効化（ピンコメント入力中）
-    document.body.style.overflow = 'hidden'
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${this.savedScrollY}px`
-    document.body.style.width = '100%'
+    // 現在のスクロール位置を保存（フォームを閉じる時のために必要）
+    // ただし、既に固定されている場合は保存しない
+    if (document.body.style.position === 'fixed') {
+      // 既にロックされている場合は、top の値から元のスクロール位置を復元
+      const topValue = document.body.style.top
+      this.savedScrollY = topValue ? Math.abs(parseInt(topValue)) : 0
+    } else {
+      this.savedScrollY = window.scrollY
+    }
 
     // touchmoveイベントでスクロールを完全に防止
     this.preventScrollListener = (e) => {
@@ -434,12 +408,9 @@ export default class extends Controller {
     document.addEventListener('touchmove', this.preventScrollListener, { passive: false })
     document.addEventListener('wheel', this.preventScrollListener, { passive: false })
 
-    console.log('🔴 About to call createOverlay()...')
-    // 画像以外を暗くするオーバーレイを作成
-    this.createOverlay()
-    console.log('🔴 createOverlay() called')
+    // ❌ createOverlay() を呼ばない（インラインスクリプトで既に作成済み）
+    // this.createOverlay()
 
-    console.log('Scroll disabled at position:', this.savedScrollY)
 
     // フォームを一旦表示して、サイズを計算できるようにする
     form.classList.remove('hidden')
@@ -502,7 +473,6 @@ export default class extends Controller {
     const yField = form.querySelector('input[name="comment[y_position]"]')
     const imageIndexField = form.querySelector('input[name="comment[image_index]"]')
 
-    console.log('Form fields found:', {
       xField: !!xField,
       yField: !!yField,
       imageIndexField: !!imageIndexField
@@ -511,13 +481,9 @@ export default class extends Controller {
     if (xField) xField.value = x
     if (yField) yField.value = y
     if (imageIndexField) {
-      console.log("Current imageIndexValue:", this.imageIndexValue)
-      console.log("Type of imageIndexValue:", typeof this.imageIndexValue)
       // 0も有効な値なので、undefinedやnullの場合のみ0にフォールバック
       const indexValue = (this.imageIndexValue !== undefined && this.imageIndexValue !== null) ? this.imageIndexValue : 0
-      console.log("Setting image index to:", indexValue)
       imageIndexField.value = indexValue
-      console.log("Image index field value after setting:", imageIndexField.value)
     } else {
       console.error("Image index field not found!")
     }
@@ -536,7 +502,6 @@ export default class extends Controller {
       this.setupDocumentClickListener()
     }, 150)
 
-    console.log('Image comment form shown at:', x, y, 'adjusted to:', adjustedX, adjustedY, 'for image index:', this.imageIndexValue)
   }
 
   focusCommentForm(x, y) {
@@ -554,7 +519,7 @@ export default class extends Controller {
     // テキストエリアにフォーカス
     const textarea = commentForm.querySelector("[data-comment-form-target='textarea']")
     if (textarea) {
-      textarea.focus()
+      textarea.focus({ preventScroll: true })  // ✅ preventScroll を追加（画面移動を防ぐ）
       // プレースホルダーを変更してピンの位置を示す
       textarea.placeholder = `画像の位置 (${x}%, ${y}%) にコメントを書いてください...`
     }
@@ -634,7 +599,6 @@ export default class extends Controller {
 
       // 元のスクロール位置に戻す
       window.scrollTo(0, this.savedScrollY)
-      console.log('Scroll restored to position:', this.savedScrollY)
 
       // オーバーレイを削除
       this.removeOverlay()
@@ -659,39 +623,32 @@ export default class extends Controller {
       // ドキュメントクリックリスナーを削除
       this.removeDocumentClickListener()
 
-      console.log('Image comment form hidden')
     }
   }
 
   isMarkerAtPosition(x, y, tolerance = 5) {
     if (!this.hasMarkersContainerTarget) {
-      console.log("No markers container found")
       return false
     }
 
     const markers = this.markersContainerTarget.querySelectorAll("[data-comment-id]")
-    console.log("Checking", markers.length, "existing markers for image index", this.imageIndexValue)
 
     for (let marker of markers) {
       const markerX = parseFloat(marker.style.left)
       const markerY = parseFloat(marker.style.top)
 
-      console.log("Marker at:", markerX, markerY, "vs clicked:", parseFloat(x), parseFloat(y))
 
       // 同じ画像インデックスのマーカーのみチェック（既にフィルタリングされているので現在は不要だが、念のため確認）
       if (Math.abs(markerX - parseFloat(x)) < tolerance &&
           Math.abs(markerY - parseFloat(y)) < tolerance) {
-        console.log("Found existing marker within tolerance")
         return true
       }
     }
-    console.log("No existing marker found at this position for this image")
     return false
   }
 
   async loadExistingComments() {
     try {
-      console.log(`[Image ${this.imageIndexValue}] Loading existing comments...`)
       const response = await fetch(`/posts/${this.postIdValue}/comments.json`)
       if (!response.ok) {
         console.error("Failed to load comments")
@@ -699,11 +656,9 @@ export default class extends Controller {
       }
 
       const comments = await response.json()
-      console.log(`[Image ${this.imageIndexValue}] Total comments loaded:`, comments.length)
 
       // 画像上のコメントのみを抽出
       const pinComments = comments.filter(c => c.x_position !== null && c.y_position !== null)
-      console.log(`[Image ${this.imageIndexValue}] Pin comments (with x/y):`, pinComments.length)
 
       // 現在の画像インデックスに対応するコメントのみをフィルタリング
       const filteredComments = pinComments.filter(comment => {
@@ -717,14 +672,11 @@ export default class extends Controller {
         const shouldInclude = effectiveCommentIndex === effectiveCurrentIndex
 
         if (comment.x_position !== null) {
-          console.log(`[Image ${this.imageIndexValue}] Comment ${comment.id} (body: "${comment.body}"): image_index=${commentImageIndex} -> effective=${effectiveCommentIndex}, match=${shouldInclude}`)
         }
 
         return shouldInclude
       })
 
-      console.log(`[Image ${this.imageIndexValue}] FINAL filtered comments:`, filteredComments.length)
-      console.log(`[Image ${this.imageIndexValue}] Filtered comment IDs:`, filteredComments.map(c => c.id))
       this.renderComments(filteredComments)
     } catch (error) {
       console.error("Error loading comments:", error)
@@ -757,8 +709,6 @@ export default class extends Controller {
   }
 
   renderComments(comments) {
-    console.log(`>>> renderComments called for image index ${this.imageIndexValue}`)
-    console.log(`>>> Rendering ${comments.length} comments`)
 
     const container = this.markersContainerTarget
     container.innerHTML = "" // 既存のマーカーをクリア
@@ -772,10 +722,8 @@ export default class extends Controller {
       comment.x_position !== null && comment.y_position !== null
     )
 
-    console.log(`>>> After filtering, ${imageComments.length} image comments to render`)
 
     imageComments.forEach((comment, index) => {
-      console.log(`>>> Creating marker ${index + 1} for comment ${comment.id} at (${comment.x_position}, ${comment.y_position})`)
       this.createMarker(comment, index + 1)
     })
   }
@@ -871,7 +819,8 @@ export default class extends Controller {
     
     // クリックイベント（既存コメントの編集・表示用）
     marker.addEventListener("click", (event) => {
-      event.stopPropagation() // 画像クリックイベントを阻止
+      event.preventDefault()    // ✅ デフォルト動作を防止（画面移動を防ぐ）
+      event.stopPropagation()   // 画像クリックイベントを阻止
       this.showExistingComment(comment)
     })
 
@@ -885,22 +834,22 @@ export default class extends Controller {
   highlightMarker(event) {
     const commentId = event.currentTarget.dataset.commentId
     if (!commentId) return
-    
+
     // 対応するマーカーを見つけて強調表示
     const marker = this.markersContainerTarget.querySelector(`[data-comment-id="${commentId}"]`)
     if (!marker) return
-    
+
     // 既存の強調表示をリセット
     this.resetMarkerHighlights()
-    
+
     // マーカーを強調表示
     marker.style.backgroundColor = "#ef4444" // 赤色
     marker.style.transform = "translate(-50%, -50%) scale(1.3)"
     marker.style.zIndex = "30"
-    
+
     // アニメーション効果
     marker.classList.add("animate-ping")
-    
+
     // 2秒後に元に戻す
     setTimeout(() => {
       marker.style.backgroundColor = "#3b82f6" // 元の青色
@@ -908,9 +857,8 @@ export default class extends Controller {
       marker.style.zIndex = "10"
       marker.classList.remove("animate-ping")
     }, 2000)
-    
-    // マーカーが見える位置にスクロール
-    marker.scrollIntoView({ behavior: "smooth", block: "center" })
+
+    // ❌ scrollIntoView を削除（画面移動を防ぐ）
   }
 
   resetMarkerHighlights() {
@@ -973,10 +921,9 @@ export default class extends Controller {
     // コメント一覧にスクロールするか、詳細表示を行う
     const commentElement = document.querySelector(`[data-comment-id="${comment.id}"]`)
     if (commentElement) {
-      // コメント一覧までスクロール
-      commentElement.scrollIntoView({ behavior: "smooth", block: "center" })
-      
-      // ハイライト効果
+      // ❌ scrollIntoView を削除（画面移動を防ぐ）
+
+      // ハイライト効果のみ実行
       commentElement.style.backgroundColor = "#fef3c7" // yellow-100
       setTimeout(() => {
         commentElement.style.backgroundColor = ""

@@ -56,3 +56,4 @@ screenshot*.png
 # Ignore temporary view files
 app/views/posts/search_debug.html.erb
 app/views/posts/search_simple.html.erb
+config/master.key.backup

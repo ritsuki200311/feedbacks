@@ -1686,50 +1686,34 @@
           const image = container.querySelector('[data-image-comments-target="image"]');
           if (!image) return;
 
-          // 画像クリックイベントをオーバーライド
+          // 画像クリック時にオーバーレイを作成（Stimulusがピンとフォームを処理）
           image.addEventListener('click', (e) => {
-            console.log('🟡 Inline script: Image clicked, creating overlay...');
 
             // モーダル内の画像の場合はスキップ（Stimulusコントローラーに任せる）
             if (container.closest('#imageModal')) {
-              console.log('🟡 Modal image clicked, skipping overlay creation');
               return;
             }
 
-            // 既にロックされている場合は何もしない
-            if (isScrollLocked) return;
-
-            // 画像クリック時に即座にスクロールを停止（クリック直後に取得）
-            savedScrollY = window.pageYOffset || document.documentElement.scrollTop;
-
-            // スクロールを固定する前の状態を保存
-            const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-            document.body.style.overflow = 'hidden';
-            document.body.style.position = 'fixed';
-            document.body.style.top = `-${savedScrollY}px`;
-            document.body.style.left = '0';
-            document.body.style.right = '0';
-            document.body.style.width = '100%';
-
-            // スクロールバーの幅を補正
-            if (scrollBarWidth > 0) {
-              document.body.style.paddingRight = `${scrollBarWidth}px`;
+            // ✅ 既にオーバーレイが存在する場合は作り直さない（ピン移動のため）
+            if (overlayElement && document.body.contains(overlayElement)) {
+              return;
             }
 
-            isScrollLocked = true;
-
+            // オーバーレイを作成（Stimulusコントローラーがピンとフォームを作成する）
             createOverlay(container);
+
           }, true); // capture phase で先に実行
         });
       });
 
       function createOverlay(imageContainer) {
+        // ✅ スクロール位置を保存（オーバーレイを削除する前に！）
+        if (document.body.style.position !== 'fixed') {
+          savedScrollY = window.scrollY;
+        }
+
         // 既存のオーバーレイを削除
         removeOverlay();
-
-        // スクロール位置を保存
-        savedScrollY = window.scrollY;
 
         // オーバーレイを作成
         overlayElement = document.createElement('div');
@@ -1745,9 +1729,15 @@
           cursor: pointer;
         `;
 
-        // オーバーレイクリックでフォームを閉じる
-        overlayElement.addEventListener('click', () => {
-          console.log('🟡 Overlay clicked, closing form...');
+        // オーバーレイクリックでフォームを閉じる（画像コンテナ外のクリックのみ）
+        overlayElement.addEventListener('click', (e) => {
+
+          // ✅ 画像コンテナ内がクリックされた場合は何もしない（ピン操作のため）
+          const clickedInContainer = e.target.closest('[data-controller="image-comments"]');
+          if (clickedInContainer) {
+            return;
+          }
+
           removeOverlay();
           // StimulusコントローラーのhideFormメソッドも呼び出す
           const controller = imageContainer.imageCommentsController;
@@ -1759,17 +1749,25 @@
         // bodyに追加
         document.body.appendChild(overlayElement);
 
-        // 画像コンテナをオーバーレイの上に表示
-        imageContainer.style.position = 'relative';
+        // 画像コンテナの現在の位置とサイズを取得
+        const containerRect = imageContainer.getBoundingClientRect();
+
+        // 画像コンテナをfixed positionでオーバーレイの上に表示
+        imageContainer.style.position = 'fixed';
+        imageContainer.style.top = containerRect.top + 'px';
+        imageContainer.style.left = containerRect.left + 'px';
+        imageContainer.style.width = containerRect.width + 'px';
+        imageContainer.style.height = containerRect.height + 'px';
         imageContainer.style.zIndex = '9998';
 
-        // スクロールを無効化
-        document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${savedScrollY}px`;
-        document.body.style.width = '100%';
+        // ✅ スクロールロック（まだロックされていない場合のみ）
+        if (document.body.style.position !== 'fixed') {
+          document.body.style.overflow = 'hidden';
+          document.body.style.position = 'fixed';
+          document.body.style.top = `-${savedScrollY}px`;
+          document.body.style.width = '100%';
+        }
 
-        console.log('🟡 Overlay created successfully');
       }
 
       function removeOverlay() {
@@ -1778,29 +1776,31 @@
           overlayElement = null;
         }
 
-        // スクロールを再度有効化
+        // ✅ スクロール解除処理を復元
         document.body.style.overflow = '';
         document.body.style.position = '';
         document.body.style.top = '';
-        document.body.style.left = '';
-        document.body.style.right = '';
         document.body.style.width = '';
-        document.body.style.paddingRight = '';
 
         // スクロールロックフラグをリセット
         isScrollLocked = false;
 
-        // 元のスクロール位置に戻す
-        window.scrollTo(0, savedScrollY);
+        // ✅ スクロール位置を復元（有効な値がある場合のみ）
+        if (savedScrollY !== undefined && savedScrollY !== null && savedScrollY > 0) {
+          window.scrollTo(0, savedScrollY);
+        }
 
-        // 画像コンテナのz-indexをリセット
+        // 画像コンテナのスタイルをリセット
         const imageContainers = document.querySelectorAll('[data-controller="image-comments"]');
         imageContainers.forEach(container => {
           container.style.position = '';
+          container.style.top = '';
+          container.style.left = '';
+          container.style.width = '';
+          container.style.height = '';
           container.style.zIndex = '';
         });
 
-        console.log('🟡 Overlay removed');
       }
 
       // グローバルに公開（画像拡大機能から呼び出せるように）

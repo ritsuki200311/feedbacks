@@ -1,0 +1,32 @@
+databases:
+  - name: feedbacks-db
+    databaseName: feedbacks_production
+    user: feedbacks
+    plan: free
+
+services:
+  - type: web
+    name: feedbacks
+    runtime: ruby
+    plan: free
+    buildCommand: "./bin/render-build.sh"
+    startCommand: "bundle exec rails server -b 0.0.0.0 -p $PORT -e production"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: feedbacks-db
+          property: connectionString
+      - key: RAILS_MASTER_KEY
+        sync: false
+      - key: RAILS_ENV
+        value: production
+      - key: RACK_ENV
+        value: production
+      - key: SECRET_KEY_BASE
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 2
+      - key: RAILS_LOG_TO_STDOUT
+        value: enabled
+      - key: RAILS_SERVE_STATIC_FILES
+        value: enabled

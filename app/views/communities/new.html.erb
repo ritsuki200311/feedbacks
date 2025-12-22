@@ -1,5 +1,27 @@
-<h1>New Community</h1>
+<div class="max-w-3xl mx-auto px-4 py-8">
+  <!-- ヘッダー -->
+  <div class="mb-8">
+    <h1 class="text-4xl font-bold text-gray-800 mb-3 flex items-center gap-3">
+      <span class="text-5xl">🌟</span>
+      新しいコミュニティを作成
+    </h1>
+    <p class="text-gray-600 text-lg">
+      共通の興味を持つ仲間と繋がり、創作活動を盛り上げましょう！
+    </p>
+  </div>
 
-<%= render 'form', community: @community %>
+  <!-- フォームカード -->
+  <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+    <%= render 'form', community: @community %>
+  </div>
 
-<%= link_to 'Back', communities_path %>
+  <!-- 戻るリンク -->
+  <div class="mt-6 text-center">
+    <%= link_to communities_path, class: "inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors" do %>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      コミュニティ一覧に戻る
+    <% end %>
+  </div>
+</div>

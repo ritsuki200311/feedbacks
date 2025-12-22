@@ -369,7 +369,7 @@ class PostsMapController {
       .map(post => ({
         id: post.id,
         title: post.title,
-        body: post.body,
+        body: post.body || '',
         userName: post.user_name,
         userId: post.user_id,
         isCurrentUser: post.is_current_user || false,

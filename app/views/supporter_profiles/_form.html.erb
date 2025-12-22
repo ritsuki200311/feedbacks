@@ -11,8 +11,27 @@
   <% end %>
 
   <div>
-    <label class="block text-lg font-semibold text-gray-800 mb-3">年齢層を入力してください</label>
-    <%= f.select :age_group, ['～15歳', '16～18歳', '19～22歳', '23～29歳', '30代', '40代以上'], { prompt: "選択してください" }, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" %>
+    <label class="block text-lg font-semibold text-gray-800 mb-3">生年月日を入力してください</label>
+    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+      <%= f.select(
+          "birth_date(1i)",
+          (Date.today.year.downto(1920)).to_a,
+          { prompt: '年' },
+          { class: "flex-1 p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" }
+      ) %>
+      <%= f.select(
+          "birth_date(2i)",
+          (1..12).to_a,
+          { prompt: '月' },
+          { class: "flex-1 p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" }
+      ) %>
+      <%= f.select(
+          "birth_date(3i)",
+          (1..31).to_a,
+          { prompt: '日' },
+          { class: "flex-1 p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" }
+      ) %>
+    </div>
   </div>
 
   <%# 質問項目をセクションごとにまとめる %>
@@ -36,13 +55,13 @@
   <% end %>
 
   <div>
-    <label class="block text-lg font-semibold text-gray-800 mb-3">創作経験を入力してください</label>
+    <label class="block text-lg font-semibold text-gray-800 mb-3">創作年数を教えてください</label>
     <%= f.select :creation_experience, ['1年未満', '1-3年', '4-6年', '7-10年', '10年以上', '経験なし'], { prompt: "選択してください" }, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" %>
   </div>
 
-  <%# 精通してるジャンルの質問 %>
+  <%# 好きなジャンルの質問 %>
   <div>
-    <label class="block text-lg font-semibold text-gray-800 mb-3">よく見るジャンルはありますか？</label>
+    <label class="block text-lg font-semibold text-gray-800 mb-3">好きなジャンルはありますか？</label>
     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
       <% ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他'].each do |option| %>
         <label class="flex items-center p-3 rounded-lg border cursor-pointer transition-colors hover:bg-gray-50">

@@ -199,7 +199,9 @@
                     </div>
                   <% end %>
                   
-                  <p style="font-size: 14px; color: #374151; line-height: 1.4; margin-bottom: 8px;"><%= truncate(post.body, length: 60) %></p>
+                  <% if post.body.present? %>
+                    <p style="font-size: 14px; color: #374151; line-height: 1.4; margin-bottom: 8px;"><%= truncate(post.body, length: 60) %></p>
+                  <% end %>
                   
                   <!-- 投票とコメント数 -->
                   <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid #e5e7eb;">

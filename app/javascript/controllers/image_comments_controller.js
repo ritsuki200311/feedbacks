@@ -345,41 +345,49 @@ export default class extends Controller {
       })
 
       // bodyに追加
-      document.body.appendChild(overlay)
-      this.overlay = overlay
+              document.body.appendChild(overlay)
+              this.overlay = overlay
+      
+              // 画像コンテナ（this.element）をオーバーレイの上に表示
+              if (this.element) {
+                this.element.style.position = 'relative'
+                this.element.style.zIndex = '9998'
+              } else {
+                console.error('🔴 this.element is null!')
+              }
+      
+              // トグルボタンのテキスト色を白に設定
+              if (this.hasToggleButtonTarget) {
+                this.toggleButtonTarget.classList.remove('text-gray-300', 'text-gray-700'); // 既存の色を削除
+                this.toggleButtonTarget.classList.add('text-white', 'z-50'); // 白文字と高いz-indexを設定
+              }
+      
+            } catch (error) {      console.error('🔴 Error in createOverlay():', error)
+    }
+  }
 
-      // 画像コンテナ（this.element）をオーバーレイの上に表示
-      if (this.element) {
-        this.element.style.position = 'relative'
-        this.element.style.zIndex = '9998'
-      } else {
-        console.error('🔴 this.element is null!')
+      removeOverlay() {
+        if (this.overlay) {
+          this.overlay.remove()
+          this.overlay = null
+        }
+        // IDで検索して削除（念のため）
+        const existingOverlay = document.getElementById('pin-comment-overlay')
+        if (existingOverlay) {
+          existingOverlay.remove()
+        }
+  
+        // 画像コンテナのz-indexを元に戻す
+        if (this.element) {
+          this.element.style.position = ''
+          this.element.style.zIndex = ''
+        }
+  
+        // トグルボタンのテキスト色を元に戻す
+        if (this.hasToggleButtonTarget) {
+          this.toggleButtonTarget.classList.remove('text-white', 'z-50');
+        }
       }
-
-    } catch (error) {
-      console.error('🔴 Error in createOverlay():', error)
-    }
-  }
-
-  removeOverlay() {
-    if (this.overlay) {
-      this.overlay.remove()
-      this.overlay = null
-    }
-    // IDで検索して削除（念のため）
-    const existingOverlay = document.getElementById('pin-comment-overlay')
-    if (existingOverlay) {
-      existingOverlay.remove()
-    }
-
-    // 画像コンテナのz-indexを元に戻す
-    if (this.element) {
-      this.element.style.position = ''
-      this.element.style.zIndex = ''
-    }
-
-  }
-
   showImageCommentForm(x, y) {
     const form = this.element.querySelector("[data-image-comments-target='form']")
     if (!form) {

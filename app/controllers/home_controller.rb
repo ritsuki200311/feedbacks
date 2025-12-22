@@ -30,6 +30,12 @@ class HomeController < ApplicationController
           # フォロー機能がない場合は全投稿を表示
           filtered_posts = base_query.includes(:comments, :user, :votes, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
         end
+      elsif params[:filter] == "low_comments"
+        # コメント数が0-3件の投稿のみを表示
+        filtered_posts = base_query.left_joins(:comments)
+                                   .group('posts.id')
+                                   .having('COUNT(comments.id) <= 3')
+                                   .includes(:user, :votes, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
       else
         filtered_posts = base_query.includes(:comments, :user, :votes, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
       end
@@ -67,6 +73,13 @@ class HomeController < ApplicationController
       # 未ログインユーザーには公開投稿のみ表示
       if params[:creation_type].present?
         posts = Post.where(creation_type: params[:creation_type], is_private: false).includes(:comments, :user, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
+      elsif params[:filter] == "low_comments"
+        # コメント数が0-3件の投稿のみを表示
+        posts = Post.where(is_private: false)
+                    .left_joins(:comments)
+                    .group('posts.id')
+                    .having('COUNT(comments.id) <= 3')
+                    .includes(:user, :votes, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
       else
         posts = Post.where(is_private: false).includes(:comments, :user, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
       end

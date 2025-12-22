@@ -17,8 +17,9 @@ class Post < ApplicationRecord
   has_many_attached :videos
   has_many_attached :audios
 
-  validates :title, presence: true, length: { minimum: 1, maximum: 100 }
-  validates :body, presence: true, length: { minimum: 1, maximum: 10000 }
+  validates :title, presence: true, length: { minimum: 1, maximum: 100 }, unless: :any_attachment?
+  # bodyは任意項目（キャプションなしでも投稿可能）
+  validates :body, length: { maximum: 10000 }, allow_blank: true
 
 
   # validate :validate_video_format
@@ -56,6 +57,10 @@ class Post < ApplicationRecord
     end
 
     private
+
+    def any_attachment?
+      images.attached? || videos.attached? || audios.attached?
+    end
 
   def validate_video_format
     return unless videos.attached?

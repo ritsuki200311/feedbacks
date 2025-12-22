@@ -1,0 +1,42 @@
+<% if user_signed_in? %>
+  <!-- ユーザー情報ヘッダー（PC版とモバイル版） -->
+  <div class="fixed top-4 right-4 z-40 bg-white rounded-lg shadow-lg border border-gray-200 px-3 py-2 md:px-4 md:py-3">
+    <div class="flex items-center gap-2 md:gap-4">
+      <!-- ユーザー名（PC: 表示、スマホ: アイコンのみ） -->
+      <%= link_to mypage_path, class: "flex items-center gap-2 hover:text-blue-600 transition-colors group" do %>
+        <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base shadow-md group-hover:scale-110 transition-transform">
+          <%= current_user.name[0].upcase %>
+        </div>
+        <span class="hidden md:block font-semibold text-gray-800 text-sm md:text-base max-w-[120px] truncate">
+          <%= current_user.name %>
+        </span>
+      <% end %>
+
+      <div class="hidden md:block w-px h-8 bg-gray-300"></div>
+
+      <!-- コイン -->
+      <%= link_to mypage_path, class: "flex items-center gap-1 md:gap-2 hover:bg-yellow-50 rounded-lg px-1.5 py-1 md:px-2 md:py-1.5 transition-colors group", title: "コイン" do %>
+        <div class="text-lg md:text-xl">🪙</div>
+        <div class="flex flex-col">
+          <span class="text-xs text-gray-500 hidden md:block">コイン</span>
+          <span class="font-bold text-yellow-600 text-sm md:text-base group-hover:scale-110 transition-transform">
+            <%= current_user.coins %>
+          </span>
+        </div>
+      <% end %>
+
+      <div class="hidden sm:block w-px h-8 bg-gray-300"></div>
+
+      <!-- 信用度 -->
+      <%= link_to mypage_path, class: "hidden sm:flex items-center gap-1 md:gap-2 hover:bg-green-50 rounded-lg px-1.5 py-1 md:px-2 md:py-1.5 transition-colors group", title: "信用度" do %>
+        <div class="text-lg md:text-xl">⭐</div>
+        <div class="flex flex-col">
+          <span class="text-xs text-gray-500 hidden md:block">信用度</span>
+          <span class="font-bold text-green-600 text-sm md:text-base group-hover:scale-110 transition-transform">
+            <%= current_user.trust_score.round(1) %>
+          </span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

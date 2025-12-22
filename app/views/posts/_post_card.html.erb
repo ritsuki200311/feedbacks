@@ -22,7 +22,9 @@
   <!-- コンテンツエリア -->
   <div class="flex-grow flex flex-col">
     <h2 class="text-lg font-bold mb-2 line-clamp-2"><%= link_to post.title, post_path(post), class: "hover:underline" %></h2>
-    <p class="text-gray-700 text-sm mb-3 line-clamp-3 flex-grow"><%= truncate(post.body, length: 80) %></p>
+    <% if post.body.present? %>
+      <p class="text-gray-700 text-sm mb-3 line-clamp-3 flex-grow"><%= truncate(post.body, length: 80) %></p>
+    <% end %>
     
     <% if post.tag.present? %>
       <div class="flex flex-wrap gap-1 mb-3">

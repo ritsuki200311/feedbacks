@@ -25,8 +25,8 @@ class UsersController < ApplicationController
           coins: @user.coins,
           rank: @user.rank,
           supporter_profile: @user.supporter_profile ? {
-            can_feedback: @user.supporter_profile.can_feedback,
-            creation_genres: @user.supporter_profile.creation_genres,
+            can_feedback: @user.supporter_profile.favorite_artists,
+            creation_genres: @user.supporter_profile.support_genres.is_a?(Array) ? @user.supporter_profile.support_genres.join(', ') : @user.supporter_profile.support_genres,
             creation_experience: @user.supporter_profile.creation_experience
           } : nil
         }
@@ -104,7 +104,7 @@ class UsersController < ApplicationController
 
   def following
     @user = User.find(params[:id])
-    @following = @user.followings
+    @following = @user.following
 
     respond_to do |format|
       format.json do

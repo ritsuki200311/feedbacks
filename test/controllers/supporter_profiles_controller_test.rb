@@ -23,7 +23,7 @@ class SupporterProfilesControllerTest < ActionDispatch::IntegrationTest
   test "should create supporter_profile" do
     sign_in @user_two
     assert_difference("SupporterProfile.count") do
-      post supporter_profiles_path, params: { supporter_profile: { standing: "Fan", creation_experience: "None", interests: "Music", favorite_artists: "Artist", age_group: "20s", support_genres: "Pop", support_styles: "Comments", personality_traits: "Friendly" } }
+      post supporter_profiles_path, params: { supporter_profile: { standing: "Fan", creation_experience: "None", interests: "Music", favorite_artists: "Artist", age_group: "20s", support_genres: "Pop", support_styles: "Comments", personality_traits: "Friendly", birth_date: "2000-01-01" } }
     end
 
     assert_redirected_to mypage_url

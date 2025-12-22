@@ -35,5 +35,5 @@ class SupporterProfile < ApplicationRecord
 
   # バリデーション
   validates :creation_experience, presence: true
-  validates :age_group, presence: true
+  validates :birth_date, presence: true
 end

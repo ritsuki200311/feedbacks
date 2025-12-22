@@ -13,6 +13,9 @@
       <li class="mr-2 flex-shrink-0">
         <%= link_to "最新", root_path(sort: 'latest'), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:sort] == 'latest'}" %>
       </li>
+      <li class="mr-2 flex-shrink-0">
+        <%= link_to "コメントが少ない投稿", root_path(filter: 'low_comments'), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:filter] == 'low_comments'}" %>
+      </li>
       <% if user_signed_in? %>
         <li class="mr-2 flex-shrink-0">
           <%= link_to "フォロー済み", root_path(filter: 'following'), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:filter] == 'following'}" %>
@@ -57,7 +60,9 @@
         </p>
       <% end %>
 
-      <p class="mb-2 ml-2 text-sm"><%= truncate(post.body, length: 80) %></p>
+      <% if post.body.present? %>
+        <p class="mb-2 ml-2 text-sm"><%= truncate(post.body, length: 80) %></p>
+      <% end %>
 
       <% if post.tag.present? %>
         <div class="flex flex-wrap gap-1 mb-2">

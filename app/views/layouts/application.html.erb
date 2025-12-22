@@ -267,7 +267,7 @@
         /* デフォルトでデスクトップレイアウト（サイドバーの右側） */
         margin-left: 16rem;
         padding: 2rem;
-        padding-top: 2rem;
+        padding-top: 6rem; /* 固定ヘッダー分のスペースを確保 */
         padding-bottom: 2rem;
       }
 
@@ -275,7 +275,7 @@
       #main-content.desktop-content {
         margin-left: 16rem;
         padding: 2rem;
-        padding-top: 2rem;
+        padding-top: 6rem; /* 固定ヘッダー分のスペースを確保 */
         padding-bottom: 2rem;
       }
 
@@ -284,7 +284,7 @@
         margin-left: 0;
         padding: 1rem;
         padding-left: 1rem;
-        padding-top: 4rem;
+        padding-top: 7rem; /* 固定ヘッダー分のスペースを確保 */
         padding-bottom: 6rem; /* 下部メニューバー分のマージン */
       }
 
@@ -294,7 +294,7 @@
           margin-left: 0;
           padding: 1rem;
           padding-left: 1rem;
-          padding-top: 4rem;
+          padding-top: 7rem; /* 固定ヘッダー分のスペースを確保 */
           padding-bottom: 6rem;
         }
       }
@@ -753,26 +753,26 @@
 
         updateToggleButton() {
           if (!this.hasToggleButtonTarget) return
-          
+
           const button = this.toggleButtonTarget
           const icon = this.hasToggleIconTarget ? this.toggleIconTarget : null
           const text = this.hasToggleTextTarget ? this.toggleTextTarget : null
           const count = this.hasMarkerCountTarget ? this.markerCountTarget : null
-          
+
           if (this.markersVisible) {
             // マーカー表示中の状態
-            button.classList.remove('border-gray-300', 'hover:bg-gray-50')
+            button.classList.remove('border-gray-300', 'bg-white', 'hover:bg-gray-50')
             button.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700')
             if (icon) icon.textContent = '🙈'
             if (text) text.textContent = 'コメントピンを非表示'
           } else {
-            // マーカー非表示中の状態
+            // マーカー非表示中の状態（白背景を追加）
             button.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700')
-            button.classList.add('border-gray-300', 'hover:bg-gray-50')
+            button.classList.add('border-gray-300', 'bg-white', 'hover:bg-gray-50')
             if (icon) icon.textContent = '👁️'
             if (text) text.textContent = 'コメントピンを表示'
           }
-          
+
           // マーカー数を表示
           if (count && this.hasMarkersContainerTarget) {
             const markerCount = this.markersContainerTarget.children.length
@@ -1980,6 +1980,9 @@
   </head>
 
   <body class="bg-gray-100 text-gray-800 overflow-x-hidden">
+
+    <!-- ユーザー情報ヘッダー -->
+    <%= render 'layouts/user_info_header' %>
 
     <!-- ハンバーガーメニューボタン（スマホのみ表示） -->
     <div class="fixed top-4 right-4 z-50" data-layout="mobile">

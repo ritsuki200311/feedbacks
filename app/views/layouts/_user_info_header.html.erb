@@ -1,6 +1,6 @@
 <% if user_signed_in? %>
-  <!-- ユーザー情報ヘッダー（PC版とモバイル版） -->
-  <div class="fixed top-4 right-4 z-40 bg-white rounded-lg shadow-lg border border-gray-200 px-3 py-2 md:px-4 md:py-3">
+  <!-- ユーザー情報ヘッダー（PC版のみ表示） -->
+  <div class="hidden md:block fixed top-4 right-4 z-40 bg-white rounded-lg shadow-lg border border-gray-200 px-3 py-2 md:px-4 md:py-3">
     <div class="flex items-center gap-2 md:gap-4">
       <!-- ユーザー名（PC: 表示、スマホ: アイコンのみ） -->
       <%= link_to mypage_path, class: "flex items-center gap-2 hover:text-blue-600 transition-colors group" do %>
@@ -27,11 +27,11 @@
 
       <div class="hidden sm:block w-px h-8 bg-gray-300"></div>
 
-      <!-- 信用度 -->
-      <%= link_to mypage_path, class: "hidden sm:flex items-center gap-1 md:gap-2 hover:bg-green-50 rounded-lg px-1.5 py-1 md:px-2 md:py-1.5 transition-colors group", title: "信用度" do %>
+      <!-- スコア -->
+      <%= link_to mypage_path, class: "hidden sm:flex items-center gap-1 md:gap-2 hover:bg-green-50 rounded-lg px-1.5 py-1 md:px-2 md:py-1.5 transition-colors group", title: "コメントスコア" do %>
         <div class="text-lg md:text-xl">⭐</div>
         <div class="flex flex-col">
-          <span class="text-xs text-gray-500 hidden md:block">信用度</span>
+          <span class="text-xs text-gray-500 hidden md:block">スコア</span>
           <span class="font-bold text-green-600 text-sm md:text-base group-hover:scale-110 transition-transform">
             <%= current_user.trust_score.round(1) %>
           </span>

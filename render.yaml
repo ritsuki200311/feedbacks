@@ -6,9 +6,10 @@ databases:
 
 services:
   - type: web
-    name: feedbacks
+    name: feedbacks-art
     runtime: ruby
     plan: free
+    branch: app.feedbacks.art
     buildCommand: "./bin/render-build.sh"
     startCommand: "bundle exec rails server -b 0.0.0.0 -p $PORT -e production"
     envVars:

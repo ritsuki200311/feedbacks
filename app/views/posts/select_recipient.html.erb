@@ -110,10 +110,14 @@
 
       <!-- 送信ボタン -->
       <div class="text-center pt-6">
-        <%= form.submit "選択したユーザーに送信", 
-            class: "px-8 py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400", 
-            id: "submit-btn", 
-            disabled: true %>
+        <%= form.submit "選択したユーザーに送信",
+            class: "px-8 py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed",
+            id: "submit-btn",
+            disabled: true,
+            data: {
+              disable_with: "送信中...",
+              turbo_submits_with: "送信中..."
+            } %>
       </div>
     <% end %>
   </div>

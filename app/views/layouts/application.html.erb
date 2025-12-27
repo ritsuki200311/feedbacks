@@ -1,10 +1,19 @@
 <!DOCTYPE html>
 <html class="overflow-x-hidden">
   <head>
-    <title>アプリ名</title>
+    <title>FeedBacks</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+
+    <!-- OGP (Open Graph Protocol) tags for social media sharing -->
+    <meta property="og:title" content="FeedBacks">
+    <meta property="og:type" content="website">
+    <meta property="og:description" content="クリエイターのための作品フィードバックプラットフォーム">
+    <meta property="og:image" content="<%= request.base_url %>/images/ogp.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="description" content="クリエイターのための作品フィードバックプラットフォーム">
 
     <%= stylesheet_link_tag "tailwind", "application", "data-turbo-track": "reload", preload: false %>
     

@@ -1,0 +1,80 @@
+<!-- サイドバー -->
+<div id="sidebar">
+  <h2 class="text-2xl font-bold mb-6 text-gray-700">Feedbacks</h2>
+  <nav class="flex flex-col space-y-2">
+    <!-- デスクトップ表示用の全メニュー（md以上で表示） -->
+    <div class="hidden md:flex md:flex-col md:space-y-2">
+      <%= link_to "ホーム", root_path, class: sidebar_link_class(root_path) %>
+      <%= link_to "検索", search_path, class: sidebar_link_class(search_path) %>
+      <%= link_to rooms_path, class: "#{sidebar_link_class(rooms_path)} flex items-center justify-between" do %>
+        <span>ダイレクトメッセージ</span>
+        <% if user_signed_in? && current_user.unread_messages_count > 0 %>
+          <span class="bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold ml-2">
+            <%= current_user.unread_messages_count > 9 ? "9+" : current_user.unread_messages_count %>
+          </span>
+        <% end %>
+      <% end %>
+      <%= link_to "新規投稿", new_post_path, class: sidebar_link_class(new_post_path) %>
+      <hr class="my-2">
+      <% if user_signed_in? %>
+        <%= link_to "マイページ", mypage_path, class: sidebar_link_class(mypage_path) %>
+        <%= link_to "コミュニティ", communities_path, class: sidebar_link_class(communities_path) %>
+        <%= link_to "ユーザー関係性", user_relationships_path, class: sidebar_link_class(user_relationships_path) %>
+        <%= link_to "作品マップ", posts_map_path, class: sidebar_link_class(posts_map_path) %>
+        <%= link_to "アカウント設定", edit_user_registration_path, class: sidebar_link_class(edit_user_registration_path) %>
+        <% unless current_user.supporter_profile.present? %>
+          <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
+        <% end %>
+        
+        <!-- グローバルコメントピン表示切り替え -->
+        <div class="px-4 py-2" data-controller="global-comment-pins">
+          <button type="button" 
+                  data-action="click->global-comment-pins#toggleGlobalPins"
+                  data-global-comment-pins-target="toggleButton"
+                  class="flex items-center gap-2 w-full text-left text-sm border border-gray-300 rounded px-3 py-2 hover:bg-gray-50 transition-colors">
+            <span data-global-comment-pins-target="toggleIcon">👁️</span>
+            <span data-global-comment-pins-target="toggleText">コメントピン一括表示</span>
+          </button>
+        </div>
+        
+        <%= form_with url: destroy_user_session_path, method: :delete, local: true, class: "w-full" do |f| %>
+          <%= f.submit "ログアウト", class: "block text-left w-full text-red-500 hover:bg-red-50 px-4 py-2 rounded border-0 bg-transparent cursor-pointer", data: { turbo_confirm: "ログアウトしますか？" } %>
+        <% end %>
+      <% else %>
+        <%= link_to "ログイン", new_user_session_path, class: sidebar_link_class(new_user_session_path) %>
+        <%= link_to "新規登録", new_user_registration_path, class: sidebar_link_class(new_user_registration_path) %>
+      <% end %>
+
+    </div>
+
+    <!-- モバイル表示用の二次メニュー（mdより小さい画面で表示） -->
+    <div class="md:hidden flex flex-col space-y-2">
+      <% if user_signed_in? %>
+        <%= link_to "ユーザー関係性", user_relationships_path, class: sidebar_link_class(user_relationships_path) %>
+        <%= link_to "作品マップ", posts_map_path, class: sidebar_link_class(posts_map_path) %>
+        <%= link_to "アカウント設定", edit_user_registration_path, class: sidebar_link_class(edit_user_registration_path) %>
+        <% unless current_user.supporter_profile.present? %>
+          <%= link_to "プロフィール登録", new_supporter_profile_path, class: sidebar_link_class(new_supporter_profile_path) %>
+        <% end %>
+        
+        <!-- グローバルコメントピン表示切り替え -->
+        <div class="px-4 py-2" data-controller="global-comment-pins">
+          <button type="button" 
+                  data-action="click->global-comment-pins#toggleGlobalPins"
+                  data-global-comment-pins-target="toggleButton"
+                  class="flex items-center gap-2 w-full text-left text-sm border border-gray-300 rounded px-3 py-2 hover:bg-gray-50 transition-colors">
+            <span data-global-comment-pins-target="toggleIcon">👁️</span>
+            <span data-global-comment-pins-target="toggleText">コメントピン一括表示</span>
+          </button>
+        </div>
+        
+        <%= form_with url: destroy_user_session_path, method: :delete, local: true, class: "w-full" do |f| %>
+          <%= f.submit "ログアウト", class: "block text-left w-full text-red-500 hover:bg-red-50 px-4 py-2 rounded border-0 bg-transparent cursor-pointer", data: { turbo_confirm: "ログアウトしますか？" } %>
+        <% end %>
+      <% else %>
+        <%= link_to "ログイン", new_user_session_path, class: sidebar_link_class(new_user_session_path) %>
+        <%= link_to "新規登録", new_user_registration_path, class: sidebar_link_class(new_user_registration_path) %>
+      <% end %>
+    </div>
+  </nav>
+</div>

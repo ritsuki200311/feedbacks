@@ -1,28 +1,39 @@
 class SupporterProfile < ApplicationRecord
   belongs_to :user
 
-  # 「立場」を配列として扱うためのメソッド
-  def standing_array
-    standing.to_s.split(',')
+  # JSONB配列フィールドの初期化
+  %w[standing interests support_genres support_styles personality_traits].each do |attr|
+    define_method attr do
+      value = read_attribute(attr)
+      return [] if value.blank?
+
+      case value
+      when Array
+        value
+      when String
+        begin
+          JSON.parse(value)
+        rescue JSON::ParserError
+          value.split(",").map(&:strip)
+        end
+      else
+        []
+      end
+    end
+
+    define_method "#{attr}=" do |value|
+      case value
+      when Array
+        write_attribute(attr, value)
+      when String
+        write_attribute(attr, value.split(",").map(&:strip))
+      else
+        write_attribute(attr, [])
+      end
+    end
   end
 
-  # 「趣味・関心ジャンル」を配列として扱うためのメソッド
-  def interests_array
-    interests.to_s.split(',')
-  end
-
-  # 「支援ジャンル」を配列として扱うためのメソッド
-  def support_genres_array
-    support_genres.to_s.split(',')
-  end
-
-  # 「応援スタイル」を配列として扱うためのメソッド
-  def support_styles_array
-    support_styles.to_s.split(',')
-  end
-
-  # 「性格傾向」を配列として扱うためのメソッド
-  def personality_traits_array
-    personality_traits.to_s.split(',')
-  end
+  # バリデーション
+  validates :creation_experience, presence: true
+  validates :birth_date, presence: true
 end

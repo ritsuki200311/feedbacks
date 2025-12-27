@@ -1,119 +1,290 @@
-<div class="w-full mx-auto px-4 py-8 space-y-8">
+<div class="max-w-7xl py-8 px-0">
+  <div class="flex gap-4">
+    <!-- メインコンテンツエリア -->
+    <div class="flex-1 max-w-4xl mx-auto space-y-8">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>好み選択</title>
-    <%# <% <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script> %> 
-    <%# <% <script src="https://cdn.tailwindcss.com"></script>  %>
-</head>
 
-  <!-- ヘッダー -->
-  <h1 class="text-3xl font-bold text-gray-800">ホーム</h1>
-
-  <!-- ナビゲーション -->
-  <nav class="flex flex-wrap gap-2">
-    <%= link_to "投稿検索", search_posts_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-    <%= link_to "新規投稿", new_post_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-    <%= link_to "マイページ", mypage_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-    <%= link_to "アカウント編集", edit_user_registration_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-    <%= link_to "アカウント削除", user_registration_path, method: :delete, data: { confirm: "本当にアカウントを削除しますか？" }, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-    <%= link_to "パスワード変更", edit_user_password_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-    <%= link_to "ログイン", new_user_session_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-    <%= link_to "新規登録", new_user_registration_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-    <%= button_to "ログアウト", destroy_user_session_path, method: :delete, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-    <%= link_to "ログアウト", destroy_user_session_path, method: :delete, data: { confirm: "本当にログアウトしますか？" }, class: "bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded shadow transition duration-200" %>
-    <%= link_to "好みを登録", new_preference_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-    <%= link_to "プロフィール登録", new_supporter_profile_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-    <% if current_user.supporter_profile.present? %>
-  <%= link_to "プロフィールを見る", supporter_profile_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-  <div class="bg-red-500 text-white p-4">
-  Tailwindが効いていれば赤背景＋白文字になります！
-</div>
-
-<% else %>
-  <%= link_to "プロフィール登録", new_supporter_profile_path, class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" %>
-<% end %>
-
-  </nav>
-
-  <!-- ユーザー情報 -->
-  <div class="text-gray-700">
-    <% if user_signed_in? %>
-      <p><strong><%= current_user.name %></strong> さん</p>
-      <p>保有コイン: <%= current_user.coins %></p>
-      <p>メール: <%= current_user.email %></p>
-    <% else %>
-      <p>ログインしていません。</p>
-    <% end %>
+  <!-- 投稿一覧（見出しなし） -->
+  <div class="mb-4 border-b border-gray-200">
+    <ul class="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500">
+      <li class="mr-2 flex-shrink-0">
+        <%= link_to "ホーム", root_path, class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:creation_type].blank? && params[:filter].blank? && params[:sort].blank?}" %>
+      </li>
+      <li class="mr-2 flex-shrink-0">
+        <%= link_to "最新", root_path(sort: 'latest'), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:sort] == 'latest'}" %>
+      </li>
+      <li class="mr-2 flex-shrink-0">
+        <%= link_to "コメントが少ない投稿", root_path(filter: 'low_comments'), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:filter] == 'low_comments'}" %>
+      </li>
+      <% if user_signed_in? %>
+        <li class="mr-2 flex-shrink-0">
+          <%= link_to "フォロー済み", root_path(filter: 'following'), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:filter] == 'following'}" %>
+        </li>
+      <% end %>
+      <% Post::CREATION_TYPES.each do |key, value| %>
+        <li class="mr-2 flex-shrink-0">
+          <%= link_to key, root_path(creation_type: value), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:creation_type].to_s == value.to_s}" %>
+        </li>
+      <% end %>
+    </ul>
   </div>
 
-  <hr class="my-4">
-
-  <!-- 投稿一覧 -->
-  <h2 class="text-2xl font-semibold mb-4">投稿一覧</h2>
-
 <% if @posts.any? %>
-  <% @posts.each do |post| %>
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
-      <h3 class="text-xl font-bold text-indigo-700">
-        <%= link_to post.title, post_path(post) %>
-      </h3>
+  <% @comment_iterator = @insertable_comments.each %>
+  <% @posts.each_with_index do |post, index| %>
+    <div class="<%= post_card_class(post) %> cursor-pointer post-card relative"
+         onclick="handlePostCardClick(event, <%= post.id %>)"
+         data-post-id="<%= post.id %>">
+      <!-- 投稿日時（右上） -->
+      <div class="absolute top-2 right-2 text-xs text-gray-400 bg-white bg-opacity-90 px-2 py-1 rounded-full">
+        <%= time_ago_in_words(post.created_at) %>前
+      </div>
 
-      <p class="text-gray-500 text-sm">
-        投稿者: <%= link_to post.user.name, user_path(post.user), class: "text-indigo-600 hover:underline" %>
+      <p class="text-gray-500 mb-1 text-sm">
+        👤 <%= link_to post.user.name, user_path(post.user), class: "text-indigo-600 hover:underline" %>
       </p>
 
-      <p><%= truncate(post.body, length: 100) %></p>
+      <h3 class="text-lg font-bold text-indigo-700 mb-1 flex items-center gap-2">
+        <%= link_to post.title, post_path(post) %>
+        <% if post.is_private? %>
+          <span class="bg-red-100 text-red-800 text-xs px-1.5 py-0.5 rounded-full font-medium">🔒</span>
+          <% if user_signed_in? && post.user != current_user %>
+            <span class="bg-green-100 text-green-800 text-xs px-1.5 py-0.5 rounded-full font-medium">📨</span>
+          <% end %>
+        <% end %>
+      </h3>
+
+      <% if post.request_tag.present? %>
+        <p class="text-xs text-gray-600 mb-1">
+          <span class="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full text-xs"><%= post.request_tag %></span>
+        </p>
+      <% end %>
+
+      <% if post.body.present? %>
+        <p class="mb-2 ml-2 text-sm"><%= truncate(post.body, length: 80) %></p>
+      <% end %>
 
       <% if post.tag.present? %>
-        <div class="flex flex-wrap gap-2">
-          <% post.tag_list.each do |tag| %>
-            <span class="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-medium"><%= tag %></span>
+        <div class="flex flex-wrap gap-1 mb-2">
+          <% post.tag_list.first(3).each do |tag| %>
+            <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium"><%= tag %></span>
+          <% end %>
+          <% if post.tag_list.length > 3 %>
+            <span class="text-xs text-gray-400">+<%= post.tag_list.length - 3 %></span>
           <% end %>
         </div>
       <% end %>
 
-      <% if post.thumbnail.attached? %>
-        <div>
-          <%= image_tag post.thumbnail, class: "w-full max-w-sm mx-auto rounded shadow" %>
+      <% if post.images.attached? %>
+        <div class="flex flex-col items-center mb-2">
+          <% post.images.first(1).each_with_index do |image, index| %>
+            <div class="relative inline-block mb-2" data-controller="image-comments" data-image-comments-post-id-value="<%= post.id %>" data-image-comments-read-only-value="true">
+              <%= image_tag image, class: "w-full max-h-96 md:max-w-3xl md:max-h-[500px] object-contain mx-auto rounded shadow cursor-crosshair", data: { "image-comments-target": "image" } %>
+              
+              <% if post.images.count > 1 %>
+                <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                  +<%= post.images.count - 1 %>
+                </div>
+              <% end %>
+              
+              <!-- 画像上のコメントマーカー表示エリア -->
+              <div class="absolute inset-0 pointer-events-none" data-image-comments-target="markersContainer"></div>
+              
+              <!-- マーカー数表示のみ（グローバルコントロールを使用） -->
+              <div class="mt-1 flex items-center justify-center">
+                <span data-image-comments-target="markerCount" class="text-xs text-gray-500"></span>
+              </div>
+            </div>
+          <% end %>
         </div>
       <% end %>
 
-      <% if post.video.attached? %>
-        <div>
-          <video class="w-full max-w-md mx-auto" controls>
-            <source src="<%= url_for(post.video) %>" type="<%= post.video.content_type %>">
-            お使いのブラウザは video タグをサポートしていません。
-          </video>
+      <% if post.videos.attached? %>
+        <div class="mb-2">
+          <% post.videos.first(1).each_with_index do |video, index| %>
+            <div class="bg-gray-900 rounded-lg overflow-hidden shadow mb-2 max-w-xs mx-auto">
+              <video class="custom-video no-context-menu w-full" 
+                     controls 
+                     controlsList="nodownload noremoteplaybook"
+                     oncontextmenu="return false;"
+                     preload="metadata"
+                     style="outline: none; height: 200px;">
+                <source src="<%= url_for(video) %>" type="video/mp4">
+                お使いのブラウザは video タグをサポートしていません。
+              </video>
+              <% if post.videos.count > 1 %>
+                <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                  +<%= post.videos.count - 1 %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
         </div>
       <% end %>
 
-      <p class="text-sm text-gray-500">コメント数: <%= post.comments.count %></p>
+      <% if post.audios.attached? %>
+        <div class="mb-2 max-w-xs mx-auto">
+          <% post.audios.first(1).each_with_index do |audio, index| %>
+            <div class="bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg p-2 mb-2 border border-purple-200">
+              <audio class="custom-audio no-context-menu w-full" 
+                     controls 
+                     controlsList="nodownload noremoteplaybook"
+                     oncontextmenu="return false;"
+                     preload="metadata"
+                     style="outline: none;">
+                <source src="<%= url_for(audio) %>" type="audio/mpeg">
+                <source src="<%= url_for(audio) %>" type="audio/wav">
+                <source src="<%= url_for(audio) %>" type="audio/ogg">
+                お使いのブラウザは audio タグをサポートしていません。
+              </audio>
+              <% if post.audios.count > 1 %>
+                <div class="text-center text-xs text-purple-600 mt-1">+<%= post.audios.count - 1 %>件</div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
 
-      <!-- コメントフォーム -->
-      <div class="mt-4">
-        <%= form_with model: [post, post.comments.build], url: post_comments_path(post), local: true do |form| %>
-          <div>
-            <%= form.label :body, "コメント", class: "block text-sm font-medium text-gray-700" %>
-            <%= form.text_area :body, rows: 3, class: "mt-1 w-full border-gray-300 rounded-md shadow-sm" %>
-          </div>
-          <div class="mt-2">
-            <%= form.submit "コメントする", class: "bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded" %>
-          </div>
-        <% end %>
+      <!-- 投票システム -->
+      <% up_count = post.votes.where(value: 1).count %>
+      <% down_count = post.votes.where(value: -1).count %>
+      <% user_vote = current_user ? (post.votes.find_by(user: current_user)&.value || 0) : 0 %>
+      <% total_votes = up_count + down_count %>
+      
+      <!-- 投票システム（投稿詳細と同じスタイル） -->
+      <div class="flex items-center justify-center gap-1 mt-2 pt-2 border-t border-gray-100">
+        <!-- 投票バー（詳細と同じスタイル） -->
+        <div class="relative w-36 h-6 bg-gray-300 rounded overflow-hidden flex-shrink-0">
+          <% if total_votes == 0 %>
+            <!-- 投票がない場合：グレーのバー -->
+            <div class="absolute inset-0 flex items-center justify-center text-xs text-gray-700 font-semibold select-none">
+              <%= total_votes %>
+            </div>
+          <% else %>
+            <!-- 投票がある場合：カラフルなバーと内訳表示 -->
+            <div class="absolute inset-0 flex">
+              <% up_percentage = (up_count.to_f / total_votes * 100).round(1) %>
+              <% down_percentage = (down_count.to_f / total_votes * 100).round(1) %>
+
+              <!-- プラス票のバー -->
+              <div class="h-full bg-green-500 relative flex items-center justify-center" style="width: <%= up_percentage %>%">
+                <% if up_count > 0 %>
+                  <span class="text-xs text-white font-bold"><%= up_count %></span>
+                <% end %>
+              </div>
+
+              <!-- マイナス票のバー -->
+              <div class="h-full bg-red-500 relative flex items-center justify-center" style="width: <%= down_percentage %>%">
+                <% if down_count > 0 %>
+                  <span class="text-xs text-white font-bold"><%= down_count %></span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- コメント数 -->
+        <div class="flex items-center gap-1 text-gray-500 ml-2">
+          <%= link_to post_path(post), class: "flex items-center text-gray-500 hover:text-blue-700" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              <line x1="9" y1="10" x2="15" y2="10"></line>
+              <line x1="9" y1="14" x2="13" y2="14"></line>
+            </svg>
+            <span class="text-sm font-medium ml-1"><%= post.comments.count %></span>
+          <% end %>
+        </div>
       </div>
 
       <!-- 投稿削除ボタン -->
       <div class="text-right mt-2">
-        <%= link_to "削除", post_path(post), method: :delete, data: { confirm: "本当に削除しますか？" }, class: "text-red-600 hover:underline" %>
+        <%= button_to "削除", post_path(post), method: :delete, data: { confirm: "本当に削除しますか？" }, class: "delete-button text-red-600 hover:underline" %>
       </div>
     </div>
+
+    <%# 4投稿ごとに注目コメントを挿入 %>
+    <% if (index + 1) % 4 == 0 %>
+      <% comment_to_insert = @comment_iterator.next rescue nil %>
+      <% if comment_to_insert %>
+        <%
+          comment = comment_to_insert
+          card_class = "p-4 border-b border-gray-200 cursor-pointer relative mb-8 bg-blue-50 md:rounded-lg md:shadow md:border md:border-blue-200"
+        %>
+        <div class="<%= card_class %>" onclick="window.location.href='<%= post_path(comment.post) %>#comment-<%= comment.id %>'">
+          <div class="flex items-start gap-3">
+            <div class="flex-1">
+              <div class="flex items-center justify-between text-sm mb-2">
+                <p class="font-semibold text-gray-800">
+                  <%= link_to comment.user.name, user_path(comment.user), class: "hover:underline" %>
+                </p>
+                <p class="text-gray-500"><%= time_ago_in_words(comment.created_at) %>前</p>
+              </div>
+              <p class="text-gray-700 mb-3"><%= simple_format(comment.body) %></p>
+              <div class="text-xs text-gray-500 border-t border-gray-200 pt-2">
+                <p>元の投稿: <%= link_to comment.post.title, post_path(comment.post), class: "text-indigo-600 hover:underline" %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
   <% end %>
 
 <% else %>
   <p class="text-gray-500">まだ投稿がありません。</p>
 <% end %>
+
+<script>
+function handlePostCardClick(event, postId) {
+  console.log('Card clicked, target:', event.target, 'postId:', postId);
+
+  // リンクやボタンがクリックされた場合は無視
+  if (shouldIgnoreClick(event.target)) {
+    console.log('Click ignored for:', event.target);
+    return;
+  }
+
+  console.log('Navigating to post:', postId);
+  window.location.href = `/posts/${postId}`;
+}
+
+// 投稿詳細モーダルを表示する関数
+function showPostModal(postId) {
+  console.log('Opening post modal for:', postId);
+  // 投稿詳細ページに遷移
+  window.location.href = `/posts/${postId}`;
+}
+
+function shouldIgnoreClick(target) {
+  // クリックを無視すべき要素をチェック
+  const ignoredElements = ['A', 'BUTTON', 'INPUT', 'TEXTAREA', 'SELECT'];
+  const ignoredClasses = ['vote-button', 'delete-button'];
+
+  // 要素タイプをチェック
+  if (ignoredElements.includes(target.tagName)) {
+    return true;
+  }
+
+  // クラス名をチェック
+  if (target.classList && ignoredClasses.some(cls => target.classList.contains(cls))) {
+    return true;
+  }
+
+  // 親要素をチェック（SVGアイコンなど）
+  let parent = target.parentElement;
+  while (parent && !parent.classList.contains('post-card')) {
+    if (ignoredElements.includes(parent.tagName)) {
+      return true;
+    }
+    if (parent.classList && ignoredClasses.some(cls => parent.classList.contains(cls))) {
+      return true;
+    }
+    parent = parent.parentElement;
+  }
+
+  return false;
+}
+</script>
 
 <!-- ✅ 開発環境限定：ここが一番下 -->
 <% if Rails.env.development? %>
@@ -125,4 +296,11 @@
   </div>
 <% end %>
 
-</div> <!-- ← 最初の .max-w-5xl の閉じタグ -->
+    </div> <!-- メインコンテンツエリア終了 -->
+
+    <!-- 右サイドバー（デスクトップのみ表示） -->
+    <div class="block sticky top-4 h-fit" data-layout="desktop">
+      <%= render 'layouts/right_sidebar' %>
+    </div>
+  </div> <!-- flex コンテナ終了 -->
+</div> <!-- メインコンテナ終了 -->

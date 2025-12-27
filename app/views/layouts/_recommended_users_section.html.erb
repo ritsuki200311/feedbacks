@@ -1,0 +1,36 @@
+<!-- おすすめのユーザー -->
+<div class="p-4">
+  <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+    </svg>
+    おすすめのユーザー
+  </h3>
+
+  <% if @recommended_users&.any? %>
+    <div class="space-y-3">
+      <% @recommended_users.first(3).each do |user| %>
+        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <div class="flex-shrink-0">
+            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <span class="text-sm font-medium text-green-600"><%= user.name.first %></span>
+            </div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <%= link_to user.name, user_path(user), class: "text-sm font-medium text-gray-900 hover:text-blue-600 block truncate" %>
+            <p class="text-xs text-gray-500">
+              投稿数: <%= user.posts.size %>件
+            </p>
+          </div>
+          <div class="flex-shrink-0">
+            <%= link_to user_path(user), class: "text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors" do %>
+              プロフィール
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-sm text-gray-500 text-center py-4">おすすめのユーザーがいません</p>
+  <% end %>
+</div>

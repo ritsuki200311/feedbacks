@@ -1,0 +1,193 @@
+<div class="max-w-4xl mx-auto p-6" data-controller="profile-wizard" data-profile-wizard-total-steps-value="5">
+  <!-- 進捗バー -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-sm text-gray-600">プロフィール設定</span>
+      <span class="text-sm text-gray-600" data-profile-wizard-target="stepIndicator">1 / 5</span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-2">
+      <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+           data-profile-wizard-target="progressBar" style="width: 20%"></div>
+    </div>
+  </div>
+
+  <%= form_with(model: @supporter_profile, local: true, 
+                class: "space-y-6", data: { profile_wizard_target: "form" }) do |f| %>
+    
+    <!-- エラー表示 -->
+    <% if @supporter_profile.errors.any? %>
+      <div class="bg-red-100 text-red-700 p-4 rounded mb-6">
+        <p class="font-bold">入力エラーがあります：</p>
+        <ul class="list-disc pl-5">
+          <% @supporter_profile.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <!-- ステップ1: 生年月日 -->
+    <div class="step-content" data-profile-wizard-target="step" data-step="1">
+      <div class="text-center mb-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">生年月日を入力してください</h2>
+        <p class="text-sm md:text-base text-gray-600">正確な年齢を計算するために使用します</p>
+      </div>
+
+      <div class="max-w-lg mx-auto px-4">
+        <div class="p-4 md:p-6 border-2 border-gray-200 rounded-lg">
+          <div class="flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center">
+            <%= f.select(
+                "birth_date(1i)",
+                (Date.today.year.downto(1920)).to_a,
+                { prompt: '年' },
+                { class: "flex-1 p-3 md:p-4 border-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-base md:text-lg" }
+            ) %>
+            <%= f.select(
+                "birth_date(2i)",
+                (1..12).to_a,
+                { prompt: '月' },
+                { class: "flex-1 p-3 md:p-4 border-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-base md:text-lg" }
+            ) %>
+            <%= f.select(
+                "birth_date(3i)",
+                (1..31).to_a,
+                { prompt: '日' },
+                { class: "flex-1 p-3 md:p-4 border-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-base md:text-lg" }
+            ) %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ステップ2: 実際に創作をしていますか -->
+    <div class="step-content hidden" data-profile-wizard-target="step" data-step="2">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">実際に創作をしていますか</h2>
+        <p class="text-gray-600">当てはまるものをすべて選択してください</p>
+      </div>
+      
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        <% ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他', 'していない'].each do |option| %>
+          <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="support_genres" data-value="<%= option %>">
+            <input type="checkbox" name="supporter_profile[support_genres][]" value="<%= option %>" 
+                   <%= 'checked' if @supporter_profile.support_genres.include?(option) %> class="hidden">
+            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
+              <span class="text-base text-gray-700"><%= option %></span>
+            </div>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- ステップ3: 創作年数 -->
+    <div class="step-content hidden" data-profile-wizard-target="step" data-step="3">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">創作年数を教えてください</h2>
+        <p class="text-gray-600">該当する経験年数を選択してください</p>
+      </div>
+      
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+        <% ['1年未満', '1-3年', '4-6年', '7-10年', '10年以上', '経験なし'].each do |option| %>
+          <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectSingle" data-field="creation_experience" data-value="<%= option %>">
+            <input type="radio" name="supporter_profile[creation_experience]" value="<%= option %>" 
+                   <%= 'checked' if @supporter_profile.creation_experience == option %> class="hidden">
+            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
+              <span class="text-lg text-gray-700"><%= option %></span>
+            </div>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- ステップ4: 好きなジャンル -->
+    <div class="step-content hidden" data-profile-wizard-target="step" data-step="4">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">好きなジャンルはありますか？</h2>
+        <p class="text-gray-600">当てはまるものをすべて選択してください</p>
+      </div>
+      
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        <% ['イラスト・絵画', 'マンガ・コミック', '小説・詩・エッセイ', '音楽制作・作詞作曲', '映像制作・動画編集', 'ゲーム制作・プログラミング', 'デザイン・グラフィック', '写真・撮影技術', '舞台・演劇・パフォーマンス', '手芸・クラフト', 'その他'].each do |option| %>
+          <label class="option-card cursor-pointer" data-action="click->profile-wizard#selectOption" data-field="interests" data-value="<%= option %>">
+            <input type="checkbox" name="supporter_profile[interests][]" value="<%= option %>" 
+                   <%= 'checked' if @supporter_profile.interests.include?(option) %> class="hidden">
+            <div class="p-4 border-2 border-gray-200 rounded-lg text-center transition-all hover:border-indigo-300">
+              <span class="text-base text-gray-700"><%= option %></span>
+            </div>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- ステップ5: 自分が少し詳しいことを詳細に教えてください -->
+    <div class="step-content hidden" data-profile-wizard-target="step" data-step="5">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">フィードバックできそうなことを教えてください</h2>
+        <p class="text-gray-600">※ここに書いた内容に関するコメント依頼が届く可能性があります（回答しない場合はスキップ可能）</p>
+      </div>
+      
+      <div class="max-w-2xl mx-auto">
+        <%= f.text_area :favorite_artists, rows: 6, 
+            class: "w-full p-4 border-2 border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-lg",
+            placeholder: "例：デジタルイラストのレイヤー構成、小説の三人称視点の書き方、DTMでのミックス技法、動画編集のカット割り、写真の構図理論など...具体的なスキルや知識を教えてください" %>
+      </div>
+    </div>
+
+    <!-- ナビゲーションボタン -->
+    <div class="flex justify-between items-center pt-8">
+      <button type="button" 
+              data-action="click->profile-wizard#previousStep" 
+              data-profile-wizard-target="prevButton" 
+              class="hidden bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+        前へ
+      </button>
+      
+      <div class="flex-1"></div>
+      
+      <button type="button" 
+              data-action="click->profile-wizard#nextStep" 
+              data-profile-wizard-target="nextButton" 
+              class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
+        次へ
+      </button>
+      
+      <button type="submit" 
+              data-profile-wizard-target="submitButton" 
+              class="hidden bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
+        完了
+      </button>
+    </div>
+  <% end %>
+</div>
+
+<style>
+  .option-card input:checked + div {
+    @apply border-blue-600;
+    border-width: 4px !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.4), 0 4px 12px rgba(37, 99, 235, 0.3);
+    transform: scale(1.02);
+  }
+  
+  .option-card:hover input + div {
+    @apply border-indigo-300;
+  }
+  
+  .option-card input + div {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>

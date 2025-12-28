@@ -1,8 +1,7 @@
 class User < ApplicationRecord
   # Deviseの認証モジュール
-  # メール確認は無効化（メール送信サービス未設定のため）
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable
+         :recoverable, :rememberable, :validatable, :confirmable
 
   # バリデーション
   validates :name, presence: true, length: { minimum: 1, maximum: 50 }, uniqueness: true

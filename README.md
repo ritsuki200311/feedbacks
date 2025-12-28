@@ -100,6 +100,30 @@ FeedBacksは、数値的な評価や拡散ではなく、**質の高いフィー
 - Node.js (Importmaps用)
 - AWS S3アカウント (ファイルストレージ用)
 
+### 事前準備：PostgreSQLのインストール
+
+**macOS (Homebrew):**
+```bash
+brew install postgresql@16
+brew services start postgresql@16
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+**Windows:**
+[PostgreSQL公式サイト](https://www.postgresql.org/download/windows/)からインストーラーをダウンロード
+
+**インストール確認:**
+```bash
+psql --version
+# PostgreSQL 16.x 以上が表示されればOK
+```
+
 ### インストール手順
 
 1. リポジトリをクローン

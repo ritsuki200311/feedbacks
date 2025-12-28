@@ -113,23 +113,41 @@ cd feedbacks
 bundle install
 ```
 
-3. データベースを作成・マイグレーション
+3. 環境変数を設定
+```bash
+# .envファイルを作成
+cp .env.example .env
+
+# .envファイルを編集して必要な値を設定
+# 最低限必要なのはGoogle Gemini API Key（AI機能用）
+# GOOGLE_GEMINI_API_KEY=your_actual_api_key_here
+```
+
+**環境変数の取得方法:**
+- **Google Gemini API Key**: [Google AI Studio](https://aistudio.google.com/)で取得
+- **AWS S3**: [AWS Console](https://console.aws.amazon.com/)でアクセスキーを作成（画像アップロード機能を使う場合のみ）
+
+4. PostgreSQLユーザーの設定（必要に応じて）
+```bash
+# デフォルトでは現在のOSユーザー名が使用されます
+# 異なるユーザー名を使いたい場合は.envに追加:
+# PGUSER=your_postgres_username
+# PGPASSWORD=your_password
+```
+
+5. データベースを作成・マイグレーション
 ```bash
 bin/rails db:create db:migrate
 ```
 
-4. 初期データを投入（オプション）
+6. 初期データを投入（オプション）
 ```bash
 bin/rails db:seed
 ```
 
-5. 環境変数を設定
+7. Tailwind CSSをビルド（初回のみ）
 ```bash
-# AWS S3設定
-export AWS_ACCESS_KEY_ID=your_access_key
-export AWS_SECRET_ACCESS_KEY=your_secret_key
-export AWS_REGION=your_region
-export AWS_BUCKET_NAME=your_bucket_name
+bin/rails tailwindcss:build
 ```
 
 ## 🏃‍♂️ 開発コマンド

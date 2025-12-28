@@ -7,10 +7,11 @@ default: &default
 development:
   <<: *default
   database: feedbacks_development
-  host: 127.0.0.1
-  username: akimotoritsuki
+  host: <%= ENV.fetch("PGHOST") { "127.0.0.1" } %>
+  username: <%= ENV.fetch("PGUSER") { ENV["USER"] } %>
+  password: <%= ENV["PGPASSWORD"] %>
   schema_search_path: public
-  port: 5432
+  port: <%= ENV.fetch("PGPORT") { 5432 } %>
   
 
 test:

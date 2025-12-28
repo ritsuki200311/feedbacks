@@ -1,8 +1,8 @@
 class User < ApplicationRecord
   # Deviseの認証モジュール
-  # 開発環境、または本番環境でSENDGRID_API_KEYが設定されている場合にメール確認を有効化
-  # SENDGRID_API_KEYがない本番環境ではメール確認なしで登録可能
-  if Rails.env.development? || (Rails.env.production? && ENV['SENDGRID_API_KEY'].present?)
+  # 開発環境のみメール確認を有効化（letter_opener使用）
+  # 本番環境ではメール確認なしで登録・ログイン可能
+  if Rails.env.development?
     devise :database_authenticatable, :registerable,
            :recoverable, :rememberable, :validatable, :confirmable
   else

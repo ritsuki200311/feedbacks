@@ -1,7 +1,14 @@
 class User < ApplicationRecord
   # Deviseの認証モジュール
-  devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable, :confirmable
+  # 開発環境、または本番環境でSENDGRID_API_KEYが設定されている場合にメール確認を有効化
+  # SENDGRID_API_KEYがない本番環境ではメール確認なしで登録可能
+  if Rails.env.development? || (Rails.env.production? && ENV['SENDGRID_API_KEY'].present?)
+    devise :database_authenticatable, :registerable,
+           :recoverable, :rememberable, :validatable, :confirmable
+  else
+    devise :database_authenticatable, :registerable,
+           :recoverable, :rememberable, :validatable
+  end
 
   # バリデーション
   validates :name, presence: true, length: { minimum: 1, maximum: 50 }, uniqueness: true

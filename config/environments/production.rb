@@ -67,19 +67,26 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
 
   # Mailer settings for production
-  config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.delivery_method = :smtp
-  config.action_mailer.default_url_options = { host: ENV['APP_HOST'] || 'app.feedbacks.art' }
+  # SENDGRID_API_KEYが設定されている場合のみメール送信を有効化
+  if ENV['SENDGRID_API_KEY'].present?
+    config.action_mailer.raise_delivery_errors = true
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.default_url_options = { host: ENV['APP_HOST'] || 'app.feedbacks.art' }
 
-  config.action_mailer.smtp_settings = {
-    address: 'smtp.sendgrid.net',
-    port: 587,
-    domain: ENV['APP_HOST'] || 'app.feedbacks.art',
-    user_name: 'apikey',
-    password: ENV['SENDGRID_API_KEY'],
-    authentication: :plain,
-    enable_starttls_auto: true
-  }
+    config.action_mailer.smtp_settings = {
+      address: 'smtp.sendgrid.net',
+      port: 587,
+      domain: ENV['APP_HOST'] || 'app.feedbacks.art',
+      user_name: 'apikey',
+      password: ENV['SENDGRID_API_KEY'],
+      authentication: :plain,
+      enable_starttls_auto: true
+    }
+  else
+    # SENDGRID_API_KEYがない場合はメール送信を無効化
+    config.action_mailer.raise_delivery_errors = false
+    config.action_mailer.perform_deliveries = false
+  end
 
   # Enable locale fallbacks for I18n (makes lookups for corresponding requests fall back to
   # the array of specified locales). This is used for e.g. when a translation is missing in one locale.

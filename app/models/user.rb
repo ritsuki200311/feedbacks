@@ -1,14 +1,8 @@
 class User < ApplicationRecord
   # Deviseの認証モジュール
-  # 開発環境のみメール確認を有効化（letter_opener使用）
-  # 本番環境ではメール確認なしで登録・ログイン可能
-  if Rails.env.development?
-    devise :database_authenticatable, :registerable,
-           :recoverable, :rememberable, :validatable, :confirmable
-  else
-    devise :database_authenticatable, :registerable,
-           :recoverable, :rememberable, :validatable
-  end
+  # 本番環境・開発環境ともにメール確認を有効化
+  devise :database_authenticatable, :registerable,
+         :recoverable, :rememberable, :validatable, :confirmable
 
   # バリデーション
   validates :name, presence: true, length: { minimum: 1, maximum: 50 }, uniqueness: true

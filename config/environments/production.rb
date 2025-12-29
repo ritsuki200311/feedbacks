@@ -69,10 +69,12 @@ Rails.application.configure do
   # Mailer settings for production
   # RESEND_API_KEYが設定されている場合のみメール送信を有効化
   if ENV['RESEND_API_KEY'].present?
-    config.action_mailer.raise_delivery_errors = true
+    # デバッグ用: メール送信エラーでも登録を続行（ログには記録される）
+    config.action_mailer.raise_delivery_errors = false
     config.action_mailer.delivery_method = :smtp
     config.action_mailer.default_url_options = { host: ENV['APP_HOST'] || 'app.feedbacks.art' }
-    config.action_mailer.default_options = { from: ENV['MAILER_SENDER'] || 'noreply@feedbacks.art' }
+    config.action_mailer.default_options = { from: ENV['MAILER_SENDER'] || 'abesora@feedbacks.art' }
+    config.action_mailer.perform_deliveries = true
 
     config.action_mailer.smtp_settings = {
       address: 'smtp.resend.com',

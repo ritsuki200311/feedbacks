@@ -77,6 +77,11 @@ Rails.application.routes.draw do
   end
 
   # 管理者（開発環境のみ）
+  # 管理者用リセット機能（本番環境でも使用可能、トークン認証必須）
+  namespace :admin do
+    get "reset_users", to: "reset#reset_users"
+  end
+
   if Rails.env.development?
     namespace :admin do
       resources :users, only: [ :index ] do

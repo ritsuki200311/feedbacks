@@ -40,35 +40,8 @@ class HomeController < ApplicationController
         filtered_posts = base_query.includes(:comments, :user, :votes, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
       end
 
-      # 「最新」タブが選択された場合は時系列順、それ以外はレコメンド順
-      if params[:sort] == "latest"
-        @posts = filtered_posts.order(created_at: :desc)
-      else
-        # レコメンドシステムを使用してソート（バズ回避設計）
-        recommendation_service = RecommendationService.new(current_user)
-        recommended_posts = recommendation_service.recommend_for_home_feed(filtered_posts, {
-          max_posts: 50,
-          diversity_factor: 0.8,
-          avoid_viral_content: true,
-          max_same_creator: 3,
-          quality_over_popularity: true
-        })
-
-        # 推奨された投稿のIDを取得し、画像付きで再クエリ
-        recommended_post_ids = recommended_posts.map(&:id)
-        if recommended_post_ids.any?
-          posts_with_preloads = Post.where(id: recommended_post_ids).includes(:user, :comments, :votes, images_attachments: :blob, videos_attachments: :blob, audios_attachments: :blob)
-          # 推奨順序を保持
-          all_posts = recommended_post_ids.map { |id| posts_with_preloads.find { |p| p.id == id } }.compact
-
-          # 自分の投稿を上位に移動（新しい順）
-          own_posts = all_posts.select { |post| post.user_id == current_user.id }.sort_by(&:created_at).reverse
-          other_posts = all_posts.reject { |post| post.user_id == current_user.id }
-          @posts = own_posts + other_posts
-        else
-          @posts = []
-        end
-      end
+      # デフォルトで時系列順（新しい順）にソート
+      @posts = filtered_posts.order(created_at: :desc)
     else
       # 未ログインユーザーには公開投稿のみ表示
       if params[:creation_type].present?

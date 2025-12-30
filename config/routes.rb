@@ -40,10 +40,16 @@ Rails.application.routes.draw do
     resources :comments, only: [ :index, :create ]
     # AI comment assistant
     post "ai_comment_assistant/analyze", to: "ai_comment_assistant#analyze_post"
-    # ユーザー選択画面
+    # ユーザー選択画面（メンバールート - 既存投稿用）
     get "select_recipient", to: "posts#select_recipient"
     post "send_to_user", to: "posts#send_to_user"
     get "match_users", to: "posts#match_users"
+
+    # コレクションルート - セッションベース（投稿前）用
+    collection do
+      get "select_recipient", to: "posts#select_recipient", as: "select_recipient_collection"
+      post "send_to_user", to: "posts#send_to_user", as: "send_to_user_collection"
+    end
   end
 
   # 投票機能

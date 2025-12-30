@@ -17,15 +17,45 @@ class PostsController < ApplicationController
     Rails.logger.debug "files in params[:post]: #{params[:post][:files].inspect if params[:post]}"
     Rails.logger.debug "=========================="
 
+    # 「送るユーザーを選ぶ」ボタンの場合は投稿を保存せず、データをセッションに保存
+    if params[:commit] == "送るユーザーを選ぶ"
+      # 投稿データをセッションに保存
+      session[:pending_post_data] = {
+        title: params[:post][:title],
+        body: params[:post][:body],
+        creation_type: params[:post][:creation_type],
+        tag: params[:post][:tag]
+      }
+
+      # ファイルをActiveStorageにアップロードし、blob signed_idをセッションに保存
+      if params[:post][:files].present?
+        blob_signed_ids = []
+        params[:post][:files].each do |file|
+          next if file.blank?
+          next unless file.respond_to?(:content_type) && file.respond_to?(:original_filename)
+
+          # ActiveStorageにファイルをアップロード
+          blob = ActiveStorage::Blob.create_and_upload!(
+            io: file.open,
+            filename: file.original_filename,
+            content_type: file.content_type
+          )
+
+          # blob signed_idをセッションに保存
+          blob_signed_ids << blob.signed_id
+        end
+        session[:pending_post_blob_ids] = blob_signed_ids if blob_signed_ids.any?
+      end
+
+      redirect_to select_recipient_collection_posts_path, notice: "投稿内容を保存しました。送信相手を選んでください。"
+      return
+    end
+
     @post = Post.new(post_params.except(:files))
     @post.user = current_user
 
-    # ボタンのcommitパラメータによって動作を変える
-    if params[:commit] == "投稿する"
-      @post.is_private = false  # 公開投稿として保存
-    else
-      @post.is_private = true  # 非公開投稿として保存
-    end
+    # 「投稿する」ボタンの場合
+    @post.is_private = false  # 公開投稿として保存
 
     respond_to do |format|
       if @post.valid?
@@ -256,18 +286,72 @@ class PostsController < ApplicationController
   end
 
   def select_recipient
-    @post = Post.find(params[:post_id])
-    unless @post.user == current_user
-      redirect_to root_path, alert: "権限がありません。"
-      nil
+    # セッションに保存された投稿データがある場合はそれを使用
+    if session[:pending_post_data].present?
+      @post = Post.new(session[:pending_post_data])
+      @post.user = current_user
+      @is_pending = true
+    else
+      # 既存の投稿の場合
+      @post = Post.find(params[:post_id])
+      unless @post.user == current_user
+        redirect_to root_path, alert: "権限がありません。"
+        return
+      end
+      @is_pending = false
     end
   end
 
   def send_to_user
-    @post = Post.find(params[:post_id])
-    unless @post.user == current_user
-      redirect_to root_path, alert: "権限がありません。"
-      return
+    # セッションから投稿データがある場合は、ここで投稿を作成
+    if session[:pending_post_data].present?
+      @post = Post.new(session[:pending_post_data])
+      @post.user = current_user
+      @post.is_private = true
+
+      # バリデーションチェック
+      unless @post.valid?
+        redirect_to new_post_path, alert: "投稿内容にエラーがあります。"
+        return
+      end
+
+      # 投稿を保存
+      @post.save!
+
+      # ファイルを添付（セッションから復元）
+      if session[:pending_post_blob_ids].present?
+        session[:pending_post_blob_ids].each do |signed_id|
+          begin
+            # signed_idからblobを取得
+            blob = ActiveStorage::Blob.find_signed(signed_id)
+
+            # content_typeに基づいて適切なアタッチメントに追加
+            case blob.content_type
+            when /^image\//
+              @post.images.attach(blob)
+            when /^video\//
+              @post.videos.attach(blob)
+            when /^audio\//
+              @post.audios.attach(blob)
+            end
+          rescue ActiveSupport::MessageVerifier::InvalidSignature
+            Rails.logger.error "Invalid blob signature: #{signed_id}"
+          rescue ActiveRecord::RecordNotFound
+            Rails.logger.error "Blob not found: #{signed_id}"
+          end
+        end
+      end
+
+      # セッションをクリア
+      session.delete(:pending_post_data)
+      session.delete(:pending_post_blob_ids)
+    else
+      # 既存の投稿の場合
+      @post = Post.find(params[:post_id])
+      unless @post.user == current_user
+        redirect_to root_path, alert: "権限がありません。"
+        return
+      end
     end
 
     selected_user_ids = params[:selected_user_ids]

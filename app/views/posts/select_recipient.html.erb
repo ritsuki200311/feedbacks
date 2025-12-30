@@ -15,7 +15,7 @@
       <% end %>
     </div>
 
-    <%= form_with url: post_send_to_user_path(@post), method: :post, local: true, class: "space-y-8" do |form| %>
+    <%= form_with url: (@is_pending ? send_to_user_collection_posts_path : post_send_to_user_path(@post)), method: :post, local: true, class: "space-y-8" do |form| %>
       
       <!-- アドバイザータイプ選択セクション -->
       <div class="space-y-6">
@@ -273,23 +273,29 @@ document.getElementById('user-profile-modal')?.addEventListener('click', functio
 
 async function showMatchingUsersWithAdvisorType() {
   try {
+    <% if @is_pending %>
+    // セッションベースの投稿の場合はマッチング機能をスキップ
+    console.log('Pending post - matching feature disabled');
+    return;
+    <% else %>
     const advisorType = document.querySelector('input[name="advisor_type"]:checked')?.value;
     const targetGenres = Array.from(document.querySelectorAll('input[name="target_genres[]"]:checked')).map(cb => cb.value);
 
     const params = new URLSearchParams();
     if (advisorType) params.append('advisor_type', advisorType);
     targetGenres.forEach(g => params.append('target_genres[]', g));
-    
+
     const response = await fetch(`<%= post_match_users_path(@post) %>?${params.toString()}`);
     const data = await response.json();
-    
+
     if (data.error) {
       console.error('Matching error:', data.error);
       return;
     }
-    
+
     displayMatchingResults(data.users, advisorType);
-    
+    <% end %>
+
   } catch (error) {
     console.error('Matching API error:', error);
   }

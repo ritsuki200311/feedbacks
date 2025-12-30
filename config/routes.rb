@@ -4,7 +4,8 @@ Rails.application.routes.draw do
 
   # Devise（ユーザー認証）
   devise_for :users, controllers: {
-    registrations: "users/registrations"
+    registrations: "users/registrations",
+    confirmations: "users/confirmations"
   }
 
   # この順番が大事！- Deviseルートを保護するため

@@ -372,7 +372,7 @@ export default class extends Controller {
 
       const img = document.createElement('img')
       img.src = e.target.result
-      img.className = 'w-32 h-32 object-cover rounded-lg shadow-md border border-gray-200'
+      img.className = 'w-16 h-16 object-cover rounded-lg shadow-md border border-gray-200'
       img.alt = `プレビュー ${index + 1}`
 
       const removeBtn = document.createElement('button')
@@ -416,7 +416,7 @@ export default class extends Controller {
 
     const video = document.createElement('video')
     video.src = URL.createObjectURL(file)
-    video.className = 'w-32 h-32 object-cover rounded-lg shadow-md border border-gray-200'
+    video.className = 'w-16 h-16 object-cover rounded-lg shadow-md border border-gray-200'
     video.controls = true
     video.preload = 'metadata'
 
@@ -454,11 +454,11 @@ export default class extends Controller {
 
   createAudioPreview(file, index, container) {
     const previewDiv = document.createElement('div')
-    previewDiv.className = 'relative mb-4 inline-block mx-2 w-32'
+    previewDiv.className = 'relative mb-4 inline-block mx-2 w-16'
     const self = this  // thisの参照を保存
 
     const audioWrapper = document.createElement('div')
-    audioWrapper.className = 'p-3 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg border border-gray-200 h-32 flex flex-col justify-center items-center'
+    audioWrapper.className = 'p-2 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg border border-gray-200 h-16 flex flex-col justify-center items-center'
 
     const audioIcon = document.createElement('div')
     audioIcon.className = 'w-8 h-8 flex items-center justify-center bg-white rounded-full mb-2 shadow-sm'
@@ -587,19 +587,19 @@ export default class extends Controller {
       if (fileInfo.type.startsWith('image/')) {
         const img = document.createElement('img')
         img.src = fileInfo.dataUrl
-        img.className = 'w-32 h-32 object-cover rounded-lg shadow-md border border-gray-200'
+        img.className = 'w-16 h-16 object-cover rounded-lg shadow-md border border-gray-200'
         img.alt = `復元されたプレビュー ${index + 1}`
         previewDiv.appendChild(img)
       } else if (fileInfo.type.startsWith('video/')) {
         const video = document.createElement('video')
         video.src = fileInfo.dataUrl
-        video.className = 'w-32 h-32 object-cover rounded-lg shadow-md border border-gray-200'
+        video.className = 'w-16 h-16 object-cover rounded-lg shadow-md border border-gray-200'
         video.controls = true
         video.preload = 'metadata'
         previewDiv.appendChild(video)
       } else if (fileInfo.type.startsWith('audio/')) {
         const audioWrapper = document.createElement('div')
-        audioWrapper.className = 'p-3 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg border border-gray-200 h-32 flex flex-col justify-center items-center'
+        audioWrapper.className = 'p-2 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg border border-gray-200 h-16 flex flex-col justify-center items-center'
 
         const audioIcon = document.createElement('div')
         audioIcon.className = 'w-8 h-8 flex items-center justify-center bg-white rounded-full mb-2 shadow-sm'

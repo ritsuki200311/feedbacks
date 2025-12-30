@@ -195,8 +195,14 @@
 
       <div class="pt-6 text-center">
         <div class="flex flex-col md:flex-row gap-4 justify-center">
-          <%= form.submit "送るユーザーを選ぶ", class: "bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105", style: "background-color: #4F46E5; color: white; border: none;" %>
-          <%= form.submit "投稿する", class: "bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105", style: "background-color: #059669; color: white; border: none;" %>
+          <%= form.submit "送るユーザーを選ぶ",
+              class: "bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105",
+              style: "background-color: #4F46E5; color: white; border: none;",
+              data: { disable_with: "処理中..." } %>
+          <%= form.submit "投稿する",
+              class: "bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-md transition-transform transform hover:scale-105",
+              style: "background-color: #059669; color: white; border: none;",
+              data: { disable_with: "投稿中..." } %>
         </div>
       </div>
     <% end %>

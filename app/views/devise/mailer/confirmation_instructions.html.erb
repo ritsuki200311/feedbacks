@@ -1,12 +1,5 @@
-<p>FeedBacksへようこそ！</p>
-
 <p>メールアドレスの確認を完了するため、以下のリンクをクリックしてください：</p>
 
 <p><%= link_to 'メールアドレスを確認する', confirmation_url(@resource, confirmation_token: @token), style: 'display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;' %></p>
 
 <p style="color: #6B7280; font-size: 14px;">このリンクは24時間有効です。</p>
-
-<p style="margin-top: 32px; color: #6B7280; font-size: 14px;">
-  FeedBacksチーム<br>
-  <%= @email %>
-</p>

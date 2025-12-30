@@ -8,7 +8,10 @@
   <div class="mb-4 border-b border-gray-200">
     <ul class="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500">
       <li class="mr-2 flex-shrink-0">
-        <%= link_to "新しい順", root_path, class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:creation_type].blank? && params[:filter].blank? && params[:sort].blank?}" %>
+        <%= link_to "ホーム", root_path, class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:creation_type].blank? && params[:filter].blank? && params[:sort].blank?}" %>
+      </li>
+      <li class="mr-2 flex-shrink-0">
+        <%= link_to "最新", root_path(sort: 'latest'), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:sort] == 'latest'}" %>
       </li>
       <li class="mr-2 flex-shrink-0">
         <%= link_to "コメントが少ない投稿", root_path(filter: 'low_comments'), class: "inline-block p-3 md:p-4 rounded-t-lg hover:border-gray-300 #{'bg-blue-600 text-white' if params[:filter] == 'low_comments'}" %>

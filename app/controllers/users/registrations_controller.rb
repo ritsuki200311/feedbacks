@@ -21,22 +21,48 @@ class Users::RegistrationsController < Devise::RegistrationsController
       email = params.dig(:user, :email)
       name = params.dig(:user, :name)
 
-      if email.present?
-        unconfirmed_by_email = User.where(email: email).where("confirmed_at IS NULL")
-        unconfirmed_by_email.each do |user|
-          # 関連データを先に削除
-          user.posts.destroy_all
-          user.destroy
-        end
-      end
+      begin
+        ActiveRecord::Base.transaction do
+          if email.present?
+            unconfirmed_by_email = User.where(email: email).where("confirmed_at IS NULL")
+            unconfirmed_by_email.each do |user|
+              # 関連データを完全に削除
+              user.posts.each do |post|
+                post.images.purge
+                post.videos.purge
+                post.audios.purge
+                post.comments.destroy_all
+                post.votes.destroy_all
+                post.destroy
+              end
+              user.comments.destroy_all
+              user.votes.destroy_all
+              user.destroy
+            end
+          end
 
-      if name.present?
-        unconfirmed_by_name = User.where(name: name).where("confirmed_at IS NULL")
-        unconfirmed_by_name.each do |user|
-          # 関連データを先に削除
-          user.posts.destroy_all
-          user.destroy
+          if name.present?
+            unconfirmed_by_name = User.where(name: name).where("confirmed_at IS NULL")
+            unconfirmed_by_name.each do |user|
+              # 関連データを完全に削除
+              user.posts.each do |post|
+                post.images.purge
+                post.videos.purge
+                post.audios.purge
+                post.comments.destroy_all
+                post.votes.destroy_all
+                post.destroy
+              end
+              user.comments.destroy_all
+              user.votes.destroy_all
+              user.destroy
+            end
+          end
         end
+      rescue => e
+        # エラーが出ても登録は継続できるようにログに記録のみ
+        Rails.logger.error "未確認ユーザー削除エラー: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
       end
     end
 end

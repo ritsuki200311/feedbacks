@@ -142,7 +142,21 @@ class PostsController < ApplicationController
 
   def destroy
     @post.destroy
-    redirect_to root_path, notice: "投稿が削除されました。"
+
+    respond_to do |format|
+      format.html do
+        # リファラーをチェックしてマイページから来た場合はマイページに戻る
+        if request.referer&.include?("mypage")
+          redirect_to mypage_path, notice: "投稿が削除されました。"
+        else
+          redirect_to root_path, notice: "投稿が削除されました。"
+        end
+      end
+      format.turbo_stream do
+        # Turbo Streamsでスムーズに削除
+        render turbo_stream: turbo_stream.remove(@post)
+      end
+    end
   end
 
   def search

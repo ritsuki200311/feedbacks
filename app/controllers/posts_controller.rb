@@ -29,46 +29,67 @@ class PostsController < ApplicationController
 
     respond_to do |format|
       if @post.valid?
-        @post.save
-        Rails.logger.debug "Post saved successfully with ID: #{@post.id}"
+        begin
+          @post.save
+          Rails.logger.debug "Post saved successfully with ID: #{@post.id}"
+        rescue => e
+          Rails.logger.error "=== ERROR SAVING POST ==="
+          Rails.logger.error "Error class: #{e.class}"
+          Rails.logger.error "Error message: #{e.message}"
+          Rails.logger.error "Backtrace: #{e.backtrace.first(10).join("\n")}"
+          Rails.logger.error "=========================="
+          format.html { redirect_to new_post_path, alert: "投稿の保存に失敗しました: #{e.message}" }
+          return
+        end
 
         # filesパラメータを適切なアタッチメントに振り分け（トランザクション外で実行）
         if params[:post] && params[:post][:files].present?
-          Rails.logger.debug "Files parameter: #{params[:post][:files].inspect}"
-          Rails.logger.debug "Files parameter class: #{params[:post][:files].class}"
-          params[:post][:files].each_with_index do |file, index|
-            Rails.logger.debug "File #{index}: #{file.inspect} (class: #{file.class})"
-          end
+          begin
+            Rails.logger.debug "Files parameter: #{params[:post][:files].inspect}"
+            Rails.logger.debug "Files parameter class: #{params[:post][:files].class}"
+            params[:post][:files].each_with_index do |file, index|
+              Rails.logger.debug "File #{index}: #{file.inspect} (class: #{file.class})"
+            end
 
-          # バリデーションを回避するため、トランザクション外でアタッチメントを追加
-          files_to_attach = params[:post][:files].reject(&:blank?)
+            # バリデーションを回避するため、トランザクション外でアタッチメントを追加
+            files_to_attach = params[:post][:files].reject(&:blank?)
 
-          # 画像ファイル数制限チェック
-          image_files = files_to_attach.select { |f| f.respond_to?(:content_type) && f.content_type&.start_with?('image/') }
-          if image_files.count > 10
-            @post.errors.add(:images, "は10枚まで添付できます")
-            format.html { render :new, status: :unprocessable_entity }
+            # 画像ファイル数制限チェック
+            image_files = files_to_attach.select { |f| f.respond_to?(:content_type) && f.content_type&.start_with?('image/') }
+            if image_files.count > 10
+              @post.errors.add(:images, "は10枚まで添付できます")
+              format.html { render :new, status: :unprocessable_entity }
+              return
+            end
+            files_to_attach.each do |file|
+              next unless file.respond_to?(:content_type) && file.respond_to?(:original_filename)
+
+              Rails.logger.debug "Processing file: #{file.original_filename} (#{file.content_type})"
+
+              case file.content_type
+              when /^image\//
+                @post.images.attach(file)
+                Rails.logger.debug "Attached image: #{file.original_filename}"
+              when /^video\//
+                @post.videos.attach(file)
+                Rails.logger.debug "Attached video: #{file.original_filename}"
+              when /^audio\//
+                @post.audios.attach(file)
+                Rails.logger.debug "Attached audio: #{file.original_filename}"
+              end
+            end
+
+            Rails.logger.debug "After attaching files: #{@post.images.count} images, #{@post.videos.count} videos, #{@post.audios.count} audios"
+          rescue => e
+            Rails.logger.error "=== ERROR ATTACHING FILES ==="
+            Rails.logger.error "Error class: #{e.class}"
+            Rails.logger.error "Error message: #{e.message}"
+            Rails.logger.error "Backtrace: #{e.backtrace.first(10).join("\n")}"
+            Rails.logger.error "=========================="
+            @post.destroy
+            format.html { redirect_to new_post_path, alert: "ファイルのアップロードに失敗しました: #{e.message}" }
             return
           end
-          files_to_attach.each do |file|
-            next unless file.respond_to?(:content_type) && file.respond_to?(:original_filename)
-
-            Rails.logger.debug "Processing file: #{file.original_filename} (#{file.content_type})"
-
-            case file.content_type
-            when /^image\//
-              @post.images.attach(file)
-              Rails.logger.debug "Attached image: #{file.original_filename}"
-            when /^video\//
-              @post.videos.attach(file)
-              Rails.logger.debug "Attached video: #{file.original_filename}"
-            when /^audio\//
-              @post.audios.attach(file)
-              Rails.logger.debug "Attached audio: #{file.original_filename}"
-            end
-          end
-
-          Rails.logger.debug "After attaching files: #{@post.images.count} images, #{@post.videos.count} videos, #{@post.audios.count} audios"
         else
           Rails.logger.debug "No files parameter found or files parameter is empty"
         end

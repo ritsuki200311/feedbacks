@@ -23,12 +23,20 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
       if email.present?
         unconfirmed_by_email = User.where(email: email).where("confirmed_at IS NULL")
-        unconfirmed_by_email.destroy_all if unconfirmed_by_email.any?
+        unconfirmed_by_email.each do |user|
+          # 関連データを先に削除
+          user.posts.destroy_all
+          user.destroy
+        end
       end
 
       if name.present?
         unconfirmed_by_name = User.where(name: name).where("confirmed_at IS NULL")
-        unconfirmed_by_name.destroy_all if unconfirmed_by_name.any?
+        unconfirmed_by_name.each do |user|
+          # 関連データを先に削除
+          user.posts.destroy_all
+          user.destroy
+        end
       end
     end
 end

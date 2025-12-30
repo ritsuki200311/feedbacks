@@ -41,9 +41,9 @@ export default class extends Controller {
   async analyzePost() {
     // ローディング表示
     this.showLoading()
-    
+
     try {
-      const response = await fetch(`/ai_comment_assistant/analyze`, {
+      const response = await fetch(`/posts/${this.postIdValue}/ai_comment_assistant/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

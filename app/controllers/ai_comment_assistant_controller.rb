@@ -84,8 +84,8 @@ class AiCommentAssistantController < ApplicationController
     end
 
     # 画像がある場合はVision対応モデルを使用
-    model = post.images.attached? ? "gemini-1.5-flash" : "gemini-1.5-flash"
-    url = URI("https://generativelanguage.googleapis.com/v1/models/#{model}:generateContent?key=#{api_key}")
+    model = post.images.attached? ? "gemini-2.5-flash" : "gemini-2.5-flash"
+    url = URI("https://generativelanguage.googleapis.com/v1beta/models/#{model}:generateContent?key=#{api_key}")
 
     http = Net::HTTP.new(url.host, url.port)
     http.use_ssl = true

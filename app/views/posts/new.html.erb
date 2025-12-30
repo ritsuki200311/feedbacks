@@ -217,6 +217,45 @@
       window.lastSelectedFiles = null;
       console.log('Cleared saved files due to success');
     }
+
+    // 二重送信防止
+    const form = document.querySelector('form[action="/posts"]');
+    let isSubmitting = false;
+
+    if (form) {
+      // ボタンのクリックイベントで二重送信を防止
+      const submitButtons = form.querySelectorAll('input[type="submit"]');
+      submitButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          // 既に送信中の場合はクリックをキャンセル
+          if (isSubmitting) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            console.log('Button click blocked - already submitting');
+            return false;
+          }
+
+          // 送信フラグを立てる
+          isSubmitting = true;
+          console.log('Form submission started');
+
+          // すべてのボタンを無効化（送信後に実行）
+          setTimeout(() => {
+            submitButtons.forEach(btn => {
+              btn.disabled = true;
+              btn.style.opacity = '0.5';
+              btn.style.cursor = 'not-allowed';
+            });
+
+            // クリックされたボタンにローディング表示を追加（ボタンのvalueは変更しない）
+            const loadingSpan = document.createElement('span');
+            loadingSpan.textContent = ' (処理中...)';
+            loadingSpan.style.fontSize = '0.9em';
+            button.parentElement.appendChild(loadingSpan);
+          }, 10);
+        });
+      });
+    }
   });
 </script>
 

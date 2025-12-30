@@ -22,20 +22,42 @@ class Admin::ResetController < ApplicationController
       app_host: ENV['APP_HOST'],
       delivery_method: Rails.configuration.action_mailer.delivery_method,
       perform_deliveries: Rails.configuration.action_mailer.perform_deliveries,
-      raise_delivery_errors: Rails.configuration.action_mailer.raise_delivery_errors
+      raise_delivery_errors: Rails.configuration.action_mailer.raise_delivery_errors,
+      smtp_settings: Rails.configuration.action_mailer.smtp_settings
     }
 
     # テストメール送信
+    delivery_info = nil
     begin
       # テスト用メールを送信
       test_email = params[:email] || "test@example.com"
 
-      # 簡単なテストメーラーを使用
-      TestMailer.test_message(test_email).deliver_now
+      # 一時的にエラーを発生させる設定
+      original_raise_errors = ActionMailer::Base.raise_delivery_errors
+      ActionMailer::Base.raise_delivery_errors = true
 
-      result = { success: true, message: "テストメール送信を試みました" }
+      # 簡単なテストメーラーを使用
+      mail = TestMailer.test_message(test_email)
+      delivery_info = mail.deliver_now
+
+      # 設定を戻す
+      ActionMailer::Base.raise_delivery_errors = original_raise_errors
+
+      result = {
+        success: true,
+        message: "テストメール送信成功",
+        delivery_info: delivery_info.inspect
+      }
     rescue => e
-      result = { success: false, error: e.message, backtrace: e.backtrace.first(5) }
+      # 設定を戻す
+      ActionMailer::Base.raise_delivery_errors = original_raise_errors if defined?(original_raise_errors)
+
+      result = {
+        success: false,
+        error: e.message,
+        error_class: e.class.name,
+        backtrace: e.backtrace.first(10)
+      }
     end
 
     render json: {

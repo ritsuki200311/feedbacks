@@ -10,13 +10,14 @@ class SupporterProfilesController < ApplicationController
       search_term = "%#{params[:search]}%"
       @supporter_profiles = @supporter_profiles.where(
         "favorite_artists ILIKE ? OR " \
+        "can_feedback ILIKE ? OR " \
         "interests::text ILIKE ? OR " \
         "support_genres::text ILIKE ? OR " \
         "support_styles::text ILIKE ? OR " \
         "personality_traits::text ILIKE ? OR " \
         "creation_experience ILIKE ? OR " \
         "age_group ILIKE ?",
-        search_term, search_term, search_term, search_term, search_term, search_term, search_term
+        search_term, search_term, search_term, search_term, search_term, search_term, search_term, search_term
       )
     end
 
@@ -61,7 +62,7 @@ class SupporterProfilesController < ApplicationController
 
   def supporter_profile_params
     params.require(:supporter_profile).permit(
-      :creation_experience, :favorite_artists, :age_group, :birth_date,
+      :creation_experience, :favorite_artists, :can_feedback, :age_group, :birth_date,
       standing: [], interests: [], support_genres: [], support_styles: [], personality_traits: []
     )
   end

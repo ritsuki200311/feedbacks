@@ -74,9 +74,15 @@
 
   <%# SelectとTextAreaのセクション %>
   <div>
+    <label class="block text-lg font-semibold text-gray-800 mb-3">好きなアーティストはいますか？</label>
+    <p class="text-sm text-gray-600 mb-3">好きなクリエイターやアーティストを教えてください（スキップ可能）</p>
+    <%= f.text_area :favorite_artists, rows: 4, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "例：米津玄師、新海誠、村上春樹、Banksy、草間彌生など...好きなアーティストやクリエイターの名前を自由に書いてください" %>
+  </div>
+
+  <div>
     <label class="block text-lg font-semibold text-gray-800 mb-3">フィードバックできそうなことを教えてください</label>
     <p class="text-sm text-gray-600 mb-3">※ここに書いた内容に関するコメント依頼が届く可能性があります（回答しない場合はスキップ可能）</p>
-    <%= f.text_area :favorite_artists, rows: 4, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "例：デジタルイラストのレイヤー構成、小説の三人称視点の書き方、DTMでのミックス技法、動画編集のカット割り、写真の構図理論など...具体的なスキルや知識を教えてください" %>
+    <%= f.text_area :can_feedback, rows: 4, class: "w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500", placeholder: "例：デジタルイラストのレイヤー構成、小説の三人称視点の書き方、DTMでのミックス技法、動画編集のカット割り、写真の構図理論など...具体的なスキルや知識を教えてください" %>
   </div>
 
   <!-- 保存ボタン -->

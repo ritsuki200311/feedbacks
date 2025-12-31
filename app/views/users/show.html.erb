@@ -127,8 +127,14 @@
           <% end %>
           <% if @supporter_profile.favorite_artists.present? %>
             <div class="bg-pink-50 rounded-lg p-4 border border-pink-200">
-              <h3 class="font-semibold text-pink-800 mb-2">⭐ 好きな作品</h3>
+              <h3 class="font-semibold text-pink-800 mb-2">⭐ 好きなアーティスト</h3>
               <p class="text-pink-700"><%= @supporter_profile.favorite_artists %></p>
+            </div>
+          <% end %>
+          <% if @supporter_profile.can_feedback.present? %>
+            <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+              <h3 class="font-semibold text-yellow-800 mb-2">💡 フィードバックできること</h3>
+              <p class="text-yellow-700"><%= @supporter_profile.can_feedback %></p>
             </div>
           <% end %>
           <% if @supporter_profile.age_group.present? %>

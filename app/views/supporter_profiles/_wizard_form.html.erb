@@ -1,13 +1,13 @@
-<div class="max-w-4xl mx-auto p-6" data-controller="profile-wizard" data-profile-wizard-total-steps-value="5">
+<div class="max-w-4xl mx-auto p-6" data-controller="profile-wizard" data-profile-wizard-total-steps-value="6">
   <!-- 進捗バー -->
   <div class="mb-8">
     <div class="flex items-center justify-between mb-2">
       <span class="text-sm text-gray-600">プロフィール設定</span>
-      <span class="text-sm text-gray-600" data-profile-wizard-target="stepIndicator">1 / 5</span>
+      <span class="text-sm text-gray-600" data-profile-wizard-target="stepIndicator">1 / 6</span>
     </div>
     <div class="w-full bg-gray-200 rounded-full h-2">
-      <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
-           data-profile-wizard-target="progressBar" style="width: 20%"></div>
+      <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+           data-profile-wizard-target="progressBar" style="width: 16.66%"></div>
     </div>
   </div>
 
@@ -119,15 +119,29 @@
       </div>
     </div>
 
-    <!-- ステップ5: 自分が少し詳しいことを詳細に教えてください -->
+    <!-- ステップ5: 好きなアーティストはいますか -->
     <div class="step-content hidden" data-profile-wizard-target="step" data-step="5">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">好きなアーティストはいますか？</h2>
+        <p class="text-gray-600">好きなクリエイターやアーティストを教えてください（スキップ可能）</p>
+      </div>
+
+      <div class="max-w-2xl mx-auto">
+        <%= f.text_area :favorite_artists, rows: 6,
+            class: "w-full p-4 border-2 border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-lg",
+            placeholder: "例：米津玄師、新海誠、村上春樹、Banksy、草間彌生など...好きなアーティストやクリエイターの名前を自由に書いてください" %>
+      </div>
+    </div>
+
+    <!-- ステップ6: フィードバックできそうなことを教えてください -->
+    <div class="step-content hidden" data-profile-wizard-target="step" data-step="6">
       <div class="text-center mb-8">
         <h2 class="text-3xl font-bold text-gray-800 mb-2">フィードバックできそうなことを教えてください</h2>
         <p class="text-gray-600">※ここに書いた内容に関するコメント依頼が届く可能性があります（回答しない場合はスキップ可能）</p>
       </div>
-      
+
       <div class="max-w-2xl mx-auto">
-        <%= f.text_area :favorite_artists, rows: 6, 
+        <%= f.text_area :can_feedback, rows: 6,
             class: "w-full p-4 border-2 border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-lg",
             placeholder: "例：デジタルイラストのレイヤー構成、小説の三人称視点の書き方、DTMでのミックス技法、動画編集のカット割り、写真の構図理論など...具体的なスキルや知識を教えてください" %>
       </div>

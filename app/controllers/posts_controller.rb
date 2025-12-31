@@ -570,13 +570,14 @@ class PostsController < ApplicationController
         @results = User.left_joins(:supporter_profile).where(
           "users.name ILIKE ? OR " \
           "supporter_profiles.favorite_artists ILIKE ? OR " \
+          "supporter_profiles.can_feedback ILIKE ? OR " \
           "supporter_profiles.interests::text ILIKE ? OR " \
           "supporter_profiles.support_genres::text ILIKE ? OR " \
           "supporter_profiles.support_styles::text ILIKE ? OR " \
           "supporter_profiles.personality_traits::text ILIKE ? OR " \
           "supporter_profiles.creation_experience ILIKE ? OR " \
           "supporter_profiles.age_group ILIKE ?",
-          search_term, search_term, search_term, search_term, search_term, search_term, search_term, search_term
+          search_term, search_term, search_term, search_term, search_term, search_term, search_term, search_term, search_term
         ).distinct.limit(20)
         Rails.logger.debug "Free-word search results: #{@results.map(&:name)}"
       end

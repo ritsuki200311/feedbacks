@@ -24,6 +24,17 @@ class Admin::ResetController < ApplicationController
     }
   end
 
+  def reset_all_coins_to_three
+    user_count = User.count
+    User.update_all(coins: 3)
+
+    render json: {
+      message: "全ユーザーのコインを3枚に設定しました",
+      user_count: user_count,
+      new_coins: 3
+    }
+  end
+
   def test_email
     # 環境変数の確認
     env_info = {

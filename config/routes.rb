@@ -88,6 +88,7 @@ Rails.application.routes.draw do
   namespace :admin do
     get "reset_users", to: "reset#reset_users"
     get "delete_all_posts", to: "reset#delete_all_posts"
+    get "reset_all_coins_to_three", to: "reset#reset_all_coins_to_three"
     get "test_email", to: "reset#test_email"
   end
 

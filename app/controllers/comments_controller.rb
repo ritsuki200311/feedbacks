@@ -27,8 +27,8 @@ class CommentsController < ApplicationController
     # セッションから手動でユーザーを取得
     unless user_signed_in?
       respond_to do |format|
-        format.html { redirect_to new_user_session_path, alert: "ログインが必要です。" }
-        format.json { render json: { success: false, errors: ["ログインが必要です"] }, status: :unauthorized }
+        format.html { redirect_to new_user_session_path, alert: "コメントするにはログインまたは新規登録が必要です。" }
+        format.json { render json: { success: false, error: "コメントするにはログインまたは新規登録が必要です" }, status: :unauthorized }
       end
       return
     end

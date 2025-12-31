@@ -710,7 +710,7 @@
             } else {
               const errorData = await response.json()
               console.error('Comment submission failed:', errorData)
-              alert('コメントの投稿に失敗しました。')
+              alert(errorData.error || 'コメントの投稿に失敗しました。')
             }
           } catch (error) {
             console.error('Error submitting comment:', error)

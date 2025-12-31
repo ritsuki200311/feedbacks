@@ -17,6 +17,12 @@ class PostsController < ApplicationController
     Rails.logger.debug "files in params[:post]: #{params[:post][:files].inspect if params[:post]}"
     Rails.logger.debug "=========================="
 
+    # コイン数チェック（投稿には1枚必要）
+    if current_user.coins < 1
+      redirect_to new_post_path, alert: "コインが足りません。誰かの投稿にコメントしてコインを稼ぎましょう！"
+      return
+    end
+
     # 「送るユーザーを選ぶ」ボタンの場合は投稿を保存せず、データをセッションに保存
     if params[:commit] == "送るユーザーを選ぶ"
       # 投稿データをセッションに保存
@@ -126,6 +132,9 @@ class PostsController < ApplicationController
 
         # 成功時にセッションをクリア
         session[:submitted_files_info] = nil
+
+        # コインを1枚消費
+        current_user.update(coins: current_user.coins - 1)
 
         if params[:commit] == "投稿する"
           format.html { redirect_to root_path, notice: "投稿を公開しました。" }

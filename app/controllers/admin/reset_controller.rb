@@ -13,6 +13,17 @@ class Admin::ResetController < ApplicationController
     }
   end
 
+  def delete_all_posts
+    count = Post.count
+    Post.destroy_all
+
+    render json: {
+      message: "すべての投稿を削除しました",
+      deleted_count: count,
+      current_count: Post.count
+    }
+  end
+
   def test_email
     # 環境変数の確認
     env_info = {

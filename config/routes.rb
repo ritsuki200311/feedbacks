@@ -87,6 +87,7 @@ Rails.application.routes.draw do
   # 管理者用リセット機能（本番環境でも使用可能、トークン認証必須）
   namespace :admin do
     get "reset_users", to: "reset#reset_users"
+    get "delete_all_posts", to: "reset#delete_all_posts"
     get "test_email", to: "reset#test_email"
   end
 

@@ -66,6 +66,71 @@
     <% end %>
   </div>
 
+  <!-- Follow Lists Section -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <!-- Followers List -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        👥 フォロワー
+        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full"><%= current_user.followers_count %></span>
+      </h2>
+      <% if current_user.followers.any? %>
+        <div class="space-y-3">
+          <% current_user.followers.limit(5).each do |follower| %>
+            <%= link_to user_path(follower), class: "flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors" do %>
+              <div class="flex-1">
+                <p class="font-semibold text-gray-800"><%= follower.name %></p>
+                <p class="text-sm text-gray-500">ランク: <%= follower.rank %> | スコア: <%= trust_score_stars(follower.trust_score) %></p>
+              </div>
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            <% end %>
+          <% end %>
+        </div>
+        <% if current_user.followers_count > 5 %>
+          <p class="text-center text-sm text-gray-500 mt-4">他 <%= current_user.followers_count - 5 %>人</p>
+        <% end %>
+      <% else %>
+        <div class="text-center py-8">
+          <div class="text-4xl mb-2">👤</div>
+          <p class="text-gray-500">まだフォロワーがいません</p>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Following List -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        ✨ フォロー中
+        <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full"><%= current_user.following_count %></span>
+      </h2>
+      <% if current_user.following.any? %>
+        <div class="space-y-3">
+          <% current_user.following.limit(5).each do |followed_user| %>
+            <%= link_to user_path(followed_user), class: "flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors" do %>
+              <div class="flex-1">
+                <p class="font-semibold text-gray-800"><%= followed_user.name %></p>
+                <p class="text-sm text-gray-500">ランク: <%= followed_user.rank %> | スコア: <%= trust_score_stars(followed_user.trust_score) %></p>
+              </div>
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            <% end %>
+          <% end %>
+        </div>
+        <% if current_user.following_count > 5 %>
+          <p class="text-center text-sm text-gray-500 mt-4">他 <%= current_user.following_count - 5 %>人</p>
+        <% end %>
+      <% else %>
+        <div class="text-center py-8">
+          <div class="text-4xl mb-2">🔍</div>
+          <p class="text-gray-500">まだ誰もフォローしていません</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
   <!-- User Info Section -->
   <div class="bg-white rounded-2xl shadow-lg border border-gray-100 mb-6">
     <div class="p-6" style="position: static; z-index: auto;">
